@@ -1,17 +1,18 @@
 /**
  * AZLA EQ data and offline response model.
  * Analytic curves are previews, not vendor coefficients or acoustic measurements.
- * The product's red REW screenshot supplied qualitative guidance only; no SPL
- * points have been invented or digitised from the image.
+ * The product's green/orange REW screenshot supplied qualitative guidance only;
+ * the centre frequencies below follow its visible response features, not
+ * invented SPL measurements.
  */
 export const BANDS = 10;
-export const FREQUENCIES = Object.freeze([50, 125, 250, 500, 1000, 2000, 4000, 8000, 11000, 16000]);
-export const QS = Object.freeze([.65, .75, .60, .75, .75, .75, 1.20, .75, .75, .75]);
+export const FREQUENCIES = Object.freeze([50, 125, 250, 500, 850, 1800, 3100, 7000, 8500, 15000]);
+export const QS = Object.freeze(Array(BANDS).fill(.75));
 export const SAMPLE_RATE = 96000;
 export const FILTERS = Object.freeze({
   1: 'LOW SHELF', 2: 'PEAK', 3: 'HIGH SHELF · 실험', 4: 'LOW PASS', 5: 'HIGH PASS'
 });
-export const PRESET_REFERENCE = '이미지 참고 시작값 · 청음/측정 조정 필요';
+export const PRESET_REFERENCE = '초록·주황 측정 이미지 기반 시작값 · 제품별 청음/실측 확인 필요';
 
 function makeEq(gains = Array(BANDS).fill(0), options = {}) {
   return {
@@ -31,24 +32,18 @@ const preset = (id, name, category, description, icon, gains, options) => ({
 /** Every preset is an editable starting point; none is a measured correction. */
 export const PRESETS = [
   preset('flat', 'FLAT', 'REFERENCE', '원래의 소리를 그대로. 모든 밴드 0 dB.', 'flat', Array(BANDS).fill(0), {tag: 13}),
-  preset('fps-competitive', 'FPS 경쟁전', 'GAMING', '저역 마스킹을 줄이고 중역 단서를 살리는 시작값입니다.', 'crosshair',
-    [-3, -2.5, -1, 1, 2, .5, -.8, -1, 0, 0],
-    {tag: 11, freqs: [50,125,250,500,850,1800,3100,8500,11000,16000], qs: [.7,.8,.8,.8,.8,1,1,2,.75,.75]}),
-  preset('fps-balanced', 'FPS 밸런스', 'GAMING', '저음의 무게는 남기고 중역을 부드럽게 정리합니다.', 'gamepad',
-    [-1.5,-1.5,-.5,.5,1.5,.5,-.5,-.8,0,0],
-    {tag: 15, freqs: [50,125,250,500,850,1800,3100,8500,11000,16000]}),
-  preset('vocal', '보컬 선명도', 'LISTENING', '낮은 중역을 보완하고 3 kHz의 자극은 완만하게 줄입니다.', 'mic',
-    [-1.5,-1,-.5,1,2,1,-1.5,-1,0,0],
-    {tag: 16, freqs: [50,125,250,500,850,1600,3100,8500,11000,16000], qs: [.65,.75,.6,.75,.9,.9,1.1,2,.75,.75]}),
-  preset('music', '음악 밸런스', 'LISTENING', '저역과 중고역의 대비를 줄여 편안하게 듣는 시작값입니다.', 'music',
-    [-1,-.8,0,.5,1,0,-1,-.8,0,0],
-    {tag: 12, freqs: [50,125,250,500,850,2000,3100,8500,11000,16000]}),
-  preset('bass', '베이스 부스트', 'LISTENING', '이미 풍부한 저역을 고려해 아주 낮은 대역만 가볍게 더합니다.', 'wave',
-    [2,1,.2,0,0,0,-.5,-.5,0,0],
-    {tag: 17, freqs: [40,100,250,500,1000,2000,3100,8500,11000,16000]}),
-  preset('low-bass', '저음 절제', 'LISTENING', '저역의 양감을 줄여 중역이 더 또렷하게 들리도록 조정합니다.', 'leaf',
-    [-3,-2.5,-1,0,.5,0,-.5,-.5,0,0],
-    {tag: 18, freqs: [50,125,250,500,850,2000,3100,8500,11000,16000]}),
+  preset('fps-competitive', 'FPS 경쟁전', 'GAMING', '저역 마스킹을 줄이고 500–850 Hz와 7 kHz 단서를 선명하게 살립니다.', 'crosshair',
+    [-4,-3,-1.5,2.5,3.5,2,-1.5,2,-2.5,0], {tag: 11}),
+  preset('fps-balanced', 'FPS 밸런스', 'GAMING', '저음의 무게를 남기면서 발소리와 공간 단서를 자연스럽게 분리합니다.', 'gamepad',
+    [-2,-1.5,-.5,1.5,2,1,-1,1,-1.5,0], {tag: 15}),
+  preset('vocal', '보컬 선명도', 'LISTENING', '500–850 Hz의 몸통을 채우고 이미 높은 3.1·8.5 kHz 자극을 정리합니다.', 'mic',
+    [-2.5,-1.5,-.5,2,2.5,1.5,-2,1.5,-2,0], {tag: 16}),
+  preset('music', '음악 밸런스', 'LISTENING', '원응답의 중역 골과 3.1·8.5 kHz 피크를 완만하게 보정합니다.', 'music',
+    [-1.5,-1,0,1.5,2.5,.5,-2.5,1.5,-2,-.5], {tag: 12}),
+  preset('bass', '베이스 부스트', 'LISTENING', '50–125 Hz의 타격과 깊이를 분명히 올리고 중고역 피크는 차분하게 정리합니다.', 'wave',
+    [4,2.5,1,-.5,-1,-.5,-1.5,0,-1.5,0], {tag: 17}),
+  preset('low-bass', '저음 절제', 'LISTENING', '저역의 양감을 확실히 줄이고 낮은 중역과 공간 단서를 앞으로 가져옵니다.', 'leaf',
+    [-4,-3,-1.5,1,2,1,-1,1,-1.5,0], {tag: 18}),
   preset('custom', '사용자 설정', 'MY SOUND', '취향에 맞춰 나만의 소리를 만들어 보세요.', 'sliders', Array(BANDS).fill(0), {tag: 14})
 ];
 for (const entry of PRESETS) {
@@ -71,7 +66,7 @@ export function validateEq(value) {
     if (!Number.isInteger(filterTypes[i]) || !Object.hasOwn(FILTERS, filterTypes[i])) throw new Error(`${i+1}번 필터 종류가 올바르지 않습니다.`);
   }
   const tag = value.tag ?? 14;
-  if (!Number.isInteger(tag) || tag < 0 || tag > 255) throw new Error('프리셋 식별값은 0~255 정수여야 합니다.');
+  if (!Number.isInteger(tag) || tag < 0 || tag > 255) throw new Error('사운드 식별값은 0~255 정수여야 합니다.');
   if (value.offset !== undefined && value.offset !== 0) throw new Error('이 프로그램은 전체 출력 게인 자동 보정을 사용하지 않습니다.');
   return {
     freqs: [...value.freqs], qs: [...value.qs], gains: [...value.gains],

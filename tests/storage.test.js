@@ -37,12 +37,14 @@ test('legacy local settings retain every original band and append two neutral ba
 });
 
 test('malformed or inaccessible storage yields a usable fresh fallback without rewriting user data',()=>{
-  const corrupt=memoryStorage({azla_equalizer_v3:'{"current":'});
+  const corrupt=memoryStorage({azla_equalizer_v4:'{"current":'});
   const first=restore(corrupt),second=restore(corrupt);
-  assert.equal(first.selected,'music');assert.equal(first.current.freqs.length,10);
+  assert.equal(first.selected,'flat');assert.equal(first.current.freqs.length,10);
+  assert.ok(first.current.gains.every(gain=>gain===0));
+  assert.ok(first.current.qs.every(q=>q===.75));
   assert.deepEqual(first.presets,[]);assert.equal(first.advanced,false);
   assert.deepEqual(corrupt.writes,[]);
-  assert.equal(corrupt.getItem('azla_equalizer_v3'),'{"current":');
+  assert.equal(corrupt.getItem('azla_equalizer_v4'),'{"current":');
   first.current.gains[0]=12;
   assert.notEqual(second.current.gains[0],12,'fallback settings must not share arrays');
   const denied=restore({getItem(){throw new Error('Storage is blocked');}});
@@ -69,7 +71,7 @@ test('one corrupt or out-of-range preset does not destroy valid presets',()=>{
   assert.equal(result[1].eq.freqs.length,10);
 });
 
-test('v3 persist and restore keep independent snapshots and leave old keys untouched',()=>{
+test('v4 persist and restore keep independent snapshots and leave old keys untouched',()=>{
   const original='old user-owned value';
   const storage=memoryStorage({azla_cb5100_presets_v1:original});
   const state={eq:flat(),selected:'custom',advanced:true,presets:[{name:'내 설정',eq:flat()}]};
@@ -82,7 +84,20 @@ test('v3 persist and restore keep independent snapshots and leave old keys untou
   saved.current.gains[0]=9;saved.presets[0].eq.gains[1]=9;
   assert.equal(again.current.gains[0],-2);assert.equal(again.presets[0].eq.gains[1],1);
   assert.equal(storage.getItem('azla_cb5100_presets_v1'),original);
-  assert.deepEqual(storage.writes.map(entry=>entry.key),['azla_equalizer_v3']);
+  assert.deepEqual(storage.writes.map(entry=>entry.key),['azla_equalizer_v4']);
+});
+
+test('v3 upgrade starts once from FLAT while preserving named sounds and view preference',()=>{
+  const previous=flat();previous.gains[0]=6;previous.qs[0]=1.8;
+  const named=flat();named.gains[4]=2;
+  const raw=JSON.stringify({version:3,current:previous,selected:'custom',advanced:true,presets:[{name:'기존 사운드',eq:named}]});
+  const storage=memoryStorage({azla_equalizer_v3:raw});
+  const result=restore(storage);
+  assert.equal(result.selected,'flat');assert.ok(result.current.gains.every(gain=>gain===0));
+  assert.ok(result.current.qs.every(q=>q===.75));assert.equal(result.advanced,true);
+  assert.equal(result.presets.length,1);assert.equal(result.presets[0].name,'기존 사운드');
+  assert.equal(result.presets[0].eq.gains[4],2);
+  assert.equal(storage.getItem('azla_equalizer_v3'),raw);assert.deepEqual(storage.writes,[]);
 });
 
 test('backup import rejects unrelated formats, empty backups, oversized files and broken JSON',()=>{
@@ -110,7 +125,7 @@ test('v3 backup imports preserve valid entries and safely discard malformed entr
     format:'azla-equalizer-v3',presets:[{name:'유효한 설정',eq:flat()},{name:'불량 설정',eq:invalid}],current:flat()
   }));
   assert.equal(result.presets.length,1);assert.equal(result.presets[0].name,'유효한 설정');
-  assert.deepEqual(result.current.freqs,[50,125,250,500,1000,2000,4000,8000,11000,16000]);
+  assert.deepEqual(result.current.freqs,[50,125,250,500,850,1800,3100,7000,8500,15000]);
 });
 
 test('export contains only EQ backups, not device credentials, reports or incidental application state',()=>{

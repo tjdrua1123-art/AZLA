@@ -36,7 +36,7 @@ function download(name, value) {
 function selectedProfile() {
   if (state.selected.startsWith('user:')) {
     const item = state.presets.find(p => `user:${p.name}` === state.selected);
-    if (item) return { name: item.name, description: '직접 저장한 나만의 사운드입니다.', eq: item.eq, reference: '사용자 프리셋' };
+    if (item) return { name: item.name, description: '직접 저장한 나만의 사운드입니다.', eq: item.eq, reference: '사용자 사운드' };
   }
   return PRESETS.find(p => p.id === state.selected) || PRESETS.find(p => p.id === 'custom');
 }
@@ -130,7 +130,6 @@ function refresh(rebuild = false) {
   $('profileName').textContent = profile.name;
   $('profileDescription').textContent = profile.description;
   $('profileDescription').title = profile.reference || PRESET_REFERENCE;
-  $('profileBadge').textContent = state.selected === 'custom' || state.selected.startsWith('user:') ? 'MY SOUND' : 'PRESET';
   state.model = buildAnalyticModel(state.eq); state.peak = peakResponse(state.model);
   updateGraphLabels(); scheduleDraw(); renderComparison(); updateApplyState();
   const token = ++modelToken;
@@ -297,23 +296,23 @@ $('advancedToggle').checked = state.advanced;
 $('advancedToggle').addEventListener('change', event => { state.advanced = event.target.checked; $('bandControls').classList.toggle('advanced-visible', state.advanced); saveLocal(); scheduleDraw(); });
 $('showBands').addEventListener('change', scheduleDraw);
 $('resetBtn').addEventListener('click', () => { state.eq = cloneEq(selectedProfile().eq); state.error = null; refresh(true); saveLocal(); });
-$('flatBtn').addEventListener('click', () => { state.eq.gains.fill(0); state.eq.filterTypes.fill(2); state.eq.tag = 14; state.selected = 'custom'; state.error = null; refresh(true); saveLocal(); toast('모든 밴드를 0 dB PEAK로 변경했습니다.'); });
+$('flatBtn').addEventListener('click', () => { state.eq = cloneEq(PRESETS.find(profile => profile.id === 'flat').eq); state.selected = 'flat'; state.error = null; refresh(true); saveLocal(); toast('FLAT 기준값으로 초기화했습니다.'); });
 $('settingsBtn').addEventListener('click', () => { $('settingsDialog').showModal(); renderComparison(); });
 $('closeSettingsBtn').addEventListener('click', () => $('settingsDialog').close());
 $('savePresetBtn').addEventListener('click', () => { $('presetName').value = ''; $('saveDialog').showModal(); $('presetName').focus(); });
 $('cancelSaveBtn').addEventListener('click', () => $('saveDialog').close());
 $('saveForm').addEventListener('submit', event => {
   event.preventDefault(); const name = $('presetName').value.trim();
-  if (!name || name.length > 36 || ['__proto__', 'prototype', 'constructor'].includes(name)) { toast('1~36자의 프리셋 이름을 입력해 주세요.', true); return; }
+  if (!name || name.length > 36 || ['__proto__', 'prototype', 'constructor'].includes(name)) { toast('1~36자의 사운드 이름을 입력해 주세요.', true); return; }
   if (state.presets.some(p => p.name === name)) { toast('이미 있는 이름입니다. 다른 이름을 입력해 주세요.', true); return; }
-  if (state.presets.length >= 100) { toast('프리셋은 최대 100개까지 보관할 수 있습니다.', true); return; }
-  state.presets.push({ name, eq: cloneEq(state.eq) }); state.selected = `user:${name}`; saveLocal(); refresh(true); $('saveDialog').close(); toast('프리셋을 이 브라우저에 저장했습니다.');
+  if (state.presets.length >= 100) { toast('내 사운드는 최대 100개까지 보관할 수 있습니다.', true); return; }
+  state.presets.push({ name, eq: cloneEq(state.eq) }); state.selected = `user:${name}`; saveLocal(); refresh(true); $('saveDialog').close(); toast('내 사운드를 이 프로그램에 저장했습니다.');
 });
 $('importBtn').addEventListener('click', () => $('importInput').click());
 $('importInput').addEventListener('change', async event => {
   const file = event.target.files[0]; if (!file) return;
   try {
-    if (file.size > 200000) throw new Error('프리셋 파일은 200 KB 이하여야 합니다.');
+    if (file.size > 200000) throw new Error('사운드 설정 파일은 200 KB 이하여야 합니다.');
     const imported = importBackup(await file.text());
     const byName = new Map(state.presets.map(p => [p.name, p]));
     for (const p of imported.presets) {
@@ -323,7 +322,7 @@ $('importInput').addEventListener('change', async event => {
     }
     state.presets = [...byName.values()];
     if (imported.current) { state.eq = imported.current; state.selected = 'custom'; }
-    refresh(true); saveLocal(); toast(`${imported.presets.length}개 프리셋과 설정을 불러왔습니다.`);
+    refresh(true); saveLocal(); toast(`저장된 사운드 ${imported.presets.length}개와 설정을 불러왔습니다.`);
   } catch (error) { toast(`가져오기 실패: ${error.message}`, true); }
   finally { event.target.value = ''; }
 });
@@ -356,7 +355,7 @@ async function initialize() {
   $('supportStatus').textContent = window.isSecureContext && navigator.hid ? 'WebHID 지원' : 'Windows Chrome / Edge 필요';
   $('sdkStatus').textContent = SDK?.default ? '원본 SDK 준비됨' : '제조사 SDK 본체 추가 필요';
   $('connectionHelp').textContent = [!SDK?.default ? '제조사 SDK 본체가 아직 포함되지 않았습니다.' : '', connectionMode === 'manufacturer' ? '기존 프로그램과 같은 장치 검색 방식을 사용합니다. 사용 중인 AZLA DAC를 선택해 주세요.' : !devices.length ? '최종 제품의 USB 식별 정보 등록이 필요합니다.' : '', configError ? '장치 설정 파일을 읽을 수 없습니다.' : '', 'EQ 적용을 누르면 현재 설정 1개를 기기에 저장합니다.'].filter(Boolean).join(' ');
-  const note = document.createElement('p'); note.className = 'help-text preset-reference-note'; note.textContent = `${PRESET_REFERENCE}. 빨간 EQ OFF 곡선의 형태만 참고했습니다. 원본 REW 데이터에 맞춘 최종 제품 튜닝은 아닙니다.`;
+  const note = document.createElement('p'); note.className = 'help-text preset-reference-note'; note.textContent = `${PRESET_REFERENCE}. 제공된 초록·주황 원음 응답의 상대적인 형태를 참고했으며, 원본 REW 수치 데이터에 맞춘 최종 제품 튜닝은 아닙니다.`;
   $('settingsDialog').querySelector('.settings-section').append(note);
   const discoverRow = document.createElement('div'); discoverRow.className = 'discovery-row';
   const inspect = document.createElement('button'); inspect.type = 'button'; inspect.id = 'inspectDeviceBtn'; inspect.className = 'secondary-button'; inspect.textContent = '연결된 장치 확인';

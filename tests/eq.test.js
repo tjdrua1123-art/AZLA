@@ -76,16 +76,21 @@ test('legacy migration preserves original filters and adds only two flat bands',
   assert.equal(migrated.tag,21);assert.equal(original.freqs.length,8);
 });
 
-test('all eight presets are complete, immutable conservative starting points',()=>{
+test('all eight sound profiles are complete, immutable and use the shared 0.75 Q baseline',()=>{
   assert.equal(PRESETS.length,8);
   assert.equal(new Set(PRESETS.map(x=>x.id)).size,8);
   assert.equal(FREQUENCIES.length,BANDS);assert.equal(QS.length,BANDS);
+  assert.ok(QS.every(q=>q===.75));
   for (const preset of PRESETS) {
     validateEq(preset.eq);
     assert.ok(Object.isFrozen(preset.eq.gains));
     assert.ok(peakResponse(buildAnalyticModel(preset.eq)).db<=6, preset.id);
+    assert.ok(preset.eq.qs.every(q=>q===.75),preset.id);
     preset.eq.freqs.forEach((f,i)=>{if(f>=8000)assert.ok(preset.eq.gains[i]<=0,preset.id);});
-    if (!['flat','custom'].includes(preset.id)) assert.match(preset.reference,/이미지 참고 시작값/);
+    if (!['flat','custom'].includes(preset.id)) {
+      assert.match(preset.reference,/초록·주황 측정 이미지/);
+      assert.ok(Math.max(...preset.eq.gains)-Math.min(...preset.eq.gains)>=3,preset.id);
+    }
   }
 });
 

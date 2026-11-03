@@ -25,10 +25,10 @@
   </defs></svg>
 
   <div class="app-shell">
-    <aside class="sidebar" aria-label="사운드 프리셋">
+    <aside class="sidebar" aria-label="사운드 라이브러리">
       <a class="brand" href="./" aria-label="AZLA Equalizer 홈"><span class="brand-wordmark">AZLA<span class="brand-dot">.</span></span><span class="brand-tagline">SOUND BEYOND LIMITS</span></a>
       <div class="sidebar-heading"><span>사운드 라이브러리</span><span class="library-count">01 — 08</span></div>
-      <nav id="presetList" class="preset-list" aria-label="EQ 프리셋"></nav>
+      <nav id="presetList" class="preset-list" aria-label="사운드 라이브러리"></nav>
       <div class="sidebar-tools"><button id="importBtn" class="text-button" type="button"><svg class="icon"><use href="#icon-import"/></svg>가져오기</button><button id="exportBtn" class="text-button" type="button"><svg class="icon"><use href="#icon-export"/></svg>내보내기</button><input id="importInput" type="file" accept=".json,application/json" hidden></div>
       <div class="sidebar-spacer"></div>
       <div class="sidebar-note"><span class="note-line"></span><p>작은 조정으로 완성되는<br>나만의 사운드.</p></div>
@@ -45,7 +45,7 @@
       <section class="page-heading"><div><div class="eyebrow">PERSONAL SOUND EXPERIENCE</div><h1>당신의 사운드<span class="heading-dot">.</span></h1><p>취향에 맞게 조절하고, 당신만의 디테일을 발견하세요.</p></div><div class="heading-decoration" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div></section>
 
       <section class="equalizer-panel" aria-labelledby="profileName">
-        <div class="profile-header"><div class="profile-intro"><div class="profile-topline"><span class="section-kicker">현재 사운드</span><span id="profileBadge" class="profile-badge">PRESET</span></div><h2 id="profileName">음악 밸런스</h2><p id="profileDescription">자연스러운 균형으로 음악 속 디테일을 만나보세요.</p></div><div class="profile-actions"><button id="resetBtn" class="quiet-button" type="button"><svg class="icon"><use href="#icon-reset"/></svg><span>되돌리기</span></button><button id="savePresetBtn" class="secondary-button" type="button"><svg class="icon"><use href="#icon-plus"/></svg><span>프리셋 저장</span></button></div></div>
+        <div class="profile-header"><div class="profile-intro"><div class="profile-topline"><span class="section-kicker">현재 사운드</span></div><h2 id="profileName">FLAT</h2><p id="profileDescription">원래의 소리를 그대로. 모든 밴드 0 dB.</p></div><div class="profile-actions"><button id="resetBtn" class="quiet-button" type="button"><svg class="icon"><use href="#icon-reset"/></svg><span>되돌리기</span></button><button id="savePresetBtn" class="secondary-button" type="button"><svg class="icon"><use href="#icon-plus"/></svg><span>내 사운드 저장</span></button></div></div>
 
         <div class="chart-section"><div class="chart-toolbar"><div class="chart-legends"><span class="chart-legend"><i class="legend-line"></i>EQ 응답</span><span class="chart-legend measured-legend" id="measurementLegend" hidden><i class="legend-line measured"></i>실측 변화량</span></div><label class="subtle-checkbox"><input id="showBands" type="checkbox"><span class="checkbox-mark"></span>개별 밴드 보기</label></div><div class="chart-wrap"><canvas id="responseChart" width="1200" height="270" aria-label="주파수에 따른 EQ 예상 응답. 아래 10밴드 조절로 변경할 수 있습니다." role="img"></canvas></div><div class="chart-bottom"><span id="modelLabel">예상 EQ 응답 · 실제 소리는 기기와 측정 조건에 따라 달라질 수 있습니다.</span><span id="peakLabel" class="peak-label">최대 변화 <b>0.0 dB</b></span></div></div>
 
@@ -59,7 +59,7 @@
 
   <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 
-  <dialog id="saveDialog" class="dialog save-dialog"><form id="saveForm"><div class="dialog-kicker">MY SOUND LIBRARY</div><h2>나만의 사운드 저장</h2><p>현재 EQ에 이름을 붙여 프리셋으로 보관하세요.<br>기기에 적용하려면 별도로 EQ 적용을 눌러 주세요.</p><label class="form-label" for="presetName">프리셋 이름</label><input id="presetName" class="dialog-input" name="presetName" maxlength="36" autocomplete="off" placeholder="예: 나의 데일리 사운드" required><div class="dialog-actions"><button id="cancelSaveBtn" class="quiet-button" type="button">취소</button><button class="primary-button" type="submit">프리셋 저장</button></div></form></dialog>
+  <dialog id="saveDialog" class="dialog save-dialog"><form id="saveForm"><div class="dialog-kicker">MY SOUND LIBRARY</div><h2>나만의 사운드 저장</h2><p>현재 EQ에 이름을 붙여 사운드 라이브러리에 보관하세요.<br>기기에 적용하려면 별도로 EQ 적용을 눌러 주세요.</p><label class="form-label" for="presetName">사운드 이름</label><input id="presetName" class="dialog-input" name="presetName" maxlength="36" autocomplete="off" placeholder="예: 나의 데일리 사운드" required><div class="dialog-actions"><button id="cancelSaveBtn" class="quiet-button" type="button">취소</button><button class="primary-button" type="submit">내 사운드 저장</button></div></form></dialog>
 
   <dialog id="riskDialog" class="dialog risk-dialog"><div class="dialog-kicker">LISTEN WITH CARE</div><h2>적용 전 볼륨을 확인하세요</h2><p id="riskText">강한 증폭이 포함되어 있습니다. 볼륨을 낮추고 적용해 주세요.</p><div class="dialog-actions"><button id="cancelRiskBtn" class="quiet-button" type="button">돌아가기</button><button id="confirmRiskBtn" class="primary-button" type="button">확인 후 적용</button></div></dialog>
 

@@ -31,6 +31,10 @@ with sync_playwright() as p:
     page.wait_for_selector('.band-column')
     assert page.locator('.band-column').count() == 10
     assert page.locator('[data-preset]').count() == 8
+    assert page.locator('#profileName').inner_text() == 'FLAT'
+    assert page.locator('[data-preset="flat"]').get_attribute('aria-pressed') == 'true'
+    assert page.locator('#profileBadge').count() == 0
+    assert all(v == '0.75' for v in page.locator('.band-q input').evaluate_all('(els)=>els.map(x=>x.value)'))
     assert page.locator('#applyBtn').is_disabled()
     page.locator('[data-preset="fps-competitive"]').click()
     assert page.locator('#profileName').inner_text() == 'FPS 경쟁전'
@@ -63,6 +67,8 @@ with sync_playwright() as p:
     page.wait_for_function("document.querySelector('#toast').textContent.includes('가져오기 실패')")
     page.locator('#flatBtn').click()
     assert all(v == '0' for v in page.locator('.band-gain input').evaluate_all('(els)=>els.map(x=>x.value)'))
+    assert all(v == '0.75' for v in page.locator('.band-q input').evaluate_all('(els)=>els.map(x=>x.value)'))
+    assert page.locator('#profileName').inner_text() == 'FLAT'
     page.locator('#settingsBtn').click()
     assert 'SDK' in page.locator('#sdkStatus').inner_text()
     off = '\n'.join(f'{f} 100' for f in [20,50,100,200,500,1000,2000,5000,10000,20000])
