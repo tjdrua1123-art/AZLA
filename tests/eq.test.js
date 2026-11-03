@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  BANDS, FREQUENCIES, QS, PRESETS, cloneEq, validateEq, migrateEq, signature,
+  BANDS, FREQUENCIES, QS, PRESETS, cloneEq, validateEq, signature,
   buildAnalyticModel, responseAt, peakResponse, parseRew, interpolate, comparison
 } from '../src/eq.js';
 
@@ -66,32 +66,38 @@ test('clones are independent and identity ignores incidental metadata',()=>{
   assert.notEqual(signature(eq),signature(copy));
 });
 
-test('legacy migration preserves original filters and adds only two flat bands',()=>{
-  const original={freqs:[31,80,190,450,900,2100,5100,12000],qs:Array(8).fill(1.25),gains:[-1,2,3,-4,5,-6,1,0],filterTypes:[1,2,2,2,2,2,3,4],tag:21};
-  const migrated=migrateEq(original);
-  for (const key of ['freqs','qs','gains','filterTypes']) assert.deepEqual(migrated[key].slice(0,8),original[key]);
-  assert.deepEqual(migrated.freqs.slice(8),[11000,16000]);
-  assert.deepEqual(migrated.gains.slice(8),[0,0]);
-  assert.deepEqual(migrated.filterTypes.slice(8),[2,2]);
-  assert.equal(migrated.tag,21);assert.equal(original.freqs.length,8);
-});
-
-test('all eight sound profiles are complete, immutable and use the shared 0.75 Q baseline',()=>{
-  assert.equal(PRESETS.length,8);
-  assert.equal(new Set(PRESETS.map(x=>x.id)).size,8);
+test('seven production sound modes use the requested bands, gains and shared 0.75 Q baseline',()=>{
+  assert.equal(PRESETS.length,7);
+  assert.deepEqual(PRESETS.map(entry=>entry.id),['flat','pubg-tactical','valorant','footstep','vocal','harman','cinema']);
+  assert.equal(new Set(PRESETS.map(x=>x.id)).size,7);
   assert.equal(FREQUENCIES.length,BANDS);assert.equal(QS.length,BANDS);
+  assert.deepEqual(FREQUENCIES,[31,63,125,250,500,1000,2000,4000,8000,11000]);
   assert.ok(QS.every(q=>q===.75));
+  const expected={
+    flat:[0,0,0,0,0,0,0,0,0,0],
+    'pubg-tactical':[-7,-6,-3,-3,0,3,3,4,-2,2],
+    valorant:[-4,-4,-1,0,2,0,3,4,-2,3],
+    footstep:[-6,-5,-4,-2,3,3,3,4,-3,-3],
+    vocal:[0,-2,-2,0,3,3,3,0,0,0],
+    harman:[0,0,0,0,2,0,0,0,0,4],
+    cinema:[2,2,1,-2,0,3,3,0,0,3]
+  };
   for (const preset of PRESETS) {
     validateEq(preset.eq);
     assert.ok(Object.isFrozen(preset.eq.gains));
     assert.ok(peakResponse(buildAnalyticModel(preset.eq)).db<=6, preset.id);
     assert.ok(preset.eq.qs.every(q=>q===.75),preset.id);
-    preset.eq.freqs.forEach((f,i)=>{if(f>=8000)assert.ok(preset.eq.gains[i]<=0,preset.id);});
-    if (!['flat','custom'].includes(preset.id)) {
-      assert.match(preset.reference,/초록·주황 측정 이미지/);
+    assert.ok(preset.eq.filterTypes.every(type=>type===2),preset.id);
+    assert.deepEqual(preset.eq.gains,expected[preset.id]);
+    if (preset.id!=='flat') {
+      assert.match(preset.reference,/초록·주황 측정 그래프/);
       assert.ok(Math.max(...preset.eq.gains)-Math.min(...preset.eq.gains)>=3,preset.id);
     }
   }
+  assert.ok(expected['pubg-tactical'][0]<0&&expected['pubg-tactical'][7]>0);
+  assert.ok(expected.footstep.slice(0,3).every(gain=>gain<0)&&expected.footstep.slice(4,8).every(gain=>gain>0));
+  assert.ok(expected.vocal.slice(4,7).every(gain=>gain>0));
+  assert.ok(expected.harman[9]>0&&expected.cinema[9]>0);
 });
 
 test('REW parser accepts normal CSV/TXT headers, sorts and removes duplicates',()=>{

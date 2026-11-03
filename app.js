@@ -1,12 +1,16 @@
 import { BANDS, FILTERS, PRESETS, PRESET_REFERENCE, cloneEq, validateEq, signature, buildAnalyticModel, responseAt, peakResponse, parseRew, interpolate, comparison } from './src/eq.js';
 import { DeviceController, supportedDevices, generateRamPlan, sdkGraphModel, discoverDevice } from './src/device.js';
-import { restore, persist, importBackup, exportBackup } from './src/storage.js';
+import { restore, persist } from './src/storage.js';
 
 const $ = id => document.getElementById(id);
 const SDK = window.WalkPlayWebEqSDK;
-const safeStorage = { getItem: key => { try { return localStorage.getItem(key); } catch { return null; } }, setItem: (key, value) => localStorage.setItem(key, value) };
+const safeStorage = {
+  getItem: key => { try { return localStorage.getItem(key); } catch { return null; } },
+  setItem: (key, value) => localStorage.setItem(key, value),
+  removeItem: key => { try { localStorage.removeItem(key); } catch { /* storage may be unavailable */ } }
+};
 const previous = restore(safeStorage);
-const state = { eq: previous.current, selected: previous.selected, presets: previous.presets, advanced: previous.advanced, lastApplied: null, activeBand: 4, busy: false, off: null, on: null, model: null, peak: null, error: null };
+const state = { eq: previous.current, selected: previous.selected, baseSelected: previous.selected, advanced: previous.advanced, lastApplied: null, activeBand: 4, busy: false, off: null, on: null, model: null, peak: null, error: null };
 let devices = [], controller, discoveredDevice = null, chartFrame = null, modelToken = 0, chartGeometry = null, toastTimer, sdkTimer;
 const canvas = $('responseChart');
 const ctx = canvas.getContext('2d');
@@ -17,32 +21,29 @@ const icons = {
   flat: '<path d="M3 12h18M5 8v8M19 8v8"/>',
   crosshair: '<circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2"/><path d="M12 2v4m0 12v4M2 12h4m12 0h4"/>',
   gamepad: '<path d="M8 7h8c3 0 5 9 3 11-1 1-4-3-4-3H9s-3 4-4 3C3 16 5 7 8 7Z"/><path d="M7 11h4m-2-2v4m6-2h.01M17 13h.01"/>',
+  footsteps: '<path d="M8 3c2 0 3 2 3 4s-1 4-3 4-3-2-3-4 1-4 3-4Zm8 10c2 0 3 2 3 4s-1 4-3 4-3-2-3-4 1-4 3-4Z"/>',
   mic: '<rect x="9" y="3" width="6" height="12" rx="3"/><path d="M6 11v1a6 6 0 0 0 12 0v-1m-6 7v3m-3 0h6"/>',
   music: '<path d="M9 17V5l11-2v12M9 8l11-2"/><ellipse cx="6" cy="18" rx="3" ry="2"/><ellipse cx="17" cy="16" rx="3" ry="2"/>',
-  wave: '<path d="M3 9v6m4-10v14m5-16v18m5-15v12m4-9v6"/>',
-  leaf: '<path d="M20 4C7 1 2 10 7 16c5 6 15 0 13-12ZM5 21 17 8"/>',
+  film: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 5v14m10-14v14M3 9h4m10 0h4M3 15h4m10 0h4"/>',
   sliders: '<path d="M5 3v5m0 4v9m7-18v10m0 4v4m7-18v2m0 4v12M2 8h6m1 9h6m1-12h6"/>'
 };
 function toast(message, error = false) {
   const node = $('toast'); node.textContent = message; node.hidden = false; node.classList.toggle('error', error);
   clearTimeout(toastTimer); toastTimer = setTimeout(() => { node.hidden = true; }, error ? 6500 : 3600);
 }
-function saveLocal() { try { persist(safeStorage, state); } catch { toast('브라우저에 저장할 수 없습니다. 내보내기로 설정을 보관해 주세요.', true); } }
+function saveLocal() { try { persist(safeStorage, state); } catch { toast('화면 설정을 저장할 수 없습니다.', true); } }
 function download(name, value) {
   const url = URL.createObjectURL(new Blob([JSON.stringify(value, null, 2)], { type: 'application/json' }));
   const link = document.createElement('a'); link.href = url; link.download = name; link.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 function selectedProfile() {
-  if (state.selected.startsWith('user:')) {
-    const item = state.presets.find(p => `user:${p.name}` === state.selected);
-    if (item) return { name: item.name, description: '직접 저장한 나만의 사운드입니다.', eq: item.eq, reference: '사용자 사운드' };
-  }
-  return PRESETS.find(p => p.id === state.selected) || PRESETS.find(p => p.id === 'custom');
+  if (state.selected === 'manual') return { name: '직접 조절', description: '선택한 사운드를 슬라이더로 직접 조절한 상태입니다.', eq: state.eq, reference: '현재 세션의 임시 조절값' };
+  return PRESETS.find(p => p.id === state.selected) || PRESETS[0];
 }
 function renderPresets() {
   const root = $('presetList'); root.replaceChildren();
-  for (const profile of [...PRESETS, ...state.presets.map(p => ({ ...p, id: `user:${p.name}`, category: 'SAVED', icon: 'sliders' }))]) {
+  for (const profile of PRESETS) {
     const button = document.createElement('button'); button.type = 'button'; button.className = 'preset-item';
     button.dataset.preset = profile.id; button.setAttribute('aria-pressed', String(profile.id === state.selected)); button.disabled = state.busy;
     const symbol = document.createElement('span'); symbol.className = 'preset-icon';
@@ -55,12 +56,12 @@ function renderPresets() {
     button.append(symbol, copy, dot);
     button.addEventListener('click', () => {
       if (state.busy) return;
-      state.eq = cloneEq(profile.eq); state.selected = profile.id; state.error = null;
+      state.eq = cloneEq(profile.eq); state.selected = profile.id; state.baseSelected = profile.id; state.error = null;
       refresh(true); saveLocal();
     });
     root.append(button);
   }
-  document.querySelector('.library-count').textContent = `${String(PRESETS.length + state.presets.length).padStart(2, '0')} PROFILES`;
+  document.querySelector('.library-count').textContent = `${String(PRESETS.length).padStart(2, '0')} MODES`;
 }
 function numberInput(label, value, min, max, step, prop, i) {
   const input = document.createElement('input'); input.type = 'number'; input.value = value; input.min = min; input.max = max; input.step = step;
@@ -112,7 +113,7 @@ function editBand(i, prop, value) {
   if (state.busy) return;
   const next = cloneEq(state.eq); next[prop][i] = value; next.tag = 14;
   try { state.eq = validateEq(next); } catch (error) { toast(error.message, true); return; }
-  state.selected = 'custom'; state.error = null; selectBand(i);
+  state.selected = 'manual'; state.error = null; selectBand(i);
   const column = $('bandControls').children[i];
   const controls = { freqs: '.band-frequency input', gains: '.band-gain input', qs: '.band-q input' };
   for (const [key, selector] of Object.entries(controls)) {
@@ -169,7 +170,7 @@ function updateApplyState() {
 }
 function lockUI(flag) {
   state.busy = flag;
-  for (const node of document.querySelectorAll('#bandControls input, #bandControls select, #presetList button, #advancedToggle, #resetBtn, #flatBtn, #savePresetBtn, #importBtn, #confirmRiskBtn')) node.disabled = flag;
+  for (const node of document.querySelectorAll('#bandControls input, #bandControls select, #presetList button, #advancedToggle, #resetBtn, #flatBtn, #confirmRiskBtn')) node.disabled = flag;
   $('applyBtn').querySelector('span').textContent = flag ? '저장 중' : 'EQ 적용';
   updateApplyState();
 }
@@ -295,38 +296,10 @@ async function loadMeasurement(kind, file) {
 $('advancedToggle').checked = state.advanced;
 $('advancedToggle').addEventListener('change', event => { state.advanced = event.target.checked; $('bandControls').classList.toggle('advanced-visible', state.advanced); saveLocal(); scheduleDraw(); });
 $('showBands').addEventListener('change', scheduleDraw);
-$('resetBtn').addEventListener('click', () => { state.eq = cloneEq(selectedProfile().eq); state.error = null; refresh(true); saveLocal(); });
-$('flatBtn').addEventListener('click', () => { state.eq = cloneEq(PRESETS.find(profile => profile.id === 'flat').eq); state.selected = 'flat'; state.error = null; refresh(true); saveLocal(); toast('FLAT 기준값으로 초기화했습니다.'); });
+$('resetBtn').addEventListener('click', () => { const profile = PRESETS.find(item => item.id === state.baseSelected) || PRESETS[0]; state.eq = cloneEq(profile.eq); state.selected = profile.id; state.error = null; refresh(true); saveLocal(); });
+$('flatBtn').addEventListener('click', () => { state.eq = cloneEq(PRESETS.find(profile => profile.id === 'flat').eq); state.selected = 'flat'; state.baseSelected = 'flat'; state.error = null; refresh(true); saveLocal(); toast('FLAT 기준값으로 초기화했습니다.'); });
 $('settingsBtn').addEventListener('click', () => { $('settingsDialog').showModal(); renderComparison(); });
 $('closeSettingsBtn').addEventListener('click', () => $('settingsDialog').close());
-$('savePresetBtn').addEventListener('click', () => { $('presetName').value = ''; $('saveDialog').showModal(); $('presetName').focus(); });
-$('cancelSaveBtn').addEventListener('click', () => $('saveDialog').close());
-$('saveForm').addEventListener('submit', event => {
-  event.preventDefault(); const name = $('presetName').value.trim();
-  if (!name || name.length > 36 || ['__proto__', 'prototype', 'constructor'].includes(name)) { toast('1~36자의 사운드 이름을 입력해 주세요.', true); return; }
-  if (state.presets.some(p => p.name === name)) { toast('이미 있는 이름입니다. 다른 이름을 입력해 주세요.', true); return; }
-  if (state.presets.length >= 100) { toast('내 사운드는 최대 100개까지 보관할 수 있습니다.', true); return; }
-  state.presets.push({ name, eq: cloneEq(state.eq) }); state.selected = `user:${name}`; saveLocal(); refresh(true); $('saveDialog').close(); toast('내 사운드를 이 프로그램에 저장했습니다.');
-});
-$('importBtn').addEventListener('click', () => $('importInput').click());
-$('importInput').addEventListener('change', async event => {
-  const file = event.target.files[0]; if (!file) return;
-  try {
-    if (file.size > 200000) throw new Error('사운드 설정 파일은 200 KB 이하여야 합니다.');
-    const imported = importBackup(await file.text());
-    const byName = new Map(state.presets.map(p => [p.name, p]));
-    for (const p of imported.presets) {
-      let name = p.name, index = 2;
-      while (byName.has(name)) name = `${p.name.slice(0, 29)} (${index++})`;
-      if (byName.size < 100) byName.set(name, { ...p, name });
-    }
-    state.presets = [...byName.values()];
-    if (imported.current) { state.eq = imported.current; state.selected = 'custom'; }
-    refresh(true); saveLocal(); toast(`저장된 사운드 ${imported.presets.length}개와 설정을 불러왔습니다.`);
-  } catch (error) { toast(`가져오기 실패: ${error.message}`, true); }
-  finally { event.target.value = ''; }
-});
-$('exportBtn').addEventListener('click', () => download('AZLA-Sound-Presets.json', exportBackup(state)));
 $('exportLogBtn').addEventListener('click', () => download('AZLA-Diagnostics.json', { ...controller.diagnostics(), discoveredDevice, preview: state.eq, model: state.model.source, presetReference: PRESET_REFERENCE }));
 $('rewOffInput').addEventListener('change', e => loadMeasurement('off', e.target.files[0]));
 $('rewOnInput').addEventListener('change', e => loadMeasurement('on', e.target.files[0]));

@@ -3,12 +3,17 @@ Only HID is mocked. The browser loads the bundled, unmodified manufacturer SDK.
 Run while `node server.mjs` is serving the project.
 """
 import json
-from pathlib import Path
 from playwright.sync_api import sync_playwright
 
 BASE = 'http://127.0.0.1:8768'
-OUT = Path('/tmp/azla-browser')
-OUT.mkdir(exist_ok=True)
+legacy_saves = """
+localStorage.setItem('azla_equalizer_v4', JSON.stringify({
+  advanced:false, selected:'user:old', current:{gains:[12]},
+  presets:[{name:'삭제될 사용자 사운드'}]
+}));
+localStorage.setItem('azla_equalizer_v3', JSON.stringify({presets:[{name:'이전 저장'}]}));
+localStorage.setItem('azla_cb5100_presets_v1', JSON.stringify({'구버전 저장':{}}));
+"""
 fixture = """
 window.__writes = [];
 window.__device = {
@@ -24,51 +29,45 @@ Object.defineProperty(navigator,'hid',{value:{
 with sync_playwright() as p:
     browser = p.chromium.launch(executable_path='/usr/bin/chromium', headless=True, args=['--no-sandbox'])
     context = browser.new_context(viewport={'width':1440,'height':1000}, device_scale_factor=1)
+    context.add_init_script(legacy_saves)
     page = context.new_page()
     errors = []
     page.on('pageerror', lambda error: errors.append(str(error)))
     page.goto(BASE)
     page.wait_for_selector('.band-column')
     assert page.locator('.band-column').count() == 10
-    assert page.locator('[data-preset]').count() == 8
+    assert page.locator('[data-preset]').count() == 7
     assert page.locator('#profileName').inner_text() == 'FLAT'
     assert page.locator('[data-preset="flat"]').get_attribute('aria-pressed') == 'true'
     assert page.locator('#profileBadge').count() == 0
+    for selector in ['#savePresetBtn','#saveDialog','#importBtn','#exportBtn','#importInput']:
+        assert page.locator(selector).count() == 0, selector
+    assert page.locator('text=삭제될 사용자 사운드').count() == 0
+    for key in ['azla_equalizer_v4','azla_equalizer_v3','azla_cb5100_presets_v1']:
+        assert page.evaluate('(key)=>localStorage.getItem(key)', key) is None
     assert all(v == '0.75' for v in page.locator('.band-q input').evaluate_all('(els)=>els.map(x=>x.value)'))
     assert page.locator('#applyBtn').is_disabled()
-    page.locator('[data-preset="fps-competitive"]').click()
-    assert page.locator('#profileName').inner_text() == 'FPS 경쟁전'
-    assert page.locator('.band-frequency input').nth(4).input_value() == '850'
+    assert page.locator('.band-frequency input').evaluate_all('(els)=>els.map(x=>Number(x.value))') == [31,63,125,250,500,1000,2000,4000,8000,11000]
+    page.locator('[data-preset="pubg-tactical"]').click()
+    assert page.locator('#profileName').inner_text() == 'PUBG 텍티컬'
+    assert page.locator('.band-frequency input').nth(4).input_value() == '500'
     gain = page.locator('.band-gain input').nth(4)
     gain.fill('2.5')
     gain.press('Tab')
-    assert page.locator('#profileName').inner_text() == '사용자 설정'
+    assert page.locator('#profileName').inner_text() == '직접 조절'
     assert page.locator('.gain-slider').nth(4).input_value() == '2.5'
+    page.locator('#resetBtn').click()
+    assert page.locator('#profileName').inner_text() == 'PUBG 텍티컬'
+    assert page.locator('.band-gain input').nth(4).input_value() == '0'
     page.locator('#advancedToggle').check()
     q = page.locator('.band-q input').nth(0)
     q.fill('1.13'); q.press('Tab')
     assert q.input_value() == '1.13'
-    page.locator('#savePresetBtn').click()
-    page.locator('#presetName').fill('청음 테스트')
-    page.locator('#saveForm button[type="submit"]').click()
-    assert page.locator('[data-preset]').count() == 9
     page.reload(); page.wait_for_selector('.band-column')
-    assert page.locator('#profileName').inner_text() == '청음 테스트'
-    assert page.locator('.band-q input').nth(0).input_value() == '1.13'
-    with page.expect_download() as event:
-        page.locator('#exportBtn').click()
-    download = event.value
-    backup_path = OUT / 'backup.json'; download.save_as(backup_path)
-    data = json.loads(backup_path.read_text())
-    assert data['format'] == 'azla-equalizer-v3'
-    assert data['current']['gains'][4] == 2.5
-    assert len(data['presets']) == 1
-    page.locator('#importInput').set_input_files({'name':'invalid.json','mimeType':'application/json','buffer':b'{"format":"wrong"}'})
-    page.wait_for_function("document.querySelector('#toast').textContent.includes('가져오기 실패')")
-    page.locator('#flatBtn').click()
+    assert page.locator('#profileName').inner_text() == 'FLAT'
+    assert page.locator('#advancedToggle').is_checked()
     assert all(v == '0' for v in page.locator('.band-gain input').evaluate_all('(els)=>els.map(x=>x.value)'))
     assert all(v == '0.75' for v in page.locator('.band-q input').evaluate_all('(els)=>els.map(x=>x.value)'))
-    assert page.locator('#profileName').inner_text() == 'FLAT'
     page.locator('#settingsBtn').click()
     assert 'SDK' in page.locator('#sdkStatus').inner_text()
     off = '\n'.join(f'{f} 100' for f in [20,50,100,200,500,1000,2000,5000,10000,20000])
@@ -80,7 +79,7 @@ with sync_playwright() as p:
     page.locator('#closeSettingsBtn').click()
     page.locator('#flatBtn').click()
     assert not errors, errors
-    print('PASS: offline UI, 10 bands, preset editing, Q input, local restore, export, invalid import, FLAT, REW comparison')
+    print('PASS: seven modes, requested bands, manual reset, removed user saves, FLAT restart, Q input, REW comparison')
     context.close()
 
     context = browser.new_context(viewport={'width':1440,'height':1000})
