@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f8f9fa">
+  <meta name="color-scheme" content="light">
+  <meta name="description" content="AZLA Equalizer. 당신에게 맞는 사운드를 섬세하게 완성하세요.">
+  <title>AZLA — Equalizer</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <svg class="svg-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>
+    <symbol id="icon-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="icon-arrow" viewBox="0 0 24 24"><path d="M4 12h15m-6-6 6 6-6 6"/></symbol>
+    <symbol id="icon-reset" viewBox="0 0 24 24"><path d="M4.5 9A8 8 0 1 1 4 15M4 4v5h5"/></symbol>
+    <symbol id="icon-settings" viewBox="0 0 24 24"><path d="m9 3-.7 2.4-2.2 1.3-2.4-.5-1.7 3 1.7 1.9v2.5L2 15.5l1.7 3 2.4-.5 2.2 1.3L9 22h3.5l.7-2.7 2.2-1.3 2.4.5 1.7-3-1.7-1.9v-2.5l1.7-1.9-1.7-3-2.4.5-2.2-1.3L12.5 3z" transform="translate(1 -1) scale(.95)"/><circle cx="11.7" cy="11" r="3"/></symbol>
+    <symbol id="icon-usb" viewBox="0 0 24 24"><path d="M12 20V4m-3 3 3-3 3 3M12 15l-5-4V8m5 10 5-4v-4"/><circle cx="12" cy="21" r="1.5"/><circle cx="7" cy="6.5" r="1.5"/><path d="M15.5 7.5h3v3h-3z"/></symbol>
+    <symbol id="icon-import" viewBox="0 0 24 24"><path d="M12 3v12m-4-4 4 4 4-4M4 16v5h16v-5"/></symbol>
+    <symbol id="icon-export" viewBox="0 0 24 24"><path d="M12 15V3m-4 4 4-4 4 4M4 16v5h16v-5"/></symbol>
+    <symbol id="icon-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
+    <symbol id="icon-close" viewBox="0 0 24 24"><path d="m6 6 12 12M6 18 18 6"/></symbol>
+    <symbol id="icon-wave" viewBox="0 0 24 24"><path d="M2 12h3l2-7 4 14 3-12 3 8 2-3h3"/></symbol>
+    <symbol id="icon-shield" viewBox="0 0 24 24"><path d="M12 3 4 6v6c0 5 8 9 8 9s8-4 8-9V6z"/><path d="m8 12 3 3 5-6"/></symbol>
+  </defs></svg>
+
+  <div class="app-shell">
+    <aside class="sidebar" aria-label="사운드 프리셋">
+      <a class="brand" href="./" aria-label="AZLA Equalizer 홈"><span class="brand-wordmark">AZLA<span class="brand-dot">.</span></span><span class="brand-tagline">SOUND BEYOND LIMITS</span></a>
+      <div class="sidebar-heading"><span>사운드 라이브러리</span><span class="library-count">01 — 08</span></div>
+      <nav id="presetList" class="preset-list" aria-label="EQ 프리셋"></nav>
+      <div class="sidebar-tools"><button id="importBtn" class="text-button" type="button"><svg class="icon"><use href="#icon-import"/></svg>가져오기</button><button id="exportBtn" class="text-button" type="button"><svg class="icon"><use href="#icon-export"/></svg>내보내기</button><input id="importInput" type="file" accept=".json,application/json" hidden></div>
+      <div class="sidebar-spacer"></div>
+      <div class="sidebar-note"><span class="note-line"></span><p>작은 조정으로 완성되는<br>나만의 사운드.</p></div>
+      <section class="device-card" aria-label="장치 연결">
+        <div class="device-card-top"><span class="device-icon"><svg class="icon"><use href="#icon-usb"/></svg></span><span class="device-copy"><strong id="deviceName">AZLA USB DAC</strong><span id="connectionLabel"><i class="status-dot"></i>연결 대기</span></span></div>
+        <button id="connectBtn" class="connect-button" type="button"><span>기기 연결</span><svg class="icon"><use href="#icon-plus"/></svg></button>
+      </section>
+      <div class="sidebar-footer"><span>AZLA EQUALIZER</span><span>2.0</span></div>
+    </aside>
+
+    <main class="main-content">
+      <header class="topbar"><div class="breadcrumb"><span class="breadcrumb-square"></span>AZLA AUDIO<span class="breadcrumb-divider">/</span><span>Equalizer</span></div><div class="topbar-right"><span class="topbar-caption">DESIGNED FOR YOUR SOUND</span><button id="settingsBtn" class="icon-button" type="button" aria-label="설정 및 측정 도구" title="설정 및 측정 도구"><svg class="icon"><use href="#icon-settings"/></svg></button></div></header>
+
+      <section class="page-heading"><div><div class="eyebrow">PERSONAL SOUND EXPERIENCE</div><h1>당신의 사운드<span class="heading-dot">.</span></h1><p>취향에 맞게 조절하고, 당신만의 디테일을 발견하세요.</p></div><div class="heading-decoration" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div></section>
+
+      <section class="equalizer-panel" aria-labelledby="profileName">
+        <div class="profile-header"><div class="profile-intro"><div class="profile-topline"><span class="section-kicker">현재 사운드</span><span id="profileBadge" class="profile-badge">PRESET</span></div><h2 id="profileName">음악 밸런스</h2><p id="profileDescription">자연스러운 균형으로 음악 속 디테일을 만나보세요.</p></div><div class="profile-actions"><button id="resetBtn" class="quiet-button" type="button"><svg class="icon"><use href="#icon-reset"/></svg><span>되돌리기</span></button><button id="savePresetBtn" class="secondary-button" type="button"><svg class="icon"><use href="#icon-plus"/></svg><span>프리셋 저장</span></button></div></div>
+
+        <div class="chart-section"><div class="chart-toolbar"><div class="chart-legends"><span class="chart-legend"><i class="legend-line"></i>EQ 응답</span><span class="chart-legend measured-legend" id="measurementLegend" hidden><i class="legend-line measured"></i>실측 변화량</span></div><label class="subtle-checkbox"><input id="showBands" type="checkbox"><span class="checkbox-mark"></span>개별 밴드 보기</label></div><div class="chart-wrap"><canvas id="responseChart" width="1200" height="270" aria-label="주파수에 따른 EQ 예상 응답. 아래 10밴드 조절로 변경할 수 있습니다." role="img"></canvas></div><div class="chart-bottom"><span id="modelLabel">예상 EQ 응답 · 실제 소리는 기기와 측정 조건에 따라 달라질 수 있습니다.</span><span id="peakLabel" class="peak-label">최대 변화 <b>0.0 dB</b></span></div></div>
+
+        <div class="controls-section"><div class="controls-heading"><div class="controls-title"><h3>10밴드 이퀄라이저</h3><span class="controls-hint">직접 조절해 보세요</span></div><div class="controls-actions"><label class="switch-label"><input id="advancedToggle" type="checkbox"><span class="switch-track"></span>세부 조절</label><span class="action-divider"></span><button id="flatBtn" class="text-button" type="button">전체 0 dB</button></div></div><div class="bands-scroll"><div class="band-scale" aria-hidden="true"><span>+12</span><span>0</span><span>−12</span></div><div id="bandControls" class="band-controls" aria-label="10밴드 주파수·게인·Q·필터 조절"></div></div><div class="controls-footnote"><span><span class="mini-dot"></span>변경한 설정은 ‘EQ 적용’을 눌러야 기기에 반영됩니다.</span><span>20 Hz — 20 kHz</span></div></div>
+      </section>
+
+      <footer class="apply-bar"><div class="apply-copy"><span class="apply-symbol"><svg class="icon"><use href="#icon-shield"/></svg></span><div><strong id="applyStatus">사운드를 준비하세요</strong><p id="applyDetail">기기를 연결하면 설정을 적용할 수 있습니다.</p></div></div><div class="apply-actions"><progress id="applyProgress" max="100" value="0" aria-label="EQ 적용 진행률" hidden></progress><button id="applyBtn" class="apply-button" type="button"><span>EQ 적용</span><svg class="icon"><use href="#icon-arrow"/></svg></button></div></footer>
+      <div class="bottom-caption"><span>ENGINEERED FOR THE WAY YOU LISTEN.</span><span>© AZLA. All rights reserved.</span></div>
+    </main>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+  <dialog id="saveDialog" class="dialog save-dialog"><form id="saveForm"><div class="dialog-kicker">MY SOUND LIBRARY</div><h2>나만의 사운드 저장</h2><p>현재 EQ에 이름을 붙여 프리셋으로 보관하세요.<br>기기에 적용하려면 별도로 EQ 적용을 눌러 주세요.</p><label class="form-label" for="presetName">프리셋 이름</label><input id="presetName" class="dialog-input" name="presetName" maxlength="36" autocomplete="off" placeholder="예: 나의 데일리 사운드" required><div class="dialog-actions"><button id="cancelSaveBtn" class="quiet-button" type="button">취소</button><button class="primary-button" type="submit">프리셋 저장</button></div></form></dialog>
+
+  <dialog id="riskDialog" class="dialog risk-dialog"><div class="dialog-kicker">LISTEN WITH CARE</div><h2>적용 전 볼륨을 확인하세요</h2><p id="riskText">강한 증폭이 포함되어 있습니다. 볼륨을 낮추고 적용해 주세요.</p><div class="dialog-actions"><button id="cancelRiskBtn" class="quiet-button" type="button">돌아가기</button><button id="confirmRiskBtn" class="primary-button" type="button">확인 후 적용</button></div></dialog>
+
+  <dialog id="settingsDialog" class="dialog settings-dialog"><div class="dialog-heading"><div><div class="dialog-kicker">PREFERENCES</div><h2>설정 및 측정 도구</h2></div><button id="closeSettingsBtn" class="icon-button" type="button" aria-label="설정 닫기"><svg class="icon"><use href="#icon-close"/></svg></button></div><section class="settings-section"><h3>연결 환경</h3><dl class="settings-status"><div><dt>프로그램</dt><dd>AZLA Equalizer 2.0</dd></div><div><dt>장치 연결 지원</dt><dd id="supportStatus">확인 중</dd></div><div><dt>장치 연동 구성</dt><dd id="sdkStatus">확인 중</dd></div></dl><p id="connectionHelp" class="help-text">Windows의 Chrome 또는 Edge에서 USB DAC를 연결해 주세요.</p></section><section class="settings-section"><div class="settings-section-heading"><h3>REW 측정 비교</h3><button id="clearRewBtn" class="text-button" type="button">지우기</button></div><p class="help-text">동일 조건으로 측정한 EQ OFF·ON TXT/CSV 파일을 비교합니다. 파일은 외부로 전송되지 않습니다.</p><div class="measurement-upload-grid"><label class="measurement-upload"><span>01 <strong>EQ OFF</strong></span><input id="rewOffInput" type="file" accept=".txt,.csv,text/plain,text/csv"></label><label class="measurement-upload"><span>02 <strong>EQ ON</strong></span><input id="rewOnInput" type="file" accept=".txt,.csv,text/plain,text/csv"></label></div><p id="rewSummary" class="measurement-summary">측정 파일을 불러오면 예상 응답과의 차이를 확인할 수 있습니다.</p><div class="comparison-scroll"><table class="comparison-table"><thead><tr><th>밴드</th><th>Hz</th><th>예상 dB</th><th>실측 dB</th><th>차이 dB</th></tr></thead><tbody id="comparisonRows"></tbody></table></div></section><section class="settings-section diagnostics-row"><div><h3>진단 기록</h3><p class="help-text">문제 확인을 위한 연결·전송 기록을 저장합니다.</p></div><button id="exportLogBtn" class="secondary-button" type="button"><svg class="icon"><use href="#icon-export"/></svg>기록 저장</button></section><p class="settings-footer">EQ 적용은 현재 설정 1개를 기기에 기록합니다. 저장 명령 전송과 전원 재연결 후 보존 확인은 구분됩니다.</p></dialog>
+
+  <script src="sdk/walk-play-web-eq-sdk.umd.js"></script>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

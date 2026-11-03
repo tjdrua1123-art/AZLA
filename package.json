@@ -1,0 +1,27 @@
+{
+  "name": "azla-equalizer",
+  "version": "2.0.0",
+  "private": true,
+  "description": "AZLA 10-band equalizer and device configuration application",
+  "type": "module",
+  "main": "desktop/main.cjs",
+  "scripts": {
+    "start": "node server.mjs",
+    "test": "node --test tests/eq.test.js tests/device.test.js tests/storage.test.js tests/vendor-sdk.test.js",
+    "desktop": "electron desktop/main.cjs",
+    "package:win": "electron-builder --win nsis --x64",
+    "package:folder": "electron-builder --win --x64 --dir -c.win.signAndEditExecutable=false"
+  },
+  "devDependencies": {
+    "electron": "^39.0.0",
+    "electron-builder": "^26.0.12"
+  },
+  "build": {
+    "appId": "kr.co.azla.equalizer",
+    "productName": "AZLA Equalizer",
+    "directories": { "output": "release" },
+    "files": ["index.html", "style.css", "app.js", "src/**/*", "sdk/**/*", "device-config.json", "desktop/main.cjs", "package.json"],
+    "win": { "target": [{ "target": "nsis", "arch": ["x64"] }] },
+    "nsis": { "oneClick": false, "perMachine": false, "allowToChangeInstallationDirectory": true }
+  }
+}
