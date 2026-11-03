@@ -26,7 +26,18 @@ jobs:
       - name: Install locked dependencies
         run: npm ci
       - name: Validate EQ and original SDK
-        run: npm test
+        shell: pwsh
+        run: |
+          $testOutput = & npm test 2>&1
+          $testExit = $LASTEXITCODE
+          $testOutput | ForEach-Object { Write-Host $_ }
+          if ($testExit -ne 0) {
+            $message = ($testOutput -join "`n")
+            if ($message.Length -gt 12000) { $message = $message.Substring(0, 12000) }
+            $message = $message.Replace('%', '%25').Replace("`r", '%0D').Replace("`n", '%0A')
+            Write-Host "::error title=EQ validation failed::$message"
+            exit $testExit
+          }
       - name: Package Windows app with original SDK
         run: npm run package:folder
       - name: Create complete application ZIP

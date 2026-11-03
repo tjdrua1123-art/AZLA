@@ -1,0 +1,8 @@
+* text=auto
+*.js text eol=lf
+*.mjs text eol=lf
+*.cjs text eol=lf
+*.yml text eol=lf
+*.bat text eol=crlf
+# Preserve the exact manufacturer bytes and pinned checksum on Windows too.
+sdk/walk-play-web-eq-sdk.umd.js -text
