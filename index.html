@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta name="color-scheme" content="dark" />
+<title>AZLA | CB5100 EQ Test Studio</title>
+<link rel="stylesheet" href="style.css?v=1.3" />
+</head>
+<body>
+<div class="shell">
+<header class="topbar">
+  <div class="brand"><div class="brand-icon">A<span>·</span></div><div><div class="brand-title">AZLA <span>LAB</span></div><div class="brand-sub">CB5100PRO · EQ TEST STUDIO</div></div></div>
+  <div class="top-right"><div class="status" id="connectionStatus"><span class="dot"></span><span>DAC 미연결</span></div><button class="btn btn-primary" id="connectBtn">USB DAC 연결</button><button class="btn btn-ghost" id="disconnectBtn" disabled>연결 해제</button></div>
+</header>
+<section class="intro"><div class="eyebrow">EQUALIZER CONTROL CENTER <span>v1.4 · 10-BAND LAB</span></div><h1>사운드를 정밀하게 설계하세요.</h1><p>10밴드 파라메트릭 EQ · FPS / 음악 모드 · 브라우저 프리셋 · CB5100PRO Flash 저장</p></section>
+<div class="workspace">
+  <aside class="panel preset-sidebar">
+    <div class="small-heading">SOUND PROFILES</div><div class="side-title">사운드 모드</div><p class="muted small">모드를 선택한 뒤 <b>임시 적용</b>을 눌러 DAC에서 확인합니다.</p>
+    <div class="preset-options">
+      <button class="preset-option" data-preset="fps"><span class="preset-icon">◎</span><span><strong>FPS 게임</strong><small>발소리 강력 강조 · +9 dB</small></span><span class="preset-arrow">›</span></button>
+      <button class="preset-option" data-preset="music"><span class="preset-icon">♫</span><span><strong>일반 음악</strong><small>밸런스와 자연스러움</small></span><span class="preset-arrow">›</span></button>
+      <button class="preset-option" data-preset="flat"><span class="preset-icon">—</span><span><strong>FLAT</strong><small>EQ 0 dB 비교용</small></span><span class="preset-arrow">›</span></button>
+      <button class="preset-option active" data-preset="custom"><span class="preset-icon">◇</span><span><strong>사용자 설정</strong><small>직접 조절한 커스텀 EQ</small></span><span class="preset-arrow">›</span></button>
+    </div>
+    <div class="divider"></div><div class="section-head"><span>MY PRESETS</span><span class="mini" id="savedCount">0개</span></div>
+    <div id="savedPresets" class="saved-list"><p class="empty">저장한 프리셋이 없습니다.</p></div>
+    <label class="field-caption" for="presetName">새 프리셋 이름</label><div class="save-inline"><input id="presetName" maxlength="36" placeholder="예: 발로란트 테스트 1" /><button class="btn btn-outline" id="savePresetBtn">저장</button></div>
+    <div class="side-actions"><button class="subtle-link" id="exportBtn">설정 내보내기 ↓</button><button class="subtle-link" id="importBtn">가져오기 ↑</button><input type="file" id="importInput" accept=".json,application/json" hidden /></div>
+    <div class="hint">프리셋은 이 브라우저의 로컬 저장소에 보관됩니다. DAC Flash에는 현재 선택된 EQ만 저장합니다.</div>
+  </aside>
+  <main class="main">
+    <section class="panel graph-panel">
+      <div class="section-head row-responsive"><div><div class="small-heading">FREQUENCY RESPONSE</div><h2 id="currentProfile">사용자 설정</h2><div class="muted small" id="profileDescription">주파수·Q·게인을 자유롭게 조절하세요.</div></div><div class="graph-tools"><button class="btn btn-mini" id="resetGainsBtn">전체 게인 0 dB</button><button class="btn btn-mini" id="resetCustomBtn">기본값 복원</button></div></div>
+      <div class="graph-wrap"><canvas id="responseChart" width="1000" height="320" aria-label="EQ 예상 주파수 응답 곡선" role="img"></canvas></div>
+      <div class="graph-footer"><span><i class="legend-line"></i>SDK 계수 계산 <i class="legend-line measured-line"></i>REW 실측 변화량 (OFF 대비)</span><label class="scale-control" for="graphScaleSelect">그래프 범위 <select id="graphScaleSelect" aria-label="그래프 표시 범위"><option value="12">±12 dB</option><option value="24" selected>±24 dB</option><option value="48">±48 dB</option><option value="96">±96 dB</option></select></label></div>
+      <div id="graphNote" class="graph-note">WalkPlay SDK 정수 계수 기반 예상 응답입니다.</div><div id="peakWarning" class="peak-warning" role="status">자동 헤드룸 보정은 하지 않습니다.</div>
+    </section>
+    <section class="panel rew-panel">
+      <div class="section-head row-responsive"><div><div class="small-heading">MEASUREMENT COMPARISON</div><h2>REW 실측 비교</h2><p class="muted small" id="comparisonHint">EQ OFF와 ON 측정 파일을 불러와 비교하세요.</p></div><button class="btn btn-mini" id="clearRewBtn">측정값 지우기</button></div>
+      <div class="rew-file-grid">
+        <label class="rew-upload"><strong>① EQ OFF 기준 측정</strong><span id="rewOffLabel">미불러옴</span><input type="file" id="rewOffInput" accept=".txt,.csv,text/plain,text/csv" /></label>
+        <label class="rew-upload"><strong>② EQ ON 적용 측정</strong><span id="rewOnLabel">미불러옴</span><input type="file" id="rewOnInput" accept=".txt,.csv,text/plain,text/csv" /></label>
+      </div>
+      <div class="table-scroll"><table class="comparison-table"><thead><tr><th>밴드</th><th>주파수 Hz</th><th>SDK 예상 dB</th><th>실측 변화 dB</th><th>차이(실측−예상) dB</th></tr></thead><tbody id="comparisonRows"></tbody></table></div>
+      <p class="rew-summary" id="errorSummary">두 측정 파일을 불러오면 오차를 계산합니다.</p>
+      <p class="muted small">REW TXT/CSV: 첫 번째 열 주파수(Hz), 두 번째 열 SPL(dB). 원본 데이터를 이용하고, 측정 파일은 서버에 업로드되지 않습니다.</p>
+    </section>
+    <section class="panel eq-panel">
+      <div class="section-head row-responsive"><div><div class="small-heading">PARAMETRIC EQUALIZER</div><h2>10밴드 상세 조절</h2></div><span class="meta-pill">SDK FILTERS · 10 BANDS</span></div>
+      <div class="bands-header"><span>BAND</span><span>주파수 Hz</span><span>게인 dB</span><span>GAIN CONTROL</span><span>Q값</span><span>필터</span></div>
+      <div id="bandRows" class="band-rows"></div>
+      <div class="warning-inline" role="note">10밴드 전체 전송: 제조사 CB 타입을 유지하며 0dB 필터도 모두 기록합니다. 기존 8밴드 프리셋은 원래 8개 값을 보존하고 9·10번은 0dB PEAK로 확장합니다. 주의: 양의 게인이 겹치면 클리핑이 발생할 수 있습니다. 전체 DAC 출력은 자동 감쇄하지 않습니다. LS는 SDK에서 Q값을 적용하지 않으며, HS는 계수 계산 검증이 필요하므로 실험용입니다. LP·HP는 게인 0dB여도 통과 대역 밖을 감쇄합니다.</div>
+    </section>
+  </main>
+  <aside class="right-sidebar">
+    <section class="panel device-panel"><div class="small-heading">HARDWARE CONTROL</div><h2>DAC 장치</h2><div id="applyState" class="state-indicator">미연결 · 설정 편집 중</div><div class="device-hero"><div class="device-square">USB<br><span>DAC</span></div><div><strong id="deviceName">CB5100PRO</strong><div class="muted small" id="deviceDetail">장치 연결 대기</div></div></div>
+      <div class="device-stats"><div><span>칩 유형</span><b>CB (CB5100PRO)</b></div><div><span>USB VID / PID</span><b id="deviceVidPid">— / —</b></div><div><span>펌웨어 버전</span><b id="firmwareVersion">미확인</b></div><div><span>기기 EQ Tag</span><b id="deviceTag">미확인</b></div></div>
+      <details class="advanced"><summary>다른 VID로 연결하기</summary><div class="muted small">SDK에 등록되지 않은 CB 장치라면 제조사에 확인한 VID(16진수)를 입력하세요.</div><div class="save-inline"><input id="customVid" placeholder="예: 3302" maxlength="6" /><button class="btn btn-mini" id="connectVidBtn">검색</button></div></details>
+      <div class="divider"></div><div id="packetState" class="packet-state" role="status">HID 전송 대기 · 10밴드</div><div class="action-section"><button class="btn btn-secondary btn-full" id="previewBtn" disabled><span>◉</span> 임시 적용 (RAM)</button><div class="muted small">전원을 빼면 초기화될 수 있는 청음 테스트</div><button class="btn btn-flash btn-full" id="flashBtn" disabled><span>▣</span> Flash에 저장</button><div class="muted small">현재 EQ 1개 기록 명령 전송 · 재연결 확인 필요</div></div>
+      <div class="divider"></div><div class="device-actions"><button class="btn btn-mini" id="readDeviceBtn" disabled>기기 정보 읽기</button><button class="btn btn-mini" id="exportHidLogBtn">전송 로그 저장</button><button class="btn btn-mini" id="showHelpBtn">사용 방법</button></div>
+      <div id="deviceFeedback" class="device-feedback">먼저 USB DAC를 연결하세요.</div>
+    </section>
+    <section class="panel log-panel"><div class="section-head"><span class="small-heading">EVENT LOG</span><button class="subtle-link" id="clearLogBtn">지우기</button></div><div id="eventLog" class="event-log" aria-live="polite"></div></section>
+  </aside>
+</div>
+<footer>AZLA INTERNAL TEST UTILITY <span>CB5100PRO · 10 BANDS / CB · WALKPLAY SDK v1.0.0 · 제조사 프로토콜 테스트</span></footer>
+</div>
+<div class="modal-backdrop" id="confirmModal" hidden><div class="modal" role="dialog" aria-modal="true" aria-labelledby="confirmTitle"><div class="modal-icon">⚠</div><h2 id="confirmTitle">Flash 저장 확인</h2><p><strong id="confirmProfile">현재 EQ</strong> 설정을 DAC의 Flash에 기록합니다. 기존에 저장된 EQ 설정을 덮어쓸 수 있으며, 저장 중 DAC를 분리하면 안 됩니다.</p><label class="check-line"><input type="checkbox" id="confirmCheckbox" /> CB5100PRO 장치임을 확인했고 덮어쓰기에 동의합니다.</label><div class="modal-actions"><button class="btn btn-ghost" id="cancelFlashBtn">취소</button><button class="btn btn-flash" id="confirmFlashBtn" disabled>Flash 저장 실행</button></div></div></div>
+<div class="modal-backdrop" id="helpModal" hidden><div class="modal help-modal" role="dialog" aria-modal="true"><h2>빠른 사용 방법</h2><ol><li>Windows의 Chrome 또는 Edge에서 이 프로그램을 열고 USB DAC를 연결합니다.</li><li><b>USB DAC 연결</b> 버튼을 누르고 CB5100PRO가 탑재된 장치를 선택합니다.</li><li>FPS(300Hz +8 dB / 3.2kHz +9 dB)·음악 모드를 선택하거나 10밴드의 주파수·게인·Q를 직접 변경합니다. 전체 출력 음량은 변경하지 않습니다.</li><li>필터 종류(PEAK·LS·HS·LP·HP)를 선택할 수 있습니다. HS는 실험용이고, LP/HP는 게인과 무관하게 필터링됩니다.</li><li>REW에서 EQ OFF와 ON 응답을 TXT/CSV로 저장해 비교 창에 각각 불러올 수 있습니다.</li><li><b>임시 적용 (RAM)</b>으로 테스트 후 <b>Flash에 저장</b>으로 비휘발성 기록 명령을 보냅니다.</li><li>USB를 분리해 다시 연결한 뒤 EQ 변화가 유지되는지 청음·계측으로 확인합니다.</li></ol><p class="muted small">CB5100PRO의 제조사 확인 10밴드 지원을 기준으로 합니다. 기존 8밴드 JSON도 가져올 수 있으며 9·10번은 PEAK 0dB로 확장합니다.</p><p class="muted small">프리셋 여러 개의 기기 내 동시 저장 및 하드웨어 버튼에 의한 모드 변경은 이 SDK로 검증되지 않았습니다. Flash 저장 완료는 USB 전송 완료를 뜻하며 실제 영구 보존은 재연결 시험이 필요합니다.</p><button class="btn btn-primary" id="closeHelpBtn">확인</button></div></div>
+<script src="sdk/walk-play-web-eq-sdk.umd.js"></script>
+<script src="app.js?v=1.4"></script>
+</body></html>
