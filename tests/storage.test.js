@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { PRESETS, cloneEq } from '../src/eq.js';
-import { restore, persist } from '../src/storage.js';
+import { restore, persist, restoreDeviceSnapshot, persistDeviceSnapshot } from '../src/storage.js';
 
 const flat=()=>cloneEq(PRESETS.find(entry=>entry.id==='flat').eq);
 const OLD_KEYS=[
@@ -61,4 +61,22 @@ test('blocked or malformed storage still returns FLAT without exposing old saves
   assert.deepEqual(first.current,flat());assert.equal(first.selected,'flat');assert.equal(first.advanced,false);
   const denied=restore({getItem(){throw new Error('blocked');},removeItem(){throw new Error('blocked');}});
   assert.deepEqual(denied.current,flat());assert.equal(denied.selected,'flat');
+});
+
+test('last successful Flash transmission is stored separately from user presets',()=>{
+  const storage=memoryStorage(),eq=flat();eq.gains[0]=2.5;eq.tag=14;
+  const evidence={result:'flash-command-transmitted',time:'2026-11-06T00:00:00.000Z',device:{vendorId:0x3302,productId:0x1234},eq};
+  const saved=persistDeviceSnapshot(storage,evidence);
+  assert.equal(saved.tag,14);assert.equal(saved.eq.gains[0],2.5);
+  assert.deepEqual(storage.writes.map(entry=>entry.key),['azla_equalizer_device_state_v1']);
+  const restored=restoreDeviceSnapshot(storage);
+  assert.deepEqual(restored,saved);
+  restored.eq.gains[0]=9;
+  assert.equal(restoreDeviceSnapshot(storage).eq.gains[0],2.5);
+});
+
+test('device snapshot rejects malformed records and incomplete Flash evidence',()=>{
+  const storage=memoryStorage({azla_equalizer_device_state_v1:JSON.stringify({version:1,vendorId:1,productId:2,tag:9,savedAt:'now',eq:flat()})});
+  assert.equal(restoreDeviceSnapshot(storage),null,'record tag must match EQ tag');
+  assert.throws(()=>persistDeviceSnapshot(storage,{result:'ram-only',device:{vendorId:1,productId:2},eq:flat()}),/Flash/);
 });

@@ -6,6 +6,7 @@ import { validateEq, cloneEq } from './eq.js';
 export const TIMING = Object.freeze({ gap: 130, beforeFlash: 1100, afterFlash: 350, timeout: 8000 });
 const RAM_COMMAND = Object.freeze([1, 10, 4, 0, 0, 255, 255]);
 const FLASH_COMMAND = Object.freeze([1, 1, 0]);
+export const TAG_READ_COMMAND = Object.freeze([128, 9, 0]);
 // The search list comes from the supplied manufacturer DeviceService.js.
 // Discovery grants no application write authorization and never opens a device.
 export const DISCOVERY_VIDS = Object.freeze([0x3302, 0x0762, 0x35D8, 0x2FC6, 0x0104, 0xB44D, 0x0661, 0x0666, 0x0D8C, 0x0663]);
@@ -105,10 +106,11 @@ export class DeviceController {
     this.timing = timing; this.wait = wait; this.onProgress = onProgress;
     this.device = null; this.busy = false; this.requiresReconnect = false;
     this.sequence = 0; this.log = []; this.lastEvidence = null; this.abort = null;
+    this.lastTagRead = null;
     this.onDisconnect = null;
     this.disconnectListener = event => {
       if (event.device === this.device) {
-        this.abort?.abort(); this.device = null; this.requiresReconnect = true;
+        this.abort?.abort(); this.device = null; this.requiresReconnect = true; this.lastTagRead = null;
         this.onDisconnect?.();
       }
     };
@@ -144,6 +146,37 @@ export class DeviceController {
     const old = this.device; this.device = null;
     if (old?.opened) await old.close().catch(() => {});
     this.requiresReconnect = false;
+    this.lastTagRead = null;
+  }
+  async readEqTag(timeout = 1800) {
+    if (this.busy) throw new Error('저장이 끝난 뒤 현재 상태를 확인해 주세요.');
+    const device = this.device;
+    if (!device?.opened || this.requiresReconnect) throw new Error('먼저 AZLA 장치를 연결해 주세요.');
+    if (typeof device.addEventListener !== 'function' || typeof device.removeEventListener !== 'function') throw new Error('이 장치에서는 현재 상태 응답을 받을 수 없습니다.');
+    const signal = this.abort.signal;
+    return new Promise((resolve, reject) => {
+      let timer;
+      const cleanup = () => {
+        clearTimeout(timer);
+        signal.removeEventListener('abort', onAbort);
+        device.removeEventListener('inputreport', onReport);
+      };
+      const fail = error => { cleanup(); reject(error); };
+      const onAbort = () => fail(new Error('USB 연결이 끊어졌습니다. 다시 연결해 주세요.'));
+      const onReport = event => {
+        if (event.device && event.device !== device) return;
+        const data = event.data;
+        if (!data?.buffer) return;
+        const bytes = new Uint8Array(data.buffer, data.byteOffset || 0, data.byteLength ?? data.buffer.byteLength);
+        if (bytes.length < 36 || bytes[1] !== 9) return;
+        const result = { tag: bytes[35], time: new Date().toISOString(), source: 'device-tag' };
+        this.lastTagRead = result; cleanup(); resolve(result);
+      };
+      device.addEventListener('inputreport', onReport);
+      signal.addEventListener('abort', onAbort, { once: true });
+      timer = setTimeout(() => fail(new Error('기기에서 EQ Tag 응답을 받지 못했습니다.')), timeout);
+      Promise.resolve(device.sendReport(75, Uint8Array.from(TAG_READ_COMMAND))).catch(fail);
+    });
   }
   async transmit(packet, phase, signal) {
     const device = this.device;
@@ -197,5 +230,5 @@ export class DeviceController {
       throw error;
     } finally { this.busy = false; }
   }
-  diagnostics() { return { version: '2.0.0', sdkPresent: !!this.SDK?.default, connectionMode: this.connectionMode, supportedDeviceCount: this.devices.length, requiresReconnect: this.requiresReconnect, lastEvidence: this.lastEvidence, recentReports: this.log }; }
+  diagnostics() { return { version: '2.0.0', sdkPresent: !!this.SDK?.default, connectionMode: this.connectionMode, supportedDeviceCount: this.devices.length, requiresReconnect: this.requiresReconnect, lastTagRead: this.lastTagRead, lastEvidence: this.lastEvidence, recentReports: this.log }; }
 }

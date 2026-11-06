@@ -1,6 +1,7 @@
 import { cloneEq, PRESETS } from './eq.js';
 
 const KEY = 'azla_equalizer_v5';
+const DEVICE_STATE_KEY = 'azla_equalizer_device_state_v1';
 const OBSOLETE_KEYS = Object.freeze([
   'azla_equalizer_v4',
   'azla_equalizer_v3',
@@ -35,4 +36,30 @@ export function restore(storage) {
 
 export function persist(storage, state) {
   storage.setItem(KEY, JSON.stringify({ version: 5, advanced: state.advanced === true }));
+}
+
+/**
+ * This is an audit record of the last EQ that this app sent with a Flash
+ * command. It is deliberately separate from user presets and never restores
+ * the editor on launch. The device SDK can read only a Tag ID, not ten bands.
+ */
+export function restoreDeviceSnapshot(storage) {
+  try {
+    const value = JSON.parse(storage.getItem(DEVICE_STATE_KEY) || 'null');
+    if (!value || value.version !== 1) return null;
+    if (![value.vendorId, value.productId].every(number => Number.isInteger(number) && number >= 0 && number <= 65535)) return null;
+    if (!Number.isInteger(value.tag) || value.tag < 0 || value.tag > 255 || typeof value.savedAt !== 'string') return null;
+    const eq = cloneEq(value.eq);
+    if (eq.tag !== value.tag) return null;
+    return { version: 1, vendorId: value.vendorId, productId: value.productId, tag: value.tag, savedAt: value.savedAt, eq };
+  } catch { return null; }
+}
+
+export function persistDeviceSnapshot(storage, evidence) {
+  if (evidence?.result !== 'flash-command-transmitted') throw new Error('Flash 전송이 완료된 EQ만 현재 상태로 기록할 수 있습니다.');
+  const eq = cloneEq(evidence.eq), vendorId = evidence.device?.vendorId, productId = evidence.device?.productId;
+  if (![vendorId, productId].every(number => Number.isInteger(number) && number >= 0 && number <= 65535)) throw new Error('장치 식별 정보를 확인할 수 없습니다.');
+  const value = { version: 1, vendorId, productId, tag: eq.tag, savedAt: String(evidence.time || new Date().toISOString()), eq };
+  storage.setItem(DEVICE_STATE_KEY, JSON.stringify(value));
+  return { ...value, eq: cloneEq(eq) };
 }

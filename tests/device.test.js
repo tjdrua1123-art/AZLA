@@ -6,7 +6,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   TIMING, DeviceController, generatePlan, generateRamPlan,
-  supportedDevices, isSupported, sdkGraphModel, discoverDevice, DISCOVERY_VIDS
+  supportedDevices, isSupported, sdkGraphModel, discoverDevice, DISCOVERY_VIDS, TAG_READ_COMMAND
 } from '../src/device.js';
 import { PRESETS, cloneEq } from '../src/eq.js';
 
@@ -149,6 +149,33 @@ test('a second apply is rejected while the first transaction is active',async()=
   await assert.rejects(controller.apply(flat()),/저장이 진행 중/);
   await first;
   assert.equal(device.writes.length,12);
+});
+
+test('current-state read sends the documented Tag request and never writes EQ, RAM or Flash',async()=>{
+  const listeners=new Map(),device=fixtureDevice();
+  device.addEventListener=(name,fn)=>{if(!listeners.has(name))listeners.set(name,new Set());listeners.get(name).add(fn);};
+  device.removeEventListener=(name,fn)=>listeners.get(name)?.delete(fn);
+  device.sendReport=async function(reportId,payload){
+    const bytes=[...payload];this.writes.push({reportId,bytes});
+    if(bytes.join(',')===TAG_READ_COMMAND.join(',')) {
+      const response=new Uint8Array(36);response[1]=9;response[35]=19;
+      queueMicrotask(()=>{for(const fn of listeners.get('inputreport')||[])fn({device:this,data:new DataView(response.buffer)});});
+    }
+  };
+  const {controller}=await connected({device});
+  const result=await controller.readEqTag();
+  assert.equal(result.tag,19);assert.equal(result.source,'device-tag');
+  assert.deepEqual(device.writes,[{reportId:75,bytes:[...TAG_READ_COMMAND]}]);
+  assert.equal(controller.lastTagRead.tag,19);
+  assert.equal(controller.log.length,0,'read-only Tag requests are not Flash transaction reports');
+});
+
+test('current-state read times out cleanly when firmware does not return a Tag',async()=>{
+  const device=fixtureDevice();device.addEventListener=()=>{};device.removeEventListener=()=>{};
+  const {controller}=await connected({device});
+  await assert.rejects(controller.readEqTag(5),/Tag 응답/);
+  assert.deepEqual(device.writes,[{reportId:75,bytes:[...TAG_READ_COMMAND]}]);
+  assert.equal(controller.lastTagRead,null);
 });
 
 test('a write rejection stops the transaction, prevents Flash, and requires reconnect',async()=>{

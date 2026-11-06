@@ -1,6 +1,6 @@
 import { BANDS, FILTERS, PRESETS, PRESET_REFERENCE, cloneEq, validateEq, signature, buildAnalyticModel, responseAt, peakResponse, parseRew, interpolate, comparison } from './src/eq.js';
 import { DeviceController, supportedDevices, generateRamPlan, sdkGraphModel, discoverDevice } from './src/device.js';
-import { restore, persist } from './src/storage.js';
+import { restore, persist, restoreDeviceSnapshot, persistDeviceSnapshot } from './src/storage.js';
 
 const $ = id => document.getElementById(id);
 const SDK = window.WalkPlayWebEqSDK;
@@ -10,7 +10,7 @@ const safeStorage = {
   removeItem: key => { try { localStorage.removeItem(key); } catch { /* storage may be unavailable */ } }
 };
 const previous = restore(safeStorage);
-const state = { eq: previous.current, selected: previous.selected, baseSelected: previous.selected, advanced: previous.advanced, lastApplied: null, activeBand: 4, busy: false, off: null, on: null, model: null, peak: null, error: null };
+const state = { eq: previous.current, selected: previous.selected, baseSelected: previous.selected, baseEq: cloneEq(previous.current), advanced: previous.advanced, lastApplied: null, activeBand: 4, busy: false, off: null, on: null, model: null, peak: null, error: null, deviceSnapshot: restoreDeviceSnapshot(safeStorage), deviceTag: null, deviceTagStatus: 'disconnected' };
 let devices = [], controller, discoveredDevice = null, chartFrame = null, modelToken = 0, chartGeometry = null, toastTimer, sdkTimer;
 const canvas = $('responseChart');
 const ctx = canvas.getContext('2d');
@@ -38,11 +38,60 @@ function download(name, value) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 function selectedProfile() {
+  if (state.selected === 'device-current') {
+    const current = currentDeviceView();
+    return { name: '현재 상태', description: current?.description || '기기에 저장된 상태를 확인할 수 없습니다.', eq: current?.eq || state.eq, reference: current?.reference || '제조사 SDK는 EQ Tag ID만 읽을 수 있습니다.' };
+  }
   if (state.selected === 'manual') return { name: '직접 조절', description: '선택한 사운드를 슬라이더로 직접 조절한 상태입니다.', eq: state.eq, reference: '현재 세션의 임시 조절값' };
   return PRESETS.find(p => p.id === state.selected) || PRESETS[0];
 }
+function sameDevice(snapshot, device) { return !!snapshot && !!device && snapshot.vendorId === device.vendorId && snapshot.productId === device.productId; }
+function currentDeviceView() {
+  const device = controller?.device, snapshot = state.deviceSnapshot;
+  const matchingSnapshot = sameDevice(snapshot, device);
+  if (device && state.deviceTagStatus === 'known') {
+    if (matchingSnapshot && snapshot.tag === state.deviceTag) return {
+      eq: snapshot.eq,
+      caption: `Tag ${state.deviceTag} 일치 · 마지막 저장값`,
+      description: '기기에서 읽은 Tag ID와 이 프로그램이 마지막으로 Flash에 보낸 10밴드 값이 일치합니다.',
+      reference: '10밴드 값은 마지막 전송 기록이며, 제조사 SDK는 Flash의 밴드별 값을 직접 읽지 않습니다.'
+    };
+    const preset = PRESETS.find(profile => profile.eq.tag === state.deviceTag);
+    if (preset) return {
+      eq: preset.eq,
+      caption: `기기 Tag ${state.deviceTag} · ${preset.name}`,
+      description: `기기에서 ${preset.name} Tag ID를 확인했습니다. 화면에는 해당 모드의 기준값을 표시합니다.`,
+      reference: 'Tag ID로 모드를 식별한 값이며, Flash의 10밴드 직접 읽기 결과는 아닙니다.'
+    };
+    return { eq: null, caption: `기기 Tag ${state.deviceTag} · 상세 값 미지원`, description: '기기 Tag ID는 확인했지만 제조사 SDK가 Flash의 10밴드 값을 직접 읽지 않습니다.' };
+  }
+  if (device && state.deviceTagStatus === 'reading') return { eq: matchingSnapshot ? snapshot.eq : null, caption: '기기 상태 확인 중', description: '기기의 EQ Tag ID 응답을 기다리고 있습니다.' };
+  if (device && state.deviceTagStatus === 'error') return { eq: matchingSnapshot ? snapshot.eq : null, caption: matchingSnapshot ? '마지막 저장값 · Tag 확인 실패' : '기기 응답 없음', description: '기기의 Tag ID 응답을 받지 못했습니다. 표시 가능한 값은 이 프로그램의 마지막 전송 기록입니다.' };
+  if (snapshot) return { eq: snapshot.eq, caption: '마지막 저장 기록 · 연결해 확인', description: '이 프로그램이 마지막으로 Flash 저장 명령과 함께 보낸 값입니다. 기기를 연결하면 Tag ID를 확인합니다.' };
+  return { eq: null, caption: '기기 연결 후 확인', description: '기기를 연결하면 저장된 EQ의 Tag ID를 읽습니다.' };
+}
 function renderPresets() {
   const root = $('presetList'); root.replaceChildren();
+  const current = currentDeviceView();
+  const currentButton = document.createElement('button'); currentButton.type = 'button'; currentButton.className = 'preset-item device-current';
+  currentButton.dataset.currentState = 'true'; currentButton.setAttribute('aria-pressed', String(state.selected === 'device-current')); currentButton.disabled = state.busy;
+  currentButton.title = current.description;
+  if (!current.eq) currentButton.classList.add('unavailable');
+  const currentSymbol = document.createElement('span'); currentSymbol.className = 'preset-icon';
+  currentSymbol.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v12H4zM8 21h8m-4-4v4"/><path d="M8 10h2l2-3 2 6 2-3h2"/></svg>';
+  const currentCopy = document.createElement('span'); currentCopy.className = 'preset-copy';
+  const currentName = document.createElement('span'); currentName.className = 'preset-name'; currentName.textContent = '현재 상태';
+  const currentCaption = document.createElement('span'); currentCaption.className = 'preset-caption'; currentCaption.textContent = current.caption;
+  currentCopy.append(currentName, currentCaption);
+  const currentDot = document.createElement('span'); currentDot.className = 'preset-active-mark'; currentDot.setAttribute('aria-hidden', 'true');
+  currentButton.append(currentSymbol, currentCopy, currentDot);
+  currentButton.addEventListener('click', () => {
+    const value = currentDeviceView();
+    if (!value.eq) { toast(value.description, true); return; }
+    state.eq = cloneEq(value.eq); state.baseEq = cloneEq(value.eq); state.selected = 'device-current'; state.baseSelected = 'device-current'; state.error = null;
+    refresh(true);
+  });
+  root.append(currentButton);
   for (const profile of PRESETS) {
     const button = document.createElement('button'); button.type = 'button'; button.className = 'preset-item';
     button.dataset.preset = profile.id; button.setAttribute('aria-pressed', String(profile.id === state.selected)); button.disabled = state.busy;
@@ -56,7 +105,7 @@ function renderPresets() {
     button.append(symbol, copy, dot);
     button.addEventListener('click', () => {
       if (state.busy) return;
-      state.eq = cloneEq(profile.eq); state.selected = profile.id; state.baseSelected = profile.id; state.error = null;
+      state.eq = cloneEq(profile.eq); state.baseEq = cloneEq(profile.eq); state.selected = profile.id; state.baseSelected = profile.id; state.error = null;
       refresh(true); saveLocal();
     });
     root.append(button);
@@ -126,7 +175,10 @@ function editBand(i, prop, value) {
 }
 function refresh(rebuild = false) {
   if (rebuild) { renderPresets(); renderBands(); }
-  else $('presetList').querySelectorAll('[data-preset]').forEach(el => el.setAttribute('aria-pressed', String(el.dataset.preset === state.selected)));
+  else {
+    $('presetList').querySelectorAll('[data-preset]').forEach(el => el.setAttribute('aria-pressed', String(el.dataset.preset === state.selected)));
+    $('presetList').querySelector('[data-current-state]')?.setAttribute('aria-pressed', String(state.selected === 'device-current'));
+  }
   const profile = selectedProfile();
   $('profileName').textContent = profile.name;
   $('profileDescription').textContent = profile.description;
@@ -180,8 +232,14 @@ async function apply() {
   const current = cloneEq(state.eq), currentSignature = signature(current);
   $('applyProgress').hidden = false;
   try {
-    await controller.apply(current); state.lastApplied = currentSignature;
-    toast('Flash 저장 명령을 전송했습니다.');
+    const evidence = await controller.apply(current); state.lastApplied = currentSignature;
+    let snapshotRecorded = true;
+    try { state.deviceSnapshot = persistDeviceSnapshot(safeStorage, evidence); }
+    catch { snapshotRecorded = false; }
+    try { const read = await controller.readEqTag(); state.deviceTag = read.tag; state.deviceTagStatus = 'known'; }
+    catch { state.deviceTag = null; state.deviceTagStatus = 'error'; }
+    renderPresets();
+    toast(snapshotRecorded ? 'Flash 저장 명령을 전송했습니다.' : '기기 저장은 완료됐지만 현재 상태 기록을 이 브라우저에 보관하지 못했습니다.', !snapshotRecorded);
   } catch (error) { state.lastApplied = null; state.error = error.message; toast(error.message, true); }
   finally { lockUI(false); }
 }
@@ -296,8 +354,8 @@ async function loadMeasurement(kind, file) {
 $('advancedToggle').checked = state.advanced;
 $('advancedToggle').addEventListener('change', event => { state.advanced = event.target.checked; $('bandControls').classList.toggle('advanced-visible', state.advanced); saveLocal(); scheduleDraw(); });
 $('showBands').addEventListener('change', scheduleDraw);
-$('resetBtn').addEventListener('click', () => { const profile = PRESETS.find(item => item.id === state.baseSelected) || PRESETS[0]; state.eq = cloneEq(profile.eq); state.selected = profile.id; state.error = null; refresh(true); saveLocal(); });
-$('flatBtn').addEventListener('click', () => { state.eq = cloneEq(PRESETS.find(profile => profile.id === 'flat').eq); state.selected = 'flat'; state.baseSelected = 'flat'; state.error = null; refresh(true); saveLocal(); toast('FLAT 기준값으로 초기화했습니다.'); });
+$('resetBtn').addEventListener('click', () => { state.eq = cloneEq(state.baseEq); state.selected = state.baseSelected; state.error = null; refresh(true); saveLocal(); });
+$('flatBtn').addEventListener('click', () => { const flat = PRESETS.find(profile => profile.id === 'flat').eq; state.eq = cloneEq(flat); state.baseEq = cloneEq(flat); state.selected = 'flat'; state.baseSelected = 'flat'; state.error = null; refresh(true); saveLocal(); toast('FLAT 기준값으로 초기화했습니다.'); });
 $('settingsBtn').addEventListener('click', () => { $('settingsDialog').showModal(); renderComparison(); });
 $('closeSettingsBtn').addEventListener('click', () => $('settingsDialog').close());
 $('exportLogBtn').addEventListener('click', () => download('AZLA-Diagnostics.json', { ...controller.diagnostics(), discoveredDevice, preview: state.eq, model: state.model.source, presetReference: PRESET_REFERENCE }));
@@ -315,13 +373,21 @@ async function initialize() {
   controller = new DeviceController({ SDK, hid: navigator.hid, devices, connectionMode, onProgress: (value, label) => {
     $('applyProgress').value = value * 100; $('applyStatus').textContent = label; $('applyDetail').textContent = '장치 저장이 끝날 때까지 USB를 연결해 두세요.';
   } });
-  controller.onDisconnect = () => { state.lastApplied = null; state.error = 'USB 연결이 끊어졌습니다. 장치를 다시 연결해 주세요.'; updateApplyState(); toast(state.error, true); };
+  controller.onDisconnect = () => { state.lastApplied = null; state.deviceTag = null; state.deviceTagStatus = 'disconnected'; state.error = 'USB 연결이 끊어졌습니다. 장치를 다시 연결해 주세요.'; renderPresets(); updateApplyState(); toast(state.error, true); };
   $('connectBtn').addEventListener('click', async () => {
     if (state.busy) return;
     $('connectBtn').disabled = true;
     try {
-      if (controller.device) { await controller.disconnect(); state.lastApplied = null; state.error = null; }
-      else { const device = await controller.connect(); if (device) { state.lastApplied = null; state.error = null; toast('AZLA 기기가 연결되었습니다.'); } }
+      if (controller.device) { await controller.disconnect(); state.lastApplied = null; state.deviceTag = null; state.deviceTagStatus = 'disconnected'; state.error = null; renderPresets(); }
+      else {
+        const device = await controller.connect();
+        if (device) {
+          state.lastApplied = null; state.error = null; state.deviceTag = null; state.deviceTagStatus = 'reading'; renderPresets();
+          try { const read = await controller.readEqTag(); state.deviceTag = read.tag; state.deviceTagStatus = 'known'; }
+          catch { state.deviceTagStatus = 'error'; }
+          renderPresets(); toast('AZLA 기기가 연결되었습니다.');
+        }
+      }
     } catch (error) { toast(error.message, true); $('settingsDialog').showModal(); }
     finally { updateApplyState(); }
   });

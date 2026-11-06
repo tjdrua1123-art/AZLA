@@ -16,10 +16,21 @@ localStorage.setItem('azla_cb5100_presets_v1', JSON.stringify({'구버전 저장
 """
 fixture = """
 window.__writes = [];
+window.__deviceTag = 13;
+window.__deviceListeners = new Map();
 window.__device = {
   vendorId:4660,productId:22136,productName:'Synthetic AZLA device',opened:false,
   async open(){this.opened=true}, async close(){this.opened=false},
-  async sendReport(id,bytes){window.__writes.push({id,bytes:[...bytes]})}
+  addEventListener(name,fn){if(!window.__deviceListeners.has(name))window.__deviceListeners.set(name,new Set());window.__deviceListeners.get(name).add(fn)},
+  removeEventListener(name,fn){window.__deviceListeners.get(name)?.delete(fn)},
+  async sendReport(id,data){
+    const bytes=[...data];window.__writes.push({id,bytes});
+    if(bytes[0]===1&&bytes[1]===9&&bytes.length===36)window.__deviceTag=bytes[35];
+    if(bytes.join(',')==='128,9,0'){
+      const response=new Uint8Array(36);response[1]=9;response[35]=window.__deviceTag;
+      queueMicrotask(()=>{for(const fn of window.__deviceListeners.get('inputreport')||[])fn({device:this,data:new DataView(response.buffer)})});
+    }
+  }
 };
 Object.defineProperty(navigator,'hid',{value:{
   addEventListener(){}, async requestDevice(){return [window.__device]}
@@ -37,6 +48,8 @@ with sync_playwright() as p:
     page.wait_for_selector('.band-column')
     assert page.locator('.band-column').count() == 10
     assert page.locator('[data-preset]').count() == 7
+    assert page.locator('[data-current-state]').count() == 1
+    assert page.locator('[data-current-state]').inner_text().startswith('현재 상태')
     assert page.locator('#profileName').inner_text() == 'FLAT'
     assert page.locator('[data-preset="flat"]').get_attribute('aria-pressed') == 'true'
     assert page.locator('#profileBadge').count() == 0
@@ -90,22 +103,32 @@ with sync_playwright() as p:
     page.goto(BASE); page.wait_for_selector('.band-column')
     page.locator('#connectBtn').click()
     page.wait_for_function("!document.querySelector('#applyBtn').disabled")
-    page.locator('[data-preset="flat"]').click()
-    assert page.evaluate('window.__writes.length') == 0
+    assert page.locator('[data-current-state]').inner_text().startswith('현재 상태')
+    assert 'FLAT' in page.locator('[data-current-state]').inner_text()
+    assert page.evaluate('window.__writes.map(x=>x.bytes)') == [[128,9,0]]
+    page.locator('[data-preset="pubg-tactical"]').click()
     page.locator('#applyBtn').click()
     assert page.locator('#connectBtn').is_disabled()
     assert page.locator('.gain-slider').nth(0).is_disabled()
     page.wait_for_function("document.querySelector('#applyStatus').textContent==='Flash 저장 명령 전송 완료'", timeout=15000)
     writes = page.evaluate('window.__writes')
-    assert len(writes) == 12
-    assert [w['bytes'][4] for w in writes[:10]] == list(range(10))
-    assert writes[-1]['bytes'] == [1,1,0]
+    mutation_writes = [w for w in writes if w['bytes'] != [128,9,0]]
+    assert len(writes) == 14
+    assert len(mutation_writes) == 12
+    assert [w['bytes'][4] for w in mutation_writes[:10]] == list(range(10))
+    assert mutation_writes[-1]['bytes'] == [1,1,0]
+    assert 'Tag 11' in page.locator('[data-current-state]').inner_text()
+    assert page.evaluate("localStorage.getItem('azla_equalizer_device_state_v1')") is not None
+    page.locator('[data-preset="flat"]').click()
+    page.locator('[data-current-state]').click()
+    assert page.locator('#profileName').inner_text() == '현재 상태'
+    assert page.locator('.band-gain input').nth(0).input_value() == '-7'
     page.locator('.band-gain input').nth(0).fill('-1')
     page.locator('.band-gain input').nth(0).press('Tab')
-    assert len(page.evaluate('window.__writes')) == 12
+    assert len(page.evaluate('window.__writes')) == 14
     assert page.locator('#applyStatus').inner_text() == '적용할 준비가 되었습니다'
     assert not errors, errors
-    print('PASS: browser original SDK + mock HID apply 10 EQ + RAM + Flash, UI lock, no automatic writes, edited state')
+    print('PASS: browser original SDK + mock HID Tag read, current-state snapshot, 10 EQ + RAM + Flash, UI lock, edited state')
     context.close()
     context = browser.new_context(viewport={'width':1366,'height':768})
     context.add_init_script(fixture.replace('vendorId:4660', 'vendorId:13058'))
