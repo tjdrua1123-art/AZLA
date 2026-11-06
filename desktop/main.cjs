@@ -131,7 +131,7 @@ function configurePermissions() {
 function createWindow(appSession) {
   mainWindow = new BrowserWindow({
     width: 1512, height: 960, minWidth: 1100, minHeight: 720,
-    title: 'AZLA Equalizer', backgroundColor: '#f8f9fa', show: false, autoHideMenuBar: true,
+    title: 'AZLA Equalizer', backgroundColor: '#FFF1E6', show: false, autoHideMenuBar: true,
     webPreferences: { session: appSession, nodeIntegration: false, contextIsolation: true, sandbox: true, webSecurity: true, webviewTag: false }
   });
   mainWindow.setMenu(null);

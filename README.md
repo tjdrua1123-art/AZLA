@@ -1,8 +1,10 @@
 # AZLA Equalizer 2.0
 
-AZLA USB DAC를 위한 화이트·실버 디자인의 10밴드 EQ 프로그램입니다. 기존 프로그램에서 쓰던 **제조사 원본 SDK를 포함**하며, **EQ 적용** 버튼으로 10밴드와 RAM 반영 후 Flash 저장 명령을 보냅니다.
+AZLA USB DAC를 위한 밝은 오렌지·크림 디자인의 10밴드 EQ 프로그램입니다. 기존 프로그램에서 쓰던 **제조사 원본 SDK를 포함**하며, **EQ 적용** 버튼으로 10밴드와 RAM 반영 후 Flash 저장 명령을 보냅니다.
 
-![AZLA Equalizer 화면](docs/screenshots/azla-light-1920.png)
+![AZLA Equalizer 화면](docs/screenshots/AZLA-Orange-1920.png)
+
+브랜드 색상 `#F26A21` · `#FFF1E6` · `#F9A66C`를 적용했습니다. 첨부된 AZLA 로고 형태는 선명하게 표시되도록 인라인 SVG로 재구성했으며, EQ·장치 연결·저장 기능은 기존과 동일합니다.
 
 ## 바로 실행하기
 

@@ -14,7 +14,7 @@ const state = { eq: previous.current, selected: previous.selected, baseSelected:
 let devices = [], controller, discoveredDevice = null, chartFrame = null, modelToken = 0, chartGeometry = null, toastTimer, sdkTimer;
 const canvas = $('responseChart');
 const ctx = canvas.getContext('2d');
-const colors = ['#668fae', '#5b91b6', '#528ebd', '#488bbf', '#438bc4', '#5089bb', '#628bb9', '#6a90b9', '#6f96b2', '#719cae'];
+const colors = ['#bc531d', '#c85b20', '#d56122', '#e36622', '#f26a21', '#e97732', '#dc7433', '#ce6930', '#bd5c27', '#ad5121'];
 const formatDb = value => `${value > 0 ? '+' : ''}${Number(value).toFixed(1)}`;
 const freqLabel = value => value >= 1000 ? `${Number((value / 1000).toFixed(1))}k` : String(Math.round(value));
 const icons = {
