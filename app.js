@@ -281,13 +281,6 @@ function drawGraph() {
   }
   ctx.save(); ctx.beginPath(); ctx.rect(left - 3, top - 5, w - left - right + 6, h - top - bottom + 10); ctx.clip();
   const points = Array.from({ length: 650 }, (_, i) => { const f = 20 * 1000 ** (i / 649); return { f, x: x(f), y: y(responseAt(f, state.model)) }; });
-  if ($('showBands').checked) {
-    state.model.coeffs.forEach((coeff, i) => {
-      ctx.beginPath();
-      for (let j = 0; j < points.length; j++) { const p = points[j], py = y(responseAt(p.f, { ...state.model, coeffs: [coeff] })); if (!j) ctx.moveTo(p.x, py); else ctx.lineTo(p.x, py); }
-      ctx.setLineDash([3, 5]); ctx.lineWidth = i === state.activeBand ? 1.4 : .8; ctx.strokeStyle = `${colors[i]}${i === state.activeBand ? 'bb' : '55'}`; ctx.stroke();
-    }); ctx.setLineDash([]);
-  }
   const fill = ctx.createLinearGradient(0, top, 0, h - bottom); fill.addColorStop(0, `${color('fill', '#4b99d5')}24`); fill.addColorStop(.5, `${color('fill', '#4b99d5')}0d`); fill.addColorStop(1, `${color('fill', '#4b99d5')}00`);
   ctx.beginPath(); ctx.moveTo(points[0].x, y(0)); for (const p of points) ctx.lineTo(p.x, p.y); ctx.lineTo(points.at(-1).x, y(0)); ctx.closePath(); ctx.fillStyle = fill; ctx.fill();
   ctx.beginPath(); points.forEach((p, i) => i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y));
@@ -355,7 +348,6 @@ async function loadMeasurement(kind, file) {
 
 $('advancedToggle').checked = state.advanced;
 $('advancedToggle').addEventListener('change', event => { state.advanced = event.target.checked; $('bandControls').classList.toggle('advanced-visible', state.advanced); saveLocal(); scheduleDraw(); });
-$('showBands').addEventListener('change', scheduleDraw);
 $('resetBtn').addEventListener('click', () => { state.eq = cloneEq(state.baseEq); state.selected = state.baseSelected; state.error = null; refresh(true); saveLocal(); });
 $('flatBtn').addEventListener('click', () => { const flat = PRESETS.find(profile => profile.id === 'flat').eq; state.eq = cloneEq(flat); state.baseEq = cloneEq(flat); state.selected = 'flat'; state.baseSelected = 'flat'; state.error = null; refresh(true); saveLocal(); toast('기본 사운드 기준값으로 초기화했습니다.'); });
 $('settingsBtn').addEventListener('click', () => { $('settingsDialog').showModal(); renderComparison(); });
