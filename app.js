@@ -3,6 +3,7 @@ import { DeviceController, supportedDevices, generateRamPlan, sdkGraphModel, dis
 import { restore, persist, restoreDeviceSnapshot, persistDeviceSnapshot } from './src/storage.js';
 
 const $ = id => document.getElementById(id);
+const EARPHONE_GUIDANCE = '이어폰마다 소리 특성이 다르므로, 사용하는 이어폰에 맞게 EQ를 조절해 주세요.';
 const SDK = window.WalkPlayWebEqSDK;
 const safeStorage = {
   getItem: key => { try { return localStorage.getItem(key); } catch { return null; } },
@@ -193,11 +194,11 @@ function refresh(rebuild = false) {
       if (token !== modelToken) return;
       state.model = sdkGraphModel(packets, eq); state.model.freqs = eq.freqs;
       state.peak = peakResponse(state.model); updateGraphLabels(); scheduleDraw(); renderComparison();
-    } catch { if (token === modelToken) $('modelLabel').textContent = '수학적 예상 응답 · SDK 계수 확인 불가'; }
+    } catch { if (token === modelToken) $('modelLabel').textContent = EARPHONE_GUIDANCE; }
   }, 90);
 }
 function updateGraphLabels() {
-  $('modelLabel').textContent = state.model.source === 'sdk' ? 'SDK 계수 예상 · 96 kHz · 실제 출력은 측정으로 확인하세요' : '수학적 예상 응답 · 96 kHz · 실측 응답과 다를 수 있습니다';
+  $('modelLabel').textContent = EARPHONE_GUIDANCE;
   $('peakLabel').replaceChildren(document.createTextNode('최대 변화 '));
   const number = document.createElement('b'); number.textContent = `${formatDb(state.peak.db)} dB`; $('peakLabel').append(number);
   $('peakLabel').classList.toggle('risk', state.peak.db > 6);
