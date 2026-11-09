@@ -1,32 +1,32 @@
 @charset "UTF-8";
 
 :root {
-  --bg:#FFF1E6; --sidebar:#FFF1E6; --panel:#FFFFFF;
-  --line:#E8CDB9; --line-soft:#F0DCCD;
-  --text:#352A24; --muted:#705C50; --dim:#79675B;
+  --bg:#F7F8FA; --sidebar:#FFFFFF; --panel:#FFFFFF;
+  --line:#E1E4E8; --line-soft:#EBEDF0;
+  --text:#30343B; --muted:#646B75; --dim:#747C86;
   --accent:#F26A21; --accent-bright:#A9400B; --accent-fill:#F9A66C; --mint:#367568;
-  --surface:#FFFFFF; --surface-raised:#FFF8F2; --surface-hover:#FFE7D5; --surface-subtle:#FFFCF9;
-  --text-strong:#352A24; --text-secondary:#594438; --text-quiet:#79675B;
-  --sidebar-start:#FFF8F2; --sidebar-end:#FFF1E6;
-  --selected-start:#FFE7D5; --selected-end:#FFEFE3; --selected-border:#F9A66C; --selected-text:#983B0C;
-  --input-bg:#FFFFFF; --input-border:#D9BBA6; --hover-border:#C17B4D; --focus-border:#F26A21;
-  --slider-tick:#D9BBA6; --slider-track-top:#F26A21; --slider-track-mid:#F9A66C; --slider-track-bottom:#F7D4BA;
-  --slider-thumb-start:#FFF1E6; --slider-thumb-mid:#FFFFFF; --slider-thumb-border:#B7541D;
+  --surface:#FFFFFF; --surface-raised:#FAFBFC; --surface-hover:#F3F4F6; --surface-subtle:#FFFFFF;
+  --text-strong:#262B32; --text-secondary:#4C535D; --text-quiet:#747C86;
+  --sidebar-start:#FFFFFF; --sidebar-end:#FFFFFF;
+  --selected-start:#FFF8F2; --selected-end:#FFFCF9; --selected-border:#F4D4BD; --selected-text:#983B0C;
+  --input-bg:#FFFFFF; --input-border:#D8DDE3; --hover-border:#AEB6C0; --focus-border:#F26A21;
+  --slider-tick:#D8DDE3; --slider-track-top:#CED4DC; --slider-track-mid:#DDE2E8; --slider-track-bottom:#E7EBEF;
+  --slider-thumb-start:#FFFFFF; --slider-thumb-mid:#FFFFFF; --slider-thumb-border:#AEB6C0;
   --primary:#F26A21; --primary-hover:#F9A66C; --primary-border:#DE5914; --on-primary:#352014;
   --badge-bg:#FFF1E6; --badge-border:#F9A66C; --badge-text:#983B0C;
-  --switch-track:#DCC8B9; --switch-knob:#FFFFFF; --switch-active:#F26A21;
+  --switch-track:#CCD2DA; --switch-knob:#FFFFFF; --switch-active:#F26A21;
   --warning:#946022; --error:#AA3F4B;
   --toast-bg:#FFFFFF; --toast-border:#F9A66C; --toast-text:#873B13;
   --error-bg:#FFF2F3; --error-border:#E6C5CA; --error-text:#9B4653;
   --success-bg:#EDF6F2; --success-border:#BADACE; --success-text:#32644F;
-  --surface-wash:#FFF1E6; --surface-wash-soft:#FFF9F4; --hover-wash:#FFE7D5;
-  --line-wash:#D9BBA699; --accent-wash:#F26A2114; --accent-wash-soft:#F26A2108; --accent-border:#F9A66C;
-  --accent-halo:#F26A2124; --focus-ring:#F26A2180;
-  --shadow-panel:#87451C0B; --shadow-control:#87451C20; --shadow-thumb:#87451C25; --shadow-dialog:#87451C2B;
-  --overlay:#54403555;
-  --chart-grid:#F0DCCD; --chart-zero:#C99D7D; --chart-axis:#705C50; --chart-fill:#F26A21;
-  --chart-line-start:#F9A66C; --chart-line-mid:#F26A21; --chart-line-end:#D95617;
-  --chart-measured:#367568; --chart-label:#873B13; --chart-marker:#FFFFFF; --chart-halo:#F26A212B;
+  --surface-wash:#FFFFFF; --surface-wash-soft:#FFFFFF; --hover-wash:#F6F7F9;
+  --line-wash:#D8DDE380; --accent-wash:#FFF1E680; --accent-wash-soft:#FFFFFF; --accent-border:#F4D4BD;
+  --accent-halo:#F26A2110; --focus-ring:#F26A2180;
+  --shadow-panel:#25304406; --shadow-control:#25304412; --shadow-thumb:#25304418; --shadow-dialog:#25304425;
+  --overlay:#30374444;
+  --chart-grid:#E8EBEF; --chart-zero:#B9C0C9; --chart-axis:#68717D; --chart-fill:#F26A21;
+  --chart-line-start:#E99059; --chart-line-mid:#F26A21; --chart-line-end:#DD6E30;
+  --chart-measured:#367568; --chart-label:#735542; --chart-marker:#FFFFFF; --chart-halo:#F26A211A;
   --font:-apple-system,BlinkMacSystemFont,"Segoe UI","Malgun Gothic",sans-serif;
   color-scheme:light;
 }
@@ -70,6 +70,14 @@ input[type=number]{appearance:textfield;-moz-appearance:textfield}input[type=num
 .preset-item.active,.preset-button.active,.preset-item[aria-pressed=true],.preset-button[aria-pressed=true]{box-shadow:inset 3px 0 0 var(--accent)}
 .equalizer-panel{background:var(--surface);box-shadow:0 12px 38px var(--shadow-panel)}
 .apply-bar{background:var(--surface);border-color:var(--line)}
-.primary-button:not(:disabled){box-shadow:0 3px 10px var(--accent-halo)}
+.primary-button:not(:disabled){box-shadow:0 2px 5px var(--shadow-control)}
 .brand-tagline{color:var(--text-secondary)}
 @media(max-width:900px){.brand-wordmark{width:140px;height:44px;padding:12px}.brand-logo{width:100%;height:auto}}
+
+/* White surfaces keep the brand orange concentrated on meaningful actions. */
+.band-gain input,input.band-gain{color:var(--text-secondary)}
+.band-column.selected .gain-slider,.band-column.is-selected .gain-slider{background:linear-gradient(180deg,var(--accent-fill),var(--accent))}
+.band-column.selected .gain-slider::-webkit-slider-thumb,.band-column.is-selected .gain-slider::-webkit-slider-thumb{border-color:var(--accent)}
+.band-column.selected .gain-slider::-moz-range-thumb,.band-column.is-selected .gain-slider::-moz-range-thumb{border-color:var(--accent)}
+.connect-button{border-color:var(--line);color:var(--text-secondary)}
+.connect-button:hover{border-color:var(--selected-border);color:var(--selected-text)}
