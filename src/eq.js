@@ -133,12 +133,13 @@ export function responseAt(freq, model) {
 export function peakResponse(model) {
   const points=Array.from({length:2049},(_,i)=>20*1000**(i/2048));
   points.push(...(model?.freqs || []));
-  let db=-Infinity, freq=20;
+  let db=-Infinity, minDb=Infinity, freq=20;
   for (const point of points) {
     const value=responseAt(point,model);
     if (value>db) { db=value; freq=point; }
+    minDb=Math.min(minDb,value);
   }
-  return {db,freq};
+  return {db,freq,minDb};
 }
 
 /** REW plain TXT/CSV: frequency Hz and SPL dB in the first two columns. */

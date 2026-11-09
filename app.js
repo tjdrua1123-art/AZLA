@@ -262,7 +262,9 @@ function drawGraph() {
   if (canvas.width !== Math.round(w * dpr) || canvas.height !== Math.round(h * dpr)) { canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr); }
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, w, h);
   const left = 34, right = 14, top = 20, bottom = 27;
-  const range = Math.max(12, Math.min(96, Math.ceil(Math.max(0, state.peak.db) / 12) * 12));
+  // Include cuts as well as boosts, with 1 dB of room for the curve and markers.
+  const extent = Math.max(Math.abs(state.peak.db), Math.abs(state.peak.minDb));
+  const range = Math.max(12, Math.ceil((extent + 1) / 12) * 12);
   const x = f => left + Math.log10(f / 20) / 3 * (w - left - right), y = db => top + (range - db) / (range * 2) * (h - top - bottom);
   chartGeometry = { left, right, top, bottom, w, h, range, x, y };
   ctx.font = '600 11px "Segoe UI", sans-serif'; ctx.lineWidth = 1;

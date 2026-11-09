@@ -126,3 +126,16 @@ test('measurement comparison reports ON minus OFF and counts only overlap',()=>{
   assert.equal(limited.rows[0].measured,null);
   assert.equal(comparison(eq,model,null,null).meanAbsoluteError,null);
 });
+
+// Regression: overlapping -12 dB bands can put the combined response below -12 dB.
+test('response extrema include deep cuts without changing the positive peak',()=>{
+  const eq=flat();eq.gains=[-12,-12,-12,0,2,0,0,0,0,4];
+  const model=buildAnalyticModel(eq),peak=peakResponse(model);
+  assert.ok(peak.minDb < -12);
+  assert.ok(peak.db > 0 && peak.db < 6);
+  for(let i=0;i<=2048;i++){
+    const db=responseAt(20*1000**(i/2048),model);
+    assert.ok(db>=peak.minDb-1e-9 && db<=peak.db+1e-9);
+  }
+  assert.equal(peakResponse(buildAnalyticModel(flat())).minDb,0);
+});
