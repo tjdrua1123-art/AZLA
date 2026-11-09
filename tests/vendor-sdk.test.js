@@ -112,7 +112,7 @@ test('all seven production modes produce finite real-SDK models agreeing with PE
   }
 });
 
-test('real SDK fixed-point decoding uses 30 bits, or 27 bits for experimental high shelf', async () => {
+test('real SDK fixed-point decoding uses 30 bits, or 27 bits for high shelf', async () => {
   const eq = flat();
   eq.filterTypes = [1, 2, 3, 4, 5, 1, 2, 3, 4, 5];
   eq.gains = [1, 2, 3, 0, 0, -1, -2, -3, 0, 0];

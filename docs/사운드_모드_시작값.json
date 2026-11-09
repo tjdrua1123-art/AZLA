@@ -62,8 +62,8 @@
       }
     },
     {
-      "id": "pubg-tactical",
-      "name": "PUBG 텍티컬",
+      "id": "fps-immersive",
+      "name": "FPS 몰입",
       "category": "FPS",
       "description": "폭발·엔진 저음을 강하게 낮추고 발소리와 장전음을 앞으로 가져옵니다.",
       "icon": "crosshair",
@@ -122,10 +122,10 @@
       }
     },
     {
-      "id": "valorant",
-      "name": "발로란트",
+      "id": "fps-clarity",
+      "name": "FPS 선명",
       "category": "FPS",
-      "description": "폭발 피로도를 줄이고 스킬·금속 발소리·해체음의 구분을 높입니다.",
+      "description": "저음의 부담을 줄이고 발소리와 효과음의 구분을 돕습니다.",
       "icon": "gamepad",
       "reference": "초록·주황 측정 그래프와 제공된 튜닝 조언 기반 · 제품별 실측 확인 필요",
       "eq": {
@@ -183,7 +183,7 @@
     },
     {
       "id": "footstep",
-      "name": "발소리 극대화",
+      "name": "FPS 발소리",
       "category": "FPS",
       "description": "저음 마스킹을 억제하고 500 Hz–4 kHz의 위치 단서를 집중적으로 강조합니다.",
       "icon": "footsteps",
@@ -243,8 +243,8 @@
     },
     {
       "id": "vocal",
-      "name": "보컬 강조",
-      "category": "MUSIC",
+      "name": "음악 보컬",
+      "category": "음악",
       "description": "저음을 정리하고 500 Hz–2 kHz를 채워 목소리의 힘과 전달력을 높입니다.",
       "icon": "mic",
       "reference": "초록·주황 측정 그래프와 제공된 튜닝 조언 기반 · 제품별 실측 확인 필요",
@@ -302,9 +302,9 @@
       }
     },
     {
-      "id": "harman",
-      "name": "하만 밸런스",
-      "category": "MUSIC",
+      "id": "music-balanced",
+      "name": "음악 밸런스",
+      "category": "음악",
       "description": "기본 저음은 유지하면서 500 Hz의 몸통과 11 kHz의 공기감을 보완합니다.",
       "icon": "music",
       "reference": "초록·주황 측정 그래프와 제공된 튜닝 조언 기반 · 제품별 실측 확인 필요",
@@ -363,8 +363,8 @@
     },
     {
       "id": "cinema",
-      "name": "시네마 영화",
-      "category": "MEDIA",
+      "name": "영화",
+      "category": "영화",
       "description": "극저음의 웅장함, 대사 전달력, 고역 현장감을 함께 살립니다.",
       "icon": "film",
       "reference": "초록·주황 측정 그래프와 제공된 튜닝 조언 기반 · 제품별 실측 확인 필요",

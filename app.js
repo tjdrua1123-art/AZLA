@@ -245,9 +245,8 @@ async function apply() {
 }
 function requestApply() {
   if (state.busy || !controller?.device || controller.requiresReconnect) return;
-  const hasHS = state.eq.filterTypes.includes(3);
-  if (state.peak.db > 6 || hasHS) {
-    $('riskText').textContent = `${state.peak.db > 6 ? `필터 중첩 예상 최대 ${formatDb(state.peak.db)} dB입니다. 입력 신호에 따라 클리핑이 발생할 수 있습니다. ` : ''}${hasHS ? '실험용 HIGH SHELF 필터가 포함되어 있습니다. ' : ''}볼륨을 낮추고 적용해 주세요. 전체 출력은 자동으로 변경하지 않습니다.`;
+  if (state.peak.db > 6) {
+    $('riskText').textContent = `필터 중첩 예상 최대 ${formatDb(state.peak.db)} dB입니다. 입력 신호에 따라 클리핑이 발생할 수 있습니다. 볼륨을 낮추고 적용해 주세요. 전체 출력은 자동으로 변경하지 않습니다.`;
     $('riskDialog').showModal();
   } else apply();
 }

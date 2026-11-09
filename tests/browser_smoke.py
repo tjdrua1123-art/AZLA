@@ -48,6 +48,8 @@ with sync_playwright() as p:
     page.wait_for_selector('.band-column')
     assert page.locator('.band-column').count() == 10
     assert page.locator('[data-preset]').count() == 7
+    assert page.locator('[data-preset] .preset-name').all_text_contents() == ['FLAT','FPS 몰입','FPS 선명','FPS 발소리','음악 보컬','음악 밸런스','영화']
+    assert page.locator('.band-filter select').first.locator('option[value="3"]').inner_text() == 'HIGH SHELF'
     assert page.locator('[data-current-state]').count() == 1
     assert page.locator('[data-current-state]').inner_text().startswith('현재 상태')
     assert page.locator('#profileName').inner_text() == 'FLAT'
@@ -61,8 +63,8 @@ with sync_playwright() as p:
     assert all(v == '0.75' for v in page.locator('.band-q input').evaluate_all('(els)=>els.map(x=>x.value)'))
     assert page.locator('#applyBtn').is_disabled()
     assert page.locator('.band-frequency input').evaluate_all('(els)=>els.map(x=>Number(x.value))') == [31,63,125,250,500,1000,2000,4000,8000,11000]
-    page.locator('[data-preset="pubg-tactical"]').click()
-    assert page.locator('#profileName').inner_text() == 'PUBG 텍티컬'
+    page.locator('[data-preset="fps-immersive"]').click()
+    assert page.locator('#profileName').inner_text() == 'FPS 몰입'
     assert page.locator('.band-frequency input').nth(4).input_value() == '500'
     gain = page.locator('.band-gain input').nth(4)
     gain.fill('2.5')
@@ -70,7 +72,7 @@ with sync_playwright() as p:
     assert page.locator('#profileName').inner_text() == '직접 조절'
     assert page.locator('.gain-slider').nth(4).input_value() == '2.5'
     page.locator('#resetBtn').click()
-    assert page.locator('#profileName').inner_text() == 'PUBG 텍티컬'
+    assert page.locator('#profileName').inner_text() == 'FPS 몰입'
     assert page.locator('.band-gain input').nth(4).input_value() == '0'
     page.locator('#advancedToggle').check()
     q = page.locator('.band-q input').nth(0)
@@ -106,7 +108,7 @@ with sync_playwright() as p:
     assert page.locator('[data-current-state]').inner_text().startswith('현재 상태')
     assert 'FLAT' in page.locator('[data-current-state]').inner_text()
     assert page.evaluate('window.__writes.map(x=>x.bytes)') == [[128,9,0]]
-    page.locator('[data-preset="pubg-tactical"]').click()
+    page.locator('[data-preset="fps-immersive"]').click()
     page.locator('#applyBtn').click()
     assert page.locator('#connectBtn').is_disabled()
     assert page.locator('.gain-slider').nth(0).is_disabled()

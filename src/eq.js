@@ -9,7 +9,7 @@ export const FREQUENCIES = Object.freeze([31, 63, 125, 250, 500, 1000, 2000, 400
 export const QS = Object.freeze(Array(BANDS).fill(.75));
 export const SAMPLE_RATE = 96000;
 export const FILTERS = Object.freeze({
-  1: 'LOW SHELF', 2: 'PEAK', 3: 'HIGH SHELF · 실험', 4: 'LOW PASS', 5: 'HIGH PASS'
+  1: 'LOW SHELF', 2: 'PEAK', 3: 'HIGH SHELF', 4: 'LOW PASS', 5: 'HIGH PASS'
 });
 export const PRESET_REFERENCE = '초록·주황 측정 그래프와 제공된 튜닝 조언 기반 · 제품별 실측 확인 필요';
 
@@ -31,17 +31,17 @@ const preset = (id, name, category, description, icon, gains, options) => ({
 /** Every preset is an editable starting point; none is a measured correction. */
 export const PRESETS = [
   preset('flat', 'FLAT', 'REFERENCE', '원래의 소리를 그대로. 모든 밴드 0 dB.', 'flat', Array(BANDS).fill(0), {tag: 13}),
-  preset('pubg-tactical', 'PUBG 텍티컬', 'FPS', '폭발·엔진 저음을 강하게 낮추고 발소리와 장전음을 앞으로 가져옵니다.', 'crosshair',
+  preset('fps-immersive', 'FPS 몰입', 'FPS', '폭발·엔진 저음을 강하게 낮추고 발소리와 장전음을 앞으로 가져옵니다.', 'crosshair',
     [-7,-6,-3,-3,0,3,3,4,-2,2], {tag: 11}),
-  preset('valorant', '발로란트', 'FPS', '폭발 피로도를 줄이고 스킬·금속 발소리·해체음의 구분을 높입니다.', 'gamepad',
+  preset('fps-clarity', 'FPS 선명', 'FPS', '저음의 부담을 줄이고 발소리와 효과음의 구분을 돕습니다.', 'gamepad',
     [-4,-4,-1,0,2,0,3,4,-2,3], {tag: 15}),
-  preset('footstep', '발소리 극대화', 'FPS', '저음 마스킹을 억제하고 500 Hz–4 kHz의 위치 단서를 집중적으로 강조합니다.', 'footsteps',
+  preset('footstep', 'FPS 발소리', 'FPS', '저음 마스킹을 억제하고 500 Hz–4 kHz의 위치 단서를 집중적으로 강조합니다.', 'footsteps',
     [-6,-5,-4,-2,3,3,3,4,-3,-3], {tag: 19}),
-  preset('vocal', '보컬 강조', 'MUSIC', '저음을 정리하고 500 Hz–2 kHz를 채워 목소리의 힘과 전달력을 높입니다.', 'mic',
+  preset('vocal', '음악 보컬', '음악', '저음을 정리하고 500 Hz–2 kHz를 채워 목소리의 힘과 전달력을 높입니다.', 'mic',
     [0,-2,-2,0,3,3,3,0,0,0], {tag: 16}),
-  preset('harman', '하만 밸런스', 'MUSIC', '기본 저음은 유지하면서 500 Hz의 몸통과 11 kHz의 공기감을 보완합니다.', 'music',
+  preset('music-balanced', '음악 밸런스', '음악', '기본 저음은 유지하면서 500 Hz의 몸통과 11 kHz의 공기감을 보완합니다.', 'music',
     [0,0,0,0,2,0,0,0,0,4], {tag: 12}),
-  preset('cinema', '시네마 영화', 'MEDIA', '극저음의 웅장함, 대사 전달력, 고역 현장감을 함께 살립니다.', 'film',
+  preset('cinema', '영화', '영화', '극저음의 웅장함, 대사 전달력, 고역 현장감을 함께 살립니다.', 'film',
     [2,2,1,-2,0,3,3,0,0,3], {tag: 20})
 ];
 for (const entry of PRESETS) {
