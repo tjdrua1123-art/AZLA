@@ -2,21 +2,21 @@
 
 :root {
   --bg:#F3F3F0; --sidebar:#F0EEE9; --panel:#FFFFFF;
-  --line:#CBCDC7; --line-soft:#DDDFD8;
-  --text:#292E29; --muted:#515A51; --dim:#606A60;
+  --line:#959595; --line-soft:#B6B6B6;
+  --text:#111111; --muted:#202020; --dim:#292929;
   --accent:#F26A21; --accent-bright:#A44716; --accent-fill:#F9A66C; --mint:#5B7468;
   --surface:#FFFFFF; --surface-raised:#F6F6F3; --surface-hover:#EAECE6; --surface-subtle:#FAFAF7;
-  --text-strong:#232923; --text-secondary:#3F493F; --text-quiet:#606A60;
+  --text-strong:#000000; --text-secondary:#111111; --text-quiet:#202020;
   --sidebar-start:#F5F4F0; --sidebar-end:#F0EEE9;
-  --selected-start:#FFF1E6; --selected-end:#FFF1E6; --selected-border:#F26A21; --selected-text:#80350E;
-  --input-bg:#FAF9F6; --input-border:#B8C0B5; --hover-border:#788875; --focus-border:#F26A21;
-  --slider-tick:#BDC5B9; --slider-track-top:#899783; --slider-track-mid:#A8B2A1; --slider-track-bottom:#CDD3C6;
-  --slider-thumb-start:#FAF9F6; --slider-thumb-mid:#FFFFFF; --slider-thumb-border:#798974;
-  --primary:#F26A21; --primary-hover:#F9A66C; --primary-border:#CE5216; --on-primary:#352014;
-  --badge-bg:#FFF1E6; --badge-border:#F9A66C; --badge-text:#754320;
+  --selected-start:#FFF1E6; --selected-end:#FFF1E6; --selected-border:#F26A21; --selected-text:#000000;
+  --input-bg:#FAF9F6; --input-border:#858585; --hover-border:#555555; --focus-border:#F26A21;
+  --slider-tick:#A5ABA1; --slider-track-top:#899783; --slider-track-mid:#A8B2A1; --slider-track-bottom:#CDD3C6;
+  --slider-thumb-start:#FAF9F6; --slider-thumb-mid:#FFFFFF; --slider-thumb-border:#646B60;
+  --primary:#F26A21; --primary-hover:#F9A66C; --primary-border:#CE5216; --on-primary:#000000;
+  --badge-bg:#FFF1E6; --badge-border:#F9A66C; --badge-text:#111111;
   --switch-track:#B6BFB0; --switch-knob:#FAF9F6; --switch-active:#F26A21;
   --warning:#946022; --error:#AA3F4B;
-  --toast-bg:#FAF9F6; --toast-border:#E6B895; --toast-text:#654834;
+  --toast-bg:#FAF9F6; --toast-border:#E6B895; --toast-text:#111111;
   --error-bg:#FFF2F3; --error-border:#E6C5CA; --error-text:#9B4653;
   --success-bg:#EDF6F2; --success-border:#BADACE; --success-text:#32644F;
   --surface-wash:#F7F7F3; --surface-wash-soft:#F7F7F3; --hover-wash:#EBEEE6;
@@ -24,9 +24,9 @@
   --accent-halo:#F26A2120; --focus-ring:#F26A2180;
   --shadow-panel:#454A3D08; --shadow-control:#454A3D14; --shadow-thumb:#454A3D20; --shadow-dialog:#454A3D2B;
   --overlay:#42483E44;
-  --chart-grid:#DDE2D8; --chart-zero:#98A28F; --chart-axis:#515A51; --chart-fill:#F26A21;
+  --chart-grid:#DDE2D8; --chart-zero:#7B8277; --chart-axis:#111111; --chart-fill:#F26A21;
   --chart-line-start:#F26A21; --chart-line-mid:#F26A21; --chart-line-end:#CE5216;
-  --chart-measured:#5B7468; --chart-label:#80350E; --chart-marker:#FFFFFF; --chart-halo:#F26A2126;
+  --chart-measured:#5B7468; --chart-label:#000000; --chart-marker:#FFFFFF; --chart-halo:#F26A2126;
   --font:-apple-system,BlinkMacSystemFont,"Segoe UI","Malgun Gothic",sans-serif;
   color-scheme:light;
 }
@@ -100,3 +100,60 @@ input[type=number]{appearance:textfield;-moz-appearance:textfield}input[type=num
 .apply-button:disabled{background:var(--surface-hover);border-color:#B8C0B5;color:#55614F;opacity:1;box-shadow:none}
 .apply-button:not(:disabled){box-shadow:0 3px 10px var(--accent-halo)}
 .checkbox-mark{border-color:var(--hover-border)}
+
+/* Larger black typography and defined outlines for controls and sections. */
+body{font-weight:500}
+.page-heading h1{font-size:32px;font-weight:750;letter-spacing:-1px}
+.page-heading p,.profile-intro p{font-size:12px;font-weight:500;line-height:1.65}
+.profile-intro h2{font-size:24px;font-weight:750}
+.eyebrow,.section-kicker,.sidebar-heading{font-size:11px;font-weight:700}
+.preset-name{font-size:14px;font-weight:750}
+.preset-caption{font-size:11px;font-weight:550;line-height:1.4}
+.library-count,.brand-tagline,.sidebar-footer,.topbar-caption{font-size:9px;font-weight:600}
+.breadcrumb,.breadcrumb>span:last-child{font-size:11px;font-weight:600}
+.device-copy strong,.device-copy>span{font-size:11px;font-weight:650}
+.chart-legend,.subtle-checkbox,.chart-bottom{font-size:11px;font-weight:600}
+.controls-title h3{font-size:14px;font-weight:750}
+.controls-hint,.controls-actions>.text-button,.switch-label,.controls-footnote,.controls-footnote>span:last-child{font-size:11px;font-weight:550}
+.band-number,.band-scale,.band-frequency span,.band-frequency small,.band-gain span,.band-gain small{font-size:10px;font-weight:600}
+.band-frequency input,input.band-frequency,.band-gain input,input.band-gain{font-size:13px;font-weight:750;color:var(--text)}
+.band-q,.band-advanced{font-size:11px;font-weight:600}
+.band-q input,input.band-q,.band-filter select,select.band-filter{font-size:11px;font-weight:650}
+.apply-copy strong{font-size:14px;font-weight:750}
+.apply-copy p{font-size:12px;font-weight:500;line-height:1.6}
+.apply-button{font-size:14px;border-width:2px}
+.quiet-button,.secondary-button,.connect-button{font-size:12px;font-weight:650}
+.text-button{font-size:11px;font-weight:600}
+.bottom-caption{font-size:9px;font-weight:600}
+.equalizer-panel,.dialog{border:1.5px solid #777777}
+.apply-bar{border:1.5px solid #777777;border-left:4px solid var(--accent)}
+.device-card{border:1.5px solid #888888}
+.icon-button,.secondary-button,.connect-button{border-width:1.5px}
+.band-gain input,input.band-gain,.band-q input,input.band-q,.band-filter select,select.band-filter{border-width:1.5px}
+.band-column.selected,.band-column.is-selected{border:2px solid var(--accent)}
+.preset-item[aria-pressed=true],.preset-button[aria-pressed=true]{border-width:2px}
+.device-current{border-color:#888888}.device-current.unavailable{opacity:1}
+.apply-button:disabled{color:#252525;border-color:#858585}
+.settings-section h3{font-size:14px;font-weight:750}
+.settings-status,.help-text,.measurement-summary,.comparison-table{font-size:12px;font-weight:500}
+.comparison-table th,.measurement-upload>span,.measurement-upload strong,.measurement-upload input,.measurement-upload input::file-selector-button{font-size:11px;font-weight:600}
+.settings-footer{font-size:11px!important}
+.measurement-upload{border-color:#858585}
+@media(max-width:900px){
+ .preset-name{font-size:12px}.preset-caption{font-size:10px}
+ .page-heading h1{font-size:29px}.profile-intro h2{font-size:22px}
+ .page-heading p,.profile-intro p{font-size:11px}
+ .profile-intro p{max-width:360px}
+ .chart-bottom{font-size:10px}.controls-title h3{font-size:12px}
+ .controls-actions>.text-button,.switch-label,.controls-footnote,.controls-footnote>span:last-child{font-size:10px}
+ .apply-copy strong{font-size:12px}.apply-copy p{font-size:11px}.apply-button{font-size:12px}
+ .bottom-caption{font-size:8px}.band-number,.band-scale{font-size:10px}
+}
+@media(max-width:520px){
+ .profile-intro p{max-width:240px}.chart-legend,.subtle-checkbox{font-size:10px}
+ .controls-title h3{font-size:11px}.controls-actions{gap:8px}
+ .apply-copy p{max-width:190px}.apply-button{min-width:104px}
+ .band-frequency input,input.band-frequency,.band-gain input,input.band-gain{font-size:12px}
+ .settings-dialog{padding:20px}.settings-status{font-size:11px}
+ .bottom-caption{font-size:7px;letter-spacing:.2px}
+}

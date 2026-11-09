@@ -265,7 +265,7 @@ function drawGraph() {
   const range = Math.max(12, Math.min(96, Math.ceil(Math.max(0, state.peak.db) / 12) * 12));
   const x = f => left + Math.log10(f / 20) / 3 * (w - left - right), y = db => top + (range - db) / (range * 2) * (h - top - bottom);
   chartGeometry = { left, right, top, bottom, w, h, range, x, y };
-  ctx.font = '10px "Segoe UI", sans-serif'; ctx.lineWidth = 1;
+  ctx.font = '600 11px "Segoe UI", sans-serif'; ctx.lineWidth = 1;
   for (const level of [-range, -range / 2, 0, range / 2, range]) {
     ctx.setLineDash(level === 0 ? [] : [2, 5]); ctx.strokeStyle = level === 0 ? color('zero', '#c4c9d0') : color('grid', '#e6e8ec');
     ctx.beginPath(); ctx.moveTo(left, y(level)); ctx.lineTo(w - right, y(level)); ctx.stroke();
@@ -304,7 +304,7 @@ function drawGraph() {
     const px = x(f), py = y(responseAt(f, state.model)), active = i === state.activeBand;
     if (active) { ctx.beginPath(); ctx.arc(px, py, 10, 0, Math.PI * 2); ctx.fillStyle = color('halo', '#438bc41a'); ctx.fill(); }
     ctx.beginPath(); ctx.arc(px, py, active ? 4.5 : 3, 0, Math.PI * 2); ctx.fillStyle = color('marker', '#ffffff'); ctx.fill(); ctx.strokeStyle = colors[i]; ctx.lineWidth = active ? 2 : 1.4; ctx.stroke();
-    if (active) { ctx.fillStyle = color('label', '#49647d'); ctx.textAlign = 'center'; ctx.font = '10px "Segoe UI", sans-serif'; ctx.fillText(`${freqLabel(f)} Hz  ${formatDb(state.eq.gains[i])} dB`, Math.max(left + 48, Math.min(w - right - 48, px)), Math.max(top + 8, py - 19)); }
+    if (active) { ctx.fillStyle = color('label', '#49647d'); ctx.textAlign = 'center'; ctx.font = '600 11px "Segoe UI", sans-serif'; ctx.fillText(`${freqLabel(f)} Hz  ${formatDb(state.eq.gains[i])} dB`, Math.max(left + 48, Math.min(w - right - 48, px)), Math.max(top + 8, py - 19)); }
   });
   ctx.restore();
 }
