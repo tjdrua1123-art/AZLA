@@ -1,32 +1,32 @@
 @charset "UTF-8";
 
 :root {
-  --bg:#F0EEE9; --sidebar:#F7F6F2; --panel:#FAF9F6;
-  --line:#DDD9D1; --line-soft:#E5E1D9;
-  --text:#343631; --muted:#686C64; --dim:#787C74;
+  --bg:#F3F3F0; --sidebar:#F0EEE9; --panel:#FFFFFF;
+  --line:#CBCDC7; --line-soft:#DDDFD8;
+  --text:#292E29; --muted:#515A51; --dim:#606A60;
   --accent:#F26A21; --accent-bright:#A44716; --accent-fill:#F9A66C; --mint:#5B7468;
-  --surface:#FAF9F6; --surface-raised:#F3F1EC; --surface-hover:#EEEAE2; --surface-subtle:#F7F6F2;
-  --text-strong:#2F332E; --text-secondary:#51574F; --text-quiet:#787C74;
-  --sidebar-start:#F7F6F2; --sidebar-end:#F0EEE9;
-  --selected-start:#F9A66C; --selected-end:#F9A66C; --selected-border:#E69860; --selected-text:#54321F;
-  --input-bg:#FAF9F6; --input-border:#D8D3C9; --hover-border:#B6AEA0; --focus-border:#F26A21;
-  --slider-tick:#D8D3C9; --slider-track-top:#E6B895; --slider-track-mid:#E8CDB6; --slider-track-bottom:#E6E0D6;
-  --slider-thumb-start:#FAF9F6; --slider-thumb-mid:#FFFFFF; --slider-thumb-border:#B7AA9A;
-  --primary:#F9A66C; --primary-hover:#F7B98C; --primary-border:#E69860; --on-primary:#432E20;
+  --surface:#FFFFFF; --surface-raised:#F6F6F3; --surface-hover:#EAECE6; --surface-subtle:#FAFAF7;
+  --text-strong:#232923; --text-secondary:#3F493F; --text-quiet:#606A60;
+  --sidebar-start:#F5F4F0; --sidebar-end:#F0EEE9;
+  --selected-start:#FFF1E6; --selected-end:#FFF1E6; --selected-border:#F26A21; --selected-text:#80350E;
+  --input-bg:#FAF9F6; --input-border:#B8C0B5; --hover-border:#788875; --focus-border:#F26A21;
+  --slider-tick:#BDC5B9; --slider-track-top:#899783; --slider-track-mid:#A8B2A1; --slider-track-bottom:#CDD3C6;
+  --slider-thumb-start:#FAF9F6; --slider-thumb-mid:#FFFFFF; --slider-thumb-border:#798974;
+  --primary:#F26A21; --primary-hover:#F9A66C; --primary-border:#CE5216; --on-primary:#352014;
   --badge-bg:#FFF1E6; --badge-border:#F9A66C; --badge-text:#754320;
-  --switch-track:#CFCEC5; --switch-knob:#FAF9F6; --switch-active:#F9A66C;
+  --switch-track:#B6BFB0; --switch-knob:#FAF9F6; --switch-active:#F26A21;
   --warning:#946022; --error:#AA3F4B;
   --toast-bg:#FAF9F6; --toast-border:#E6B895; --toast-text:#654834;
   --error-bg:#FFF2F3; --error-border:#E6C5CA; --error-text:#9B4653;
   --success-bg:#EDF6F2; --success-border:#BADACE; --success-text:#32644F;
-  --surface-wash:#F0EEE9; --surface-wash-soft:#F4F2ED; --hover-wash:#EDE9E1;
-  --line-wash:#D8D3C980; --accent-wash:#F9A66C26; --accent-wash-soft:#F9A66C0D; --accent-border:#E7AD80;
-  --accent-halo:#F9A66C22; --focus-ring:#F26A2180;
+  --surface-wash:#F7F7F3; --surface-wash-soft:#F7F7F3; --hover-wash:#EBEEE6;
+  --line-wash:#BFC7BB99; --accent-wash:#FFF1E6; --accent-wash-soft:#FFFAF6; --accent-border:#F26A21;
+  --accent-halo:#F26A2120; --focus-ring:#F26A2180;
   --shadow-panel:#454A3D08; --shadow-control:#454A3D14; --shadow-thumb:#454A3D20; --shadow-dialog:#454A3D2B;
   --overlay:#42483E44;
-  --chart-grid:#E5E1D9; --chart-zero:#BCB9AF; --chart-axis:#686C64; --chart-fill:#F9A66C;
-  --chart-line-start:#F9A66C; --chart-line-mid:#E78947; --chart-line-end:#D5783C;
-  --chart-measured:#5B7468; --chart-label:#754B31; --chart-marker:#FAF9F6; --chart-halo:#F9A66C2B;
+  --chart-grid:#DDE2D8; --chart-zero:#98A28F; --chart-axis:#515A51; --chart-fill:#F26A21;
+  --chart-line-start:#F26A21; --chart-line-mid:#F26A21; --chart-line-end:#CE5216;
+  --chart-measured:#5B7468; --chart-label:#80350E; --chart-marker:#FFFFFF; --chart-halo:#F26A2126;
   --font:-apple-system,BlinkMacSystemFont,"Segoe UI","Malgun Gothic",sans-serif;
   color-scheme:light;
 }
@@ -67,27 +67,36 @@ input[type=number]{appearance:textfield;-moz-appearance:textfield}input[type=num
 @media(max-width:900px){.preset-caption{font-size:9px}.chart-bottom{font-size:8px}.band-number{font-size:9px}.band-frequency input,input.band-frequency{font-size:10px}.band-frequency span,.band-frequency small,.band-gain span,.band-gain small{font-size:9px}.controls-footnote{font-size:8px}.controls-footnote>span:last-child{font-size:8px}.bottom-caption{font-size:7px}}
 
 /* Brand finish: preserve the existing layout and all control dimensions. */
-.preset-item.active,.preset-button.active,.preset-item[aria-pressed=true],.preset-button[aria-pressed=true]{box-shadow:inset 3px 0 0 var(--selected-border)}
+.preset-item.active,.preset-button.active,.preset-item[aria-pressed=true],.preset-button[aria-pressed=true]{box-shadow:inset 4px 0 0 var(--accent)}
 .equalizer-panel{background:var(--surface);box-shadow:0 12px 38px var(--shadow-panel)}
 .apply-bar{background:var(--surface);border-color:var(--line)}
 .primary-button:not(:disabled){box-shadow:0 2px 5px var(--shadow-control)}
 .brand-tagline{color:var(--text-secondary)}
 @media(max-width:900px){.brand-wordmark{width:140px;height:44px;padding:12px}.brand-logo{width:100%;height:auto}}
 
-/* Cloud-white surfaces with peach selection and quiet sage measurement accents. */
+/* Distinct white panels and orange actions on a restrained warm background. */
 .band-gain input,input.band-gain{color:var(--text-secondary)}
-.band-column.selected .gain-slider,.band-column.is-selected .gain-slider{background:linear-gradient(180deg,var(--accent-fill),var(--accent-fill))}
+.band-column.selected .gain-slider,.band-column.is-selected .gain-slider{background:var(--accent)}
 .band-column.selected .gain-slider::-webkit-slider-thumb,.band-column.is-selected .gain-slider::-webkit-slider-thumb{border-color:var(--accent)}
 .band-column.selected .gain-slider::-moz-range-thumb,.band-column.is-selected .gain-slider::-moz-range-thumb{border-color:var(--accent)}
 .connect-button{border-color:var(--line);color:var(--text-secondary)}
 .connect-button:hover{border-color:var(--selected-border);color:var(--selected-text)}
 
-/* Soft material finish; dimensions and interactions stay unchanged. */
+/* Clear control states; dimensions and interactions stay unchanged. */
 .controls-section{background:var(--surface-wash)}
-.band-column.selected,.band-column.is-selected{background:linear-gradient(180deg,#F9A66C33,#F9A66C12)}
-.band-column.selected .gain-slider::-webkit-slider-thumb,.band-column.is-selected .gain-slider::-webkit-slider-thumb{background:var(--accent-fill);border-color:var(--selected-border)}
-.band-column.selected .gain-slider::-moz-range-thumb,.band-column.is-selected .gain-slider::-moz-range-thumb{background:var(--accent-fill);border-color:var(--selected-border)}
-.apply-bar{background:linear-gradient(110deg,var(--surface),#FFF1E6);border-color:var(--line)}
-.apply-symbol{background:#F9A66C24;border-color:#F9A66C66;color:var(--selected-text)}
+.band-column.selected,.band-column.is-selected{background:linear-gradient(180deg,#FFF1E6,#FFFFFF);border-color:var(--accent)}
+.band-column.selected .gain-slider::-webkit-slider-thumb,.band-column.is-selected .gain-slider::-webkit-slider-thumb{background:var(--accent);border-color:var(--primary-border)}
+.band-column.selected .gain-slider::-moz-range-thumb,.band-column.is-selected .gain-slider::-moz-range-thumb{background:var(--accent);border-color:var(--primary-border)}
+.apply-bar{background:var(--surface);border-color:var(--line);border-left:4px solid var(--accent)}
+.apply-symbol{background:#FFF1E6;border-color:#F9A66C;color:var(--accent-bright)}
 .heading-decoration{opacity:.65}.heading-decoration span{background:var(--accent-fill)}
 .primary-button:disabled{background:var(--surface-hover);border-color:var(--line);color:var(--muted);opacity:.85}
+
+/* Make the primary workflow and editable fields easy to identify at a glance. */
+.controls-title h3,.band-frequency input,.band-gain input{font-weight:650}
+.band-gain input,input.band-gain,.band-q input,input.band-q,.band-filter select,select.band-filter{background:var(--input-bg);border-color:var(--input-border)}
+.band-column.selected .band-gain input,.band-column.is-selected .band-gain input{color:var(--selected-text);border-color:var(--accent);background:#FFF1E6}
+.connect-button{background:#FFF1E6;border-color:var(--accent);color:var(--selected-text);font-weight:650}
+.apply-button:disabled{background:var(--surface-hover);border-color:#B8C0B5;color:#55614F;opacity:1;box-shadow:none}
+.apply-button:not(:disabled){box-shadow:0 3px 10px var(--accent-halo)}
+.checkbox-mark{border-color:var(--hover-border)}
