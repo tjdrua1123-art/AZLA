@@ -26,7 +26,7 @@ export function restore(storage) {
       const previous = JSON.parse(storage.getItem('azla_equalizer_v4') || 'null');
       advanced = previous?.advanced === true;
     }
-  } catch { /* use a fresh FLAT screen */ }
+  } catch { /* use a fresh 기본 사운드 screen */ }
 
   for (const key of OBSOLETE_KEYS) {
     try { storage.removeItem?.(key); } catch { /* never restore removed save formats */ }

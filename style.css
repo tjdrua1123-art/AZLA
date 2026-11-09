@@ -157,3 +157,9 @@ body{font-weight:500}
  .settings-dialog{padding:20px}.settings-status{font-size:11px}
  .bottom-caption{font-size:7px;letter-spacing:.2px}
 }
+
+/* Keep earphone guidance prominent, with its own row on small screens. */
+.chart-bottom{flex-wrap:wrap;align-items:center;gap:8px 16px;padding-top:8px}
+.chart-bottom #modelLabel{flex:1 1 360px;min-width:0;max-width:none;font-size:14px;font-weight:700;line-height:1.65;color:#000000}
+.chart-bottom .peak-label{margin-left:auto}
+@media(max-width:900px){.chart-bottom #modelLabel{flex-basis:100%;font-size:13px}.chart-bottom .peak-label{font-size:11px}}

@@ -3,7 +3,7 @@
   "presets": [
     {
       "id": "flat",
-      "name": "FLAT",
+      "name": "기본 사운드",
       "category": "REFERENCE",
       "description": "원래의 소리를 그대로. 모든 밴드 0 dB.",
       "icon": "flat",

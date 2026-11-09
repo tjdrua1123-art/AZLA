@@ -30,7 +30,7 @@ const preset = (id, name, category, description, icon, gains, options) => ({
 
 /** Every preset is an editable starting point; none is a measured correction. */
 export const PRESETS = [
-  preset('flat', 'FLAT', 'REFERENCE', '원래의 소리를 그대로. 모든 밴드 0 dB.', 'flat', Array(BANDS).fill(0), {tag: 13}),
+  preset('flat', '기본 사운드', 'REFERENCE', '원래의 소리를 그대로. 모든 밴드 0 dB.', 'flat', Array(BANDS).fill(0), {tag: 13}),
   preset('fps-immersive', 'FPS 몰입', 'FPS', '폭발·엔진 저음을 강하게 낮추고 발소리와 장전음을 앞으로 가져옵니다.', 'crosshair',
     [-7,-6,-3,-3,0,3,3,4,-2,2], {tag: 11}),
   preset('fps-clarity', 'FPS 선명', 'FPS', '저음의 부담을 줄이고 발소리와 효과음의 구분을 돕습니다.', 'gamepad',

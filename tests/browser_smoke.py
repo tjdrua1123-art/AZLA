@@ -48,11 +48,11 @@ with sync_playwright() as p:
     page.wait_for_selector('.band-column')
     assert page.locator('.band-column').count() == 10
     assert page.locator('[data-preset]').count() == 7
-    assert page.locator('[data-preset] .preset-name').all_text_contents() == ['FLAT','FPS 몰입','FPS 선명','FPS 발소리','음악 보컬','음악 밸런스','영화']
+    assert page.locator('[data-preset] .preset-name').all_text_contents() == ['기본 사운드','FPS 몰입','FPS 선명','FPS 발소리','음악 보컬','음악 밸런스','영화']
     assert page.locator('.band-filter select').first.locator('option[value="3"]').inner_text() == 'HIGH SHELF'
     assert page.locator('[data-current-state]').count() == 1
     assert page.locator('[data-current-state]').inner_text().startswith('현재 상태')
-    assert page.locator('#profileName').inner_text() == 'FLAT'
+    assert page.locator('#profileName').inner_text() == '기본 사운드'
     assert page.locator('[data-preset="flat"]').get_attribute('aria-pressed') == 'true'
     assert page.locator('#profileBadge').count() == 0
     for selector in ['#savePresetBtn','#saveDialog','#importBtn','#exportBtn','#importInput']:
@@ -79,7 +79,7 @@ with sync_playwright() as p:
     q.fill('1.13'); q.press('Tab')
     assert q.input_value() == '1.13'
     page.reload(); page.wait_for_selector('.band-column')
-    assert page.locator('#profileName').inner_text() == 'FLAT'
+    assert page.locator('#profileName').inner_text() == '기본 사운드'
     assert page.locator('#advancedToggle').is_checked()
     assert all(v == '0' for v in page.locator('.band-gain input').evaluate_all('(els)=>els.map(x=>x.value)'))
     assert all(v == '0.75' for v in page.locator('.band-q input').evaluate_all('(els)=>els.map(x=>x.value)'))
@@ -94,7 +94,7 @@ with sync_playwright() as p:
     page.locator('#closeSettingsBtn').click()
     page.locator('#flatBtn').click()
     assert not errors, errors
-    print('PASS: seven modes, requested bands, manual reset, removed user saves, FLAT restart, Q input, REW comparison')
+    print('PASS: seven modes, requested bands, manual reset, removed user saves, 기본 사운드 restart, Q input, REW comparison')
     context.close()
 
     context = browser.new_context(viewport={'width':1440,'height':1000})
@@ -106,7 +106,7 @@ with sync_playwright() as p:
     page.locator('#connectBtn').click()
     page.wait_for_function("!document.querySelector('#applyBtn').disabled")
     assert page.locator('[data-current-state]').inner_text().startswith('현재 상태')
-    assert 'FLAT' in page.locator('[data-current-state]').inner_text()
+    assert '기본 사운드' in page.locator('[data-current-state]').inner_text()
     assert page.evaluate('window.__writes.map(x=>x.bytes)') == [[128,9,0]]
     page.locator('[data-preset="fps-immersive"]').click()
     page.locator('#applyBtn').click()

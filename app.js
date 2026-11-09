@@ -355,7 +355,7 @@ $('advancedToggle').checked = state.advanced;
 $('advancedToggle').addEventListener('change', event => { state.advanced = event.target.checked; $('bandControls').classList.toggle('advanced-visible', state.advanced); saveLocal(); scheduleDraw(); });
 $('showBands').addEventListener('change', scheduleDraw);
 $('resetBtn').addEventListener('click', () => { state.eq = cloneEq(state.baseEq); state.selected = state.baseSelected; state.error = null; refresh(true); saveLocal(); });
-$('flatBtn').addEventListener('click', () => { const flat = PRESETS.find(profile => profile.id === 'flat').eq; state.eq = cloneEq(flat); state.baseEq = cloneEq(flat); state.selected = 'flat'; state.baseSelected = 'flat'; state.error = null; refresh(true); saveLocal(); toast('FLAT 기준값으로 초기화했습니다.'); });
+$('flatBtn').addEventListener('click', () => { const flat = PRESETS.find(profile => profile.id === 'flat').eq; state.eq = cloneEq(flat); state.baseEq = cloneEq(flat); state.selected = 'flat'; state.baseSelected = 'flat'; state.error = null; refresh(true); saveLocal(); toast('기본 사운드 기준값으로 초기화했습니다.'); });
 $('settingsBtn').addEventListener('click', () => { $('settingsDialog').showModal(); renderComparison(); });
 $('closeSettingsBtn').addEventListener('click', () => $('settingsDialog').close());
 $('exportLogBtn').addEventListener('click', () => download('AZLA-Diagnostics.json', { ...controller.diagnostics(), discoveredDevice, preview: state.eq, model: state.model.source, presetReference: PRESET_REFERENCE }));
