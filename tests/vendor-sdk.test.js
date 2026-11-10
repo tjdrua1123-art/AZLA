@@ -11,7 +11,7 @@ import { createHash } from 'node:crypto';
 import {
   generateRamPlan, generatePlan, sdkGraphModel, DeviceController, TIMING, DISCOVERY_VIDS
 } from '../src/device.js';
-import { PRESETS, cloneEq, buildAnalyticModel, responseAt } from '../src/eq.js';
+import { PRESETS, cloneEq, buildAnalyticModel, responseAt, peakResponse } from '../src/eq.js';
 
 const source = readFileSync(new URL('../sdk/walk-play-web-eq-sdk.umd.js', import.meta.url), 'utf8');
 const quiet = Object.fromEntries(['log','debug','warn','error','info'].map(method => [method, () => {}]));
@@ -103,6 +103,7 @@ test('all five production modes produce finite real-SDK models agreeing with PEA
     const eq = cloneEq(preset.eq);
     const packets = await generateRamPlan(SDK, eq);
     const actual = sdkGraphModel(packets, eq), analytic = buildAnalyticModel(eq);
+    assert.ok(peakResponse(actual).db <= 5.5, `${preset.id}: SDK response must stay below the warning with margin`);
     for (let i = 0; i <= 128; i++) {
       const f = 20 * 1000 ** (i / 128);
       const value = responseAt(f, actual);

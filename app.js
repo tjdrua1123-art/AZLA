@@ -387,7 +387,7 @@ async function initialize() {
   $('supportStatus').textContent = window.isSecureContext && navigator.hid ? 'WebHID 지원' : 'Windows Chrome / Edge 필요';
   $('sdkStatus').textContent = SDK?.default ? '원본 SDK 준비됨' : '제조사 SDK 본체 추가 필요';
   $('connectionHelp').textContent = [!SDK?.default ? '제조사 SDK 본체가 아직 포함되지 않았습니다.' : '', connectionMode === 'manufacturer' ? '기존 프로그램과 같은 장치 검색 방식을 사용합니다. 사용 중인 AZLA DAC를 선택해 주세요.' : !devices.length ? '최종 제품의 USB 식별 정보 등록이 필요합니다.' : '', configError ? '장치 설정 파일을 읽을 수 없습니다.' : '', 'EQ 적용을 누르면 현재 설정 1개를 기기에 저장합니다.'].filter(Boolean).join(' ');
-  const note = document.createElement('p'); note.className = 'help-text preset-reference-note'; note.textContent = `${PRESET_REFERENCE}. FPS·보컬·영화는 제조사 설정값을 참고하고 Q를 1.4로 통일했습니다. 음악 밸런스는 별도 완만한 튜닝이며, 사용하는 이어폰에 맞게 조절해 주세요.`;
+  const note = document.createElement('p'); note.className = 'help-text preset-reference-note'; note.textContent = `${PRESET_REFERENCE}. 제조사 설정값을 참고하고 Q를 1.4로 통일했으며, FPS·영화는 합성 상승을 줄이도록 양의 게인을 80%로 조정했습니다. 음악 밸런스는 별도 완만한 튜닝이며, 사용하는 이어폰에 맞게 조절해 주세요.`;
   $('settingsDialog').querySelector('.settings-section').append(note);
   const discoverRow = document.createElement('div'); discoverRow.className = 'discovery-row';
   const inspect = document.createElement('button'); inspect.type = 'button'; inspect.id = 'inspectDeviceBtn'; inspect.className = 'secondary-button'; inspect.textContent = '연결된 장치 확인';

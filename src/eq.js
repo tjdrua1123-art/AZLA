@@ -2,6 +2,7 @@
  * AZLA EQ data and offline response model.
  * Analytic curves are previews, not vendor coefficients or acoustic measurements.
  * Starting points follow manufacturer preset screenshots with Q fixed to 1.4.
+ * FPS/cinema positive gains are scaled to 80% to keep combined peaks below 6 dB.
  * They are not measured corrections for any particular earphone.
  */
 export const BANDS = 10;
@@ -12,7 +13,7 @@ export const SAMPLE_RATE = 96000;
 export const FILTERS = Object.freeze({
   1: 'LOW SHELF', 2: 'PEAK', 3: 'HIGH SHELF', 4: 'LOW PASS', 5: 'HIGH PASS'
 });
-export const PRESET_REFERENCE = '제조사 프리셋 화면 기반 · 공통 Q 1.4 적용 · 이어폰별 조절 필요';
+export const PRESET_REFERENCE = '제조사 프리셋 화면 기반 · 공통 Q 1.4 · FPS/영화 부스트 80% 조정 · 이어폰별 조절 필요';
 
 function makeEq(gains = Array(BANDS).fill(0), options = {}) {
   return {
@@ -33,13 +34,13 @@ const preset = (id, name, category, description, icon, gains, options) => ({
 export const PRESETS = [
   preset('flat', '기본 모드', 'REFERENCE', '원래의 소리를 그대로. 모든 밴드 0 dB.', 'flat', Array(BANDS).fill(0), {tag: 13}),
   preset('fps', 'FPS 모드', 'FPS', '극저음을 줄이고 중역과 효과음의 선명도를 강조합니다.', 'crosshair',
-    [-7,5,4,3,4,4,3.5,4,3,1], {tag: 11, freqs: MANUFACTURER_FREQUENCIES}),
+    [-7,4,3.2,2.4,3.2,3.2,2.8,3.2,2.4,0.8], {tag: 11, freqs: MANUFACTURER_FREQUENCIES}),
   preset('vocal', '음악 보컬', '음악', '저음과 초고역을 정리하고 목소리의 중역을 앞으로 가져옵니다.', 'mic',
     [-3,-2,-3,-3,3,2,4,4,-1,-2], {tag: 16}),
   preset('music-balanced', '음악 밸런스', '음악', '중역은 유지하면서 저음과 고음을 부드럽게 보완합니다.', 'music',
     [1.5,1.5,0.5,0,0,0,0,0.5,0.5,1], {tag: 12, reference: '자체 조정 음악 밸런스 · 중역 유지와 완만한 저·고역 보완'}),
   preset('cinema', '영화', '영화', '저음의 웅장함과 대사·효과음의 선명도를 함께 살립니다.', 'film',
-    [3,4,5,2,0,4,2,4.5,2,2], {tag: 20, freqs: MANUFACTURER_FREQUENCIES})
+    [2.4,3.2,4,1.6,0,3.2,1.6,3.6,1.6,1.6], {tag: 20, freqs: MANUFACTURER_FREQUENCIES})
 ];
 for (const entry of PRESETS) {
   for (const value of Object.values(entry.eq)) if (Array.isArray(value)) Object.freeze(value);

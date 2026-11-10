@@ -75,16 +75,16 @@ test('five production sound modes use the requested bands, gains and shared 1.4 
   assert.ok(QS.every(q=>q===1.4));
   const expected={
     flat:[0,0,0,0,0,0,0,0,0,0],
-    fps:[-7,5,4,3,4,4,3.5,4,3,1],
+    fps:[-7,4,3.2,2.4,3.2,3.2,2.8,3.2,2.4,0.8],
     vocal:[-3,-2,-3,-3,3,2,4,4,-1,-2],
     'music-balanced':[1.5,1.5,0.5,0,0,0,0,0.5,0.5,1],
-    cinema:[3,4,5,2,0,4,2,4.5,2,2]
+    cinema:[2.4,3.2,4,1.6,0,3.2,1.6,3.6,1.6,1.6]
   };
   for (const preset of PRESETS) {
     validateEq(preset.eq);
     assert.ok(Object.isFrozen(preset.eq.gains));
     assert.deepEqual(preset.eq.freqs,['fps','cinema'].includes(preset.id)?[50,125,250,500,1000,2000,4000,8000,11000,16000]:[31,62,125,250,500,1000,2000,4000,8000,16000]);
-    assert.ok(Number.isFinite(peakResponse(buildAnalyticModel(preset.eq)).db),preset.id);
+    assert.ok(peakResponse(buildAnalyticModel(preset.eq)).db<=5.5,`${preset.id}: leave margin below the 6 dB warning`);
     assert.ok(preset.eq.qs.every(q=>q===1.4),preset.id);
     assert.ok(preset.eq.filterTypes.every(type=>type===2),preset.id);
     assert.deepEqual(preset.eq.gains,expected[preset.id]);
@@ -94,8 +94,6 @@ test('five production sound modes use the requested bands, gains and shared 1.4 
     }
   }
   assert.ok(expected.fps[0]<0 && expected.fps[6]>0);
-  assert.ok(peakResponse(buildAnalyticModel(PRESETS.find(p=>p.id==='fps').eq)).db>6);
-  assert.ok(peakResponse(buildAnalyticModel(PRESETS.find(p=>p.id==='cinema').eq)).db>6);
   assert.ok(peakResponse(buildAnalyticModel(PRESETS.find(p=>p.id==='music-balanced').eq)).db<3);
   assert.ok(expected.vocal[6]>0 && expected.vocal[7]>0);
   assert.ok(expected['music-balanced'][0]>0 && expected.cinema[1]>0);
