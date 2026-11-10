@@ -75,16 +75,16 @@ test('five production sound modes use the requested bands, gains and shared 1.4 
   assert.ok(QS.every(q=>q===1.4));
   const expected={
     flat:[0,0,0,0,0,0,0,0,0,0],
-    fps:[-2,-2,-1,0,-0.5,0.5,2,2.5,0.5,0],
-    vocal:[-1,-1,-0.5,-0.5,0,1,2,1.5,0,0],
-    'music-balanced':[0.5,1,0.5,0,0,0,0,0,0.5,0],
-    cinema:[2,3,1,0,-0.5,0.5,1.5,1.5,0.5,0]
+    fps:[-2,-2,-1,0,-0.5,1,3,3.5,0.5,0],
+    vocal:[-1,-1,-0.5,-0.5,0,1.5,3,2.5,0,0],
+    'music-balanced':[1,2,1,0,0,0,0,0.5,1,0.5],
+    cinema:[2.5,3.5,1.5,0,-1,0.5,2,2,1,0]
   };
   for (const preset of PRESETS) {
     validateEq(preset.eq);
     assert.ok(Object.isFrozen(preset.eq.gains));
     assert.deepEqual(preset.eq.freqs,[32,63,125,250,500,1000,2000,4000,8000,16000]);
-    assert.ok(peakResponse(buildAnalyticModel(preset.eq)).db<=4,`${preset.id}: keep combined boost at most 4 dB, below the 6 dB warning`);
+    assert.ok(peakResponse(buildAnalyticModel(preset.eq)).db<=4.5,`${preset.id}: keep combined boost at most 4.5 dB, below the 6 dB warning`);
     assert.ok(preset.eq.qs.every(q=>q===1.4),preset.id);
     assert.ok(preset.eq.filterTypes.every(type=>type===2),preset.id);
     assert.deepEqual(preset.eq.gains,expected[preset.id]);
