@@ -19,12 +19,12 @@ function memoryStorage(initial={}) {
   };
 }
 
-test('a fresh launch always starts from the shared 기본 사운드 and Q 0.75 baseline',()=>{
+test('a fresh launch always starts from the shared 기본 모드 and Q 1.4 baseline',()=>{
   const storage=memoryStorage(),result=restore(storage);
   assert.equal(result.selected,'flat');assert.equal(result.advanced,false);
   assert.deepEqual(result.current,flat());
   assert.ok(result.current.gains.every(gain=>gain===0));
-  assert.ok(result.current.qs.every(q=>q===.75));
+  assert.ok(result.current.qs.every(q=>q===1.4));
   assert.deepEqual(storage.writes,[]);
 });
 
@@ -56,7 +56,7 @@ test('persist writes only the v5 UI preference and excludes EQ, names and device
   for(const forbidden of ['current','selected','presets','삭제 대상','secret','serial','device']) assert.ok(!storage.getItem('azla_equalizer_v5').includes(forbidden),forbidden);
 });
 
-test('blocked or malformed storage still returns 기본 사운드 without exposing old saves',()=>{
+test('blocked or malformed storage still returns 기본 모드 without exposing old saves',()=>{
   const malformed=memoryStorage({azla_equalizer_v5:'{"advanced":'}),first=restore(malformed);
   assert.deepEqual(first.current,flat());assert.equal(first.selected,'flat');assert.equal(first.advanced,false);
   const denied=restore({getItem(){throw new Error('blocked');},removeItem(){throw new Error('blocked');}});

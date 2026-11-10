@@ -48,12 +48,12 @@ with sync_playwright() as p:
     page.wait_for_selector('.band-column')
     assert page.locator('.band-column').count() == 10
     assert page.locator('.topbar, #settingsBtn, .sidebar-footer').count() == 0
-    assert page.locator('[data-preset]').count() == 7
-    assert page.locator('[data-preset] .preset-name').all_text_contents() == ['기본 사운드','FPS 몰입','FPS 선명','FPS 발소리','음악 보컬','음악 밸런스','영화']
+    assert page.locator('[data-preset]').count() == 5
+    assert page.locator('[data-preset] .preset-name').all_text_contents() == ['기본 모드','FPS 모드','음악 보컬','음악 밸런스','영화']
     assert page.locator('.band-filter select').first.locator('option[value="3"]').inner_text() == 'HIGH SHELF'
     assert page.locator('[data-current-state]').count() == 1
     assert page.locator('[data-current-state]').inner_text().startswith('현재 상태')
-    assert page.locator('#profileName').inner_text() == '기본 사운드'
+    assert page.locator('#profileName').inner_text() == '기본 모드'
     assert page.locator('[data-preset="flat"]').get_attribute('aria-pressed') == 'true'
     assert page.locator('#profileBadge').count() == 0
     for selector in ['#savePresetBtn','#saveDialog','#importBtn','#exportBtn','#importInput']:
@@ -61,11 +61,11 @@ with sync_playwright() as p:
     assert page.locator('text=삭제될 사용자 사운드').count() == 0
     for key in ['azla_equalizer_v4','azla_equalizer_v3','azla_cb5100_presets_v1']:
         assert page.evaluate('(key)=>localStorage.getItem(key)', key) is None
-    assert all(v == '0.75' for v in page.locator('.band-q input').evaluate_all('(els)=>els.map(x=>x.value)'))
+    assert all(v == '1.4' for v in page.locator('.band-q input').evaluate_all('(els)=>els.map(x=>x.value)'))
     assert page.locator('#applyBtn').is_disabled()
-    assert page.locator('.band-frequency input').evaluate_all('(els)=>els.map(x=>Number(x.value))') == [31,63,125,250,500,1000,2000,4000,8000,11000]
-    page.locator('[data-preset="fps-immersive"]').click()
-    assert page.locator('#profileName').inner_text() == 'FPS 몰입'
+    assert page.locator('.band-frequency input').evaluate_all('(els)=>els.map(x=>Number(x.value))') == [31,62,125,250,500,1000,2000,4000,8000,16000]
+    page.locator('[data-preset="fps"]').click()
+    assert page.locator('#profileName').inner_text() == 'FPS 모드'
     assert page.locator('.band-frequency input').nth(4).input_value() == '500'
     gain = page.locator('.band-gain input').nth(4)
     gain.fill('2.5')
@@ -73,17 +73,17 @@ with sync_playwright() as p:
     assert page.locator('#profileName').inner_text() == '직접 조절'
     assert page.locator('.gain-slider').nth(4).input_value() == '2.5'
     page.locator('#resetBtn').click()
-    assert page.locator('#profileName').inner_text() == 'FPS 몰입'
+    assert page.locator('#profileName').inner_text() == 'FPS 모드'
     assert page.locator('.band-gain input').nth(4).input_value() == '0'
     page.locator('#advancedToggle').check()
     q = page.locator('.band-q input').nth(0)
     q.fill('1.13'); q.press('Tab')
     assert q.input_value() == '1.13'
     page.reload(); page.wait_for_selector('.band-column')
-    assert page.locator('#profileName').inner_text() == '기본 사운드'
+    assert page.locator('#profileName').inner_text() == '기본 모드'
     assert page.locator('#advancedToggle').is_checked()
     assert all(v == '0' for v in page.locator('.band-gain input').evaluate_all('(els)=>els.map(x=>x.value)'))
-    assert all(v == '0.75' for v in page.locator('.band-q input').evaluate_all('(els)=>els.map(x=>x.value)'))
+    assert all(v == '1.4' for v in page.locator('.band-q input').evaluate_all('(els)=>els.map(x=>x.value)'))
     page.evaluate("document.querySelector('#settingsDialog').showModal()")
     assert 'SDK' in page.locator('#sdkStatus').inner_text()
     off = '\n'.join(f'{f} 100' for f in [20,50,100,200,500,1000,2000,5000,10000,20000])
@@ -95,7 +95,7 @@ with sync_playwright() as p:
     page.locator('#closeSettingsBtn').click()
     page.locator('#flatBtn').click()
     assert not errors, errors
-    print('PASS: seven modes, requested bands, manual reset, removed user saves, 기본 사운드 restart, Q input, REW comparison')
+    print('PASS: five modes, requested bands, manual reset, removed user saves, 기본 모드 restart, Q input, REW comparison')
     context.close()
 
     context = browser.new_context(viewport={'width':1440,'height':1000})
@@ -107,9 +107,9 @@ with sync_playwright() as p:
     page.locator('#connectBtn').click()
     page.wait_for_function("!document.querySelector('#applyBtn').disabled")
     assert page.locator('[data-current-state]').inner_text().startswith('현재 상태')
-    assert '기본 사운드' in page.locator('[data-current-state]').inner_text()
+    assert '기본 모드' in page.locator('[data-current-state]').inner_text()
     assert page.evaluate('window.__writes.map(x=>x.bytes)') == [[128,9,0]]
-    page.locator('[data-preset="fps-immersive"]').click()
+    page.locator('[data-preset="fps"]').click()
     page.locator('#applyBtn').click()
     assert page.locator('#connectBtn').is_disabled()
     assert page.locator('.gain-slider').nth(0).is_disabled()
@@ -125,7 +125,7 @@ with sync_playwright() as p:
     page.locator('[data-preset="flat"]').click()
     page.locator('[data-current-state]').click()
     assert page.locator('#profileName').inner_text() == '현재 상태'
-    assert page.locator('.band-gain input').nth(0).input_value() == '-7'
+    assert page.locator('.band-gain input').nth(0).input_value() == '-4'
     page.locator('.band-gain input').nth(0).fill('-1')
     page.locator('.band-gain input').nth(0).press('Tab')
     assert len(page.evaluate('window.__writes')) == 14

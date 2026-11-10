@@ -66,38 +66,35 @@ test('clones are independent and identity ignores incidental metadata',()=>{
   assert.notEqual(signature(eq),signature(copy));
 });
 
-test('seven production sound modes use the requested bands, gains and shared 0.75 Q baseline',()=>{
-  assert.equal(PRESETS.length,7);
-  assert.deepEqual(PRESETS.map(entry=>entry.id),['flat','fps-immersive','fps-clarity','footstep','vocal','music-balanced','cinema']);
-  assert.equal(new Set(PRESETS.map(x=>x.id)).size,7);
+test('five production sound modes use the requested bands, gains and shared 1.4 Q baseline',()=>{
+  assert.equal(PRESETS.length,5);
+  assert.deepEqual(PRESETS.map(entry=>entry.id),['flat','fps','vocal','music-balanced','cinema']);
+  assert.equal(new Set(PRESETS.map(x=>x.id)).size,5);
   assert.equal(FREQUENCIES.length,BANDS);assert.equal(QS.length,BANDS);
-  assert.deepEqual(FREQUENCIES,[31,63,125,250,500,1000,2000,4000,8000,11000]);
-  assert.ok(QS.every(q=>q===.75));
+  assert.deepEqual(FREQUENCIES,[31,62,125,250,500,1000,2000,4000,8000,16000]);
+  assert.ok(QS.every(q=>q===1.4));
   const expected={
     flat:[0,0,0,0,0,0,0,0,0,0],
-    'fps-immersive':[-7,-6,-3,-3,0,3,3,4,-2,2],
-    'fps-clarity':[-4,-4,-1,0,2,0,3,4,-2,3],
-    footstep:[-6,-5,-4,-2,3,3,3,4,-3,-3],
-    vocal:[0,-2,-2,0,3,3,3,0,0,0],
-    'music-balanced':[0,0,0,0,2,0,0,0,0,4],
-    cinema:[2,2,1,-2,0,3,3,0,0,3]
+    fps:[-4,-3,0,-2,0,1,4,3,-1,0],
+    vocal:[-1,0,-1,-2,0,0,3,4,0,2],
+    'music-balanced':[2,2,1,0,0,0,0,1,1,2],
+    cinema:[3,4,0,-1,0,1,3,2,1,2]
   };
   for (const preset of PRESETS) {
     validateEq(preset.eq);
     assert.ok(Object.isFrozen(preset.eq.gains));
     assert.ok(peakResponse(buildAnalyticModel(preset.eq)).db<=6, preset.id);
-    assert.ok(preset.eq.qs.every(q=>q===.75),preset.id);
+    assert.ok(preset.eq.qs.every(q=>q===1.4),preset.id);
     assert.ok(preset.eq.filterTypes.every(type=>type===2),preset.id);
     assert.deepEqual(preset.eq.gains,expected[preset.id]);
     if (preset.id!=='flat') {
-      assert.match(preset.reference,/초록·주황 측정 그래프/);
-      assert.ok(Math.max(...preset.eq.gains)-Math.min(...preset.eq.gains)>=3,preset.id);
+      assert.match(preset.reference,/10밴드 EQ 프리셋 추천 문서/);
+      assert.ok(preset.eq.gains.every(gain=>gain>=-4 && gain<=4),preset.id);
     }
   }
-  assert.ok(expected['fps-immersive'][0]<0&&expected['fps-immersive'][7]>0);
-  assert.ok(expected.footstep.slice(0,3).every(gain=>gain<0)&&expected.footstep.slice(4,8).every(gain=>gain>0));
-  assert.ok(expected.vocal.slice(4,7).every(gain=>gain>0));
-  assert.ok(expected['music-balanced'][9]>0&&expected.cinema[9]>0);
+  assert.ok(expected.fps[0]<0 && expected.fps[6]>0);
+  assert.ok(expected.vocal[6]>0 && expected.vocal[7]>0);
+  assert.ok(expected['music-balanced'][0]>0 && expected.cinema[1]>0);
 });
 
 test('REW parser accepts normal CSV/TXT headers, sorts and removes duplicates',()=>{

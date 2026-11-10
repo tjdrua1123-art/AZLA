@@ -349,7 +349,7 @@ async function loadMeasurement(kind, file) {
 $('advancedToggle').checked = state.advanced;
 $('advancedToggle').addEventListener('change', event => { state.advanced = event.target.checked; $('bandControls').classList.toggle('advanced-visible', state.advanced); saveLocal(); scheduleDraw(); });
 $('resetBtn').addEventListener('click', () => { state.eq = cloneEq(state.baseEq); state.selected = state.baseSelected; state.error = null; refresh(true); saveLocal(); });
-$('flatBtn').addEventListener('click', () => { const flat = PRESETS.find(profile => profile.id === 'flat').eq; state.eq = cloneEq(flat); state.baseEq = cloneEq(flat); state.selected = 'flat'; state.baseSelected = 'flat'; state.error = null; refresh(true); saveLocal(); toast('기본 사운드 기준값으로 초기화했습니다.'); });
+$('flatBtn').addEventListener('click', () => { const flat = PRESETS.find(profile => profile.id === 'flat').eq; state.eq = cloneEq(flat); state.baseEq = cloneEq(flat); state.selected = 'flat'; state.baseSelected = 'flat'; state.error = null; refresh(true); saveLocal(); toast('기본 모드 기준값으로 초기화했습니다.'); });
 $('closeSettingsBtn').addEventListener('click', () => $('settingsDialog').close());
 $('exportLogBtn').addEventListener('click', () => download('AZLA-Diagnostics.json', { ...controller.diagnostics(), discoveredDevice, preview: state.eq, model: state.model.source, presetReference: PRESET_REFERENCE }));
 $('rewOffInput').addEventListener('change', e => loadMeasurement('off', e.target.files[0]));
@@ -387,7 +387,7 @@ async function initialize() {
   $('supportStatus').textContent = window.isSecureContext && navigator.hid ? 'WebHID 지원' : 'Windows Chrome / Edge 필요';
   $('sdkStatus').textContent = SDK?.default ? '원본 SDK 준비됨' : '제조사 SDK 본체 추가 필요';
   $('connectionHelp').textContent = [!SDK?.default ? '제조사 SDK 본체가 아직 포함되지 않았습니다.' : '', connectionMode === 'manufacturer' ? '기존 프로그램과 같은 장치 검색 방식을 사용합니다. 사용 중인 AZLA DAC를 선택해 주세요.' : !devices.length ? '최종 제품의 USB 식별 정보 등록이 필요합니다.' : '', configError ? '장치 설정 파일을 읽을 수 없습니다.' : '', 'EQ 적용을 누르면 현재 설정 1개를 기기에 저장합니다.'].filter(Boolean).join(' ');
-  const note = document.createElement('p'); note.className = 'help-text preset-reference-note'; note.textContent = `${PRESET_REFERENCE}. 제공된 초록·주황 원음 응답의 상대적인 형태를 참고했으며, 원본 REW 수치 데이터에 맞춘 최종 제품 튜닝은 아닙니다.`;
+  const note = document.createElement('p'); note.className = 'help-text preset-reference-note'; note.textContent = `${PRESET_REFERENCE}. 제품 기본 응답이 대체로 평탄하다는 가정의 추천 시작값이며, 사용하는 이어폰에 맞게 조절해 주세요.`;
   $('settingsDialog').querySelector('.settings-section').append(note);
   const discoverRow = document.createElement('div'); discoverRow.className = 'discovery-row';
   const inspect = document.createElement('button'); inspect.type = 'button'; inspect.id = 'inspectDeviceBtn'; inspect.className = 'secondary-button'; inspect.textContent = '연결된 장치 확인';

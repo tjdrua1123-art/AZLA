@@ -97,8 +97,8 @@ test('real quantized PEAK filters reach the requested gain at their 96kHz center
   }
 });
 
-test('all seven production modes produce finite real-SDK models agreeing with PEAK preview', async () => {
-  assert.equal(PRESETS.length, 7);
+test('all five production modes produce finite real-SDK models agreeing with PEAK preview', async () => {
+  assert.equal(PRESETS.length, 5);
   for (const preset of PRESETS) {
     const eq = cloneEq(preset.eq);
     const packets = await generateRamPlan(SDK, eq);
