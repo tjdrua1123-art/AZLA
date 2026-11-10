@@ -47,6 +47,7 @@ with sync_playwright() as p:
     page.goto(BASE)
     page.wait_for_selector('.band-column')
     assert page.locator('.band-column').count() == 10
+    assert page.locator('.topbar, #settingsBtn, .sidebar-footer').count() == 0
     assert page.locator('[data-preset]').count() == 7
     assert page.locator('[data-preset] .preset-name').all_text_contents() == ['기본 사운드','FPS 몰입','FPS 선명','FPS 발소리','음악 보컬','음악 밸런스','영화']
     assert page.locator('.band-filter select').first.locator('option[value="3"]').inner_text() == 'HIGH SHELF'
@@ -83,7 +84,7 @@ with sync_playwright() as p:
     assert page.locator('#advancedToggle').is_checked()
     assert all(v == '0' for v in page.locator('.band-gain input').evaluate_all('(els)=>els.map(x=>x.value)'))
     assert all(v == '0.75' for v in page.locator('.band-q input').evaluate_all('(els)=>els.map(x=>x.value)'))
-    page.locator('#settingsBtn').click()
+    page.evaluate("document.querySelector('#settingsDialog').showModal()")
     assert 'SDK' in page.locator('#sdkStatus').inner_text()
     off = '\n'.join(f'{f} 100' for f in [20,50,100,200,500,1000,2000,5000,10000,20000])
     on = '\n'.join(f'{f} 102' for f in [20,50,100,200,500,1000,2000,5000,10000,20000])
@@ -137,7 +138,7 @@ with sync_playwright() as p:
     page = context.new_page()
     page.on('pageerror', lambda error: errors.append(str(error)))
     page.goto(BASE); page.wait_for_selector('.band-column')
-    page.locator('#settingsBtn').click()
+    page.evaluate("document.querySelector('#settingsDialog').showModal()")
     page.locator('#inspectDeviceBtn').click()
     page.wait_for_function("document.querySelector('#discoveredDevice').textContent.includes('0x3302')")
     assert page.evaluate('window.__writes.length') == 0

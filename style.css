@@ -168,7 +168,7 @@ body{font-weight:500}
 @media(min-width:901px){
  .app-shell{height:100dvh;min-height:0}
  .sidebar{height:100dvh}
- .main-content{display:flex;flex-direction:column;height:100dvh;min-height:0;padding-bottom:12px;--desktop-slider-height:clamp(72px,calc(30dvh - 180px),137px)}
+ .main-content{display:flex;flex-direction:column;height:100dvh;min-height:0;padding-bottom:12px;--desktop-slider-height:clamp(104px,calc(35dvh - 180px),180px)}
  .topbar,.page-heading,.apply-bar,.bottom-caption{flex-shrink:0}
  .topbar{height:44px}
  .page-heading{padding:14px 0}
@@ -195,4 +195,31 @@ body{font-weight:500}
  .controls-section{padding-top:10px;padding-bottom:8px}
  .band-column{padding-top:3px;padding-bottom:3px}
  .chart-section{min-height:174px}
+}
+
+/* Prominent device and apply actions, with the freed header space used by bands. */
+.device-card{padding:16px 12px 13px;background:#FFFFFF;border:2px solid var(--accent);box-shadow:0 0 0 3px #F9A66C33}
+.device-card-top{gap:8px}
+.device-copy strong{font-size:12px}.device-copy>span{font-size:11px}
+.connect-button{min-height:52px;padding:12px;font-size:15px;font-weight:750;border:2px solid var(--accent);border-radius:9px;background:#FFF1E6;color:#000000;box-shadow:0 3px 8px #F26A2120}
+.connect-button .icon{width:19px;height:19px}
+.connect-button:hover:not(:disabled){background:#F9A66C;border-color:#CE5216}
+.connect-button:focus-visible,.apply-button:focus-visible{outline:3px solid #111111;outline-offset:4px}
+.apply-bar{border:2px solid var(--accent);border-left-width:5px}
+.apply-button{min-width:180px;height:52px;padding:0 19px;border:3px solid #CE5216;border-radius:9px;font-size:16px;color:#000000;box-shadow:0 0 0 3px #F9A66C55,0 4px 12px #F26A2124}
+.apply-button:not(:disabled){background:var(--accent);box-shadow:0 0 0 3px #F9A66C55,0 4px 12px #F26A2133}
+.apply-button:hover:not(:disabled){background:#F9A66C;border-color:#CE5216}
+.apply-button:disabled{background:#F1F1EC;border:3px solid var(--accent);color:#333333;opacity:1;box-shadow:0 0 0 3px #F9A66C33}
+@media(min-width:901px){.sidebar{padding-bottom:22px}.page-heading{padding-top:20px}}
+@media(max-width:900px){
+ .device-card{top:14px;right:20px;padding:0;border:0;box-shadow:none;background:transparent}
+ .connect-button{min-height:48px;padding:10px 13px;font-size:14px}
+ .apply-button{min-width:130px;height:48px;font-size:14px}
+ .slider-shell,.gain-slider,.band-scale{height:170px}
+}
+@media(max-width:520px){
+ .device-card{right:15px;top:16px}
+ .apply-bar{padding:13px 10px;gap:8px}
+ .apply-button{min-width:108px;padding:0 12px;font-size:13px;gap:10px}
+ .apply-copy p{max-width:180px}
 }
