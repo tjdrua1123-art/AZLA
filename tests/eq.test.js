@@ -71,28 +71,30 @@ test('five production sound modes use the requested bands, gains and shared 1.4 
   assert.deepEqual(PRESETS.map(entry=>entry.id),['flat','fps','vocal','music-balanced','cinema']);
   assert.equal(new Set(PRESETS.map(x=>x.id)).size,5);
   assert.equal(FREQUENCIES.length,BANDS);assert.equal(QS.length,BANDS);
-  assert.deepEqual(FREQUENCIES,[31,62,125,250,500,1000,2000,4000,8000,16000]);
+  assert.deepEqual(FREQUENCIES,[32,63,125,250,500,1000,2000,4000,8000,16000]);
   assert.ok(QS.every(q=>q===1.4));
   const expected={
     flat:[0,0,0,0,0,0,0,0,0,0],
-    fps:[-7,4,3.2,2.4,3.2,3.2,2.8,3.2,2.4,0.8],
-    vocal:[-3,-2,-3,-3,3,2,4,4,-1,-2],
-    'music-balanced':[1.5,1.5,0.5,0,0,0,0,0.5,0.5,1],
-    cinema:[2.4,3.2,4,1.6,0,3.2,1.6,3.6,1.6,1.6]
+    fps:[-2,-2,-1,0,-0.5,0.5,2,2.5,0.5,0],
+    vocal:[-1,-1,-0.5,-0.5,0,1,2,1.5,0,0],
+    'music-balanced':[0.5,1,0.5,0,0,0,0,0,0.5,0],
+    cinema:[2,3,1,0,-0.5,0.5,1.5,1.5,0.5,0]
   };
   for (const preset of PRESETS) {
     validateEq(preset.eq);
     assert.ok(Object.isFrozen(preset.eq.gains));
-    assert.deepEqual(preset.eq.freqs,['fps','cinema'].includes(preset.id)?[50,125,250,500,1000,2000,4000,8000,11000,16000]:[31,62,125,250,500,1000,2000,4000,8000,16000]);
-    assert.ok(peakResponse(buildAnalyticModel(preset.eq)).db<=5.5,`${preset.id}: leave margin below the 6 dB warning`);
+    assert.deepEqual(preset.eq.freqs,[32,63,125,250,500,1000,2000,4000,8000,16000]);
+    assert.ok(peakResponse(buildAnalyticModel(preset.eq)).db<=4,`${preset.id}: keep combined boost at most 4 dB, below the 6 dB warning`);
     assert.ok(preset.eq.qs.every(q=>q===1.4),preset.id);
     assert.ok(preset.eq.filterTypes.every(type=>type===2),preset.id);
     assert.deepEqual(preset.eq.gains,expected[preset.id]);
     if (preset.id!=='flat') {
-      assert.match(preset.reference,preset.id==='music-balanced'?/자체 조정/:/제조사 프리셋/);
+      assert.match(preset.reference,/공개 음향 자료 기반 자체 설계/);
       assert.ok(preset.eq.gains.every(gain=>gain>=-12 && gain<=12),preset.id);
     }
   }
+  const fpsPeak = peakResponse(buildAnalyticModel(PRESETS.find(p=>p.id==='fps').eq));
+  assert.ok(fpsPeak.minDb >= -3, 'FPS must preserve low-end body instead of the old deep cut');
   assert.ok(expected.fps[0]<0 && expected.fps[6]>0);
   assert.ok(peakResponse(buildAnalyticModel(PRESETS.find(p=>p.id==='music-balanced').eq)).db<3);
   assert.ok(expected.vocal[6]>0 && expected.vocal[7]>0);
