@@ -163,3 +163,36 @@ body{font-weight:500}
 .chart-bottom #modelLabel{flex:1 1 360px;min-width:0;max-width:none;font-size:14px;font-weight:700;line-height:1.65;color:#000000}
 .chart-bottom .peak-label{margin-left:auto}
 @media(max-width:900px){.chart-bottom #modelLabel{flex-basis:100%;font-size:13px}.chart-bottom .peak-label{font-size:11px}}
+
+/* Reserve a desktop footer row so applying EQ never requires page scrolling. */
+@media(min-width:901px){
+ .app-shell{height:100dvh;min-height:0}
+ .sidebar{height:100dvh}
+ .main-content{display:flex;flex-direction:column;height:100dvh;min-height:0;padding-bottom:12px;--desktop-slider-height:clamp(72px,calc(30dvh - 180px),137px)}
+ .topbar,.page-heading,.apply-bar,.bottom-caption{flex-shrink:0}
+ .topbar{height:44px}
+ .page-heading{padding:14px 0}
+ .eyebrow{margin-bottom:5px}
+ .page-heading p{margin-top:5px}
+ .equalizer-panel{display:flex;flex-direction:column;flex:1 1 auto;min-height:0;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--hover-border) var(--surface-raised);scrollbar-gutter:stable}
+ .profile-header,.controls-section{flex:0 0 auto}
+ .profile-header{padding:14px 22px 6px}
+ .profile-topline{margin-bottom:4px}
+ .profile-intro p{margin-top:4px}
+ .chart-section{display:flex;flex-direction:column;flex:1 1 auto;min-height:180px;padding:4px 22px 10px}
+ .chart-wrap{flex:1 1 auto;height:auto;min-height:70px}
+ .controls-section{padding:12px 22px 10px}
+ .controls-heading{margin-bottom:8px}
+ .controls-footnote{padding-top:7px;margin-top:2px}
+ .slider-shell,.gain-slider,.band-scale{height:var(--desktop-slider-height)}
+ .slider-shell:before,.slider-shell:after{background:repeating-linear-gradient(to bottom,var(--slider-tick) 0,var(--slider-tick) 1px,transparent 1px,transparent calc(var(--desktop-slider-height)/12))}
+ .apply-bar{position:relative;z-index:1;margin-top:12px}
+ .bottom-caption{margin-top:8px}
+}
+@media(max-height:820px) and (min-width:901px){
+ .page-heading{padding:10px 0}
+ .profile-header{padding-top:12px}
+ .controls-section{padding-top:10px;padding-bottom:8px}
+ .band-column{padding-top:3px;padding-bottom:3px}
+ .chart-section{min-height:174px}
+}
