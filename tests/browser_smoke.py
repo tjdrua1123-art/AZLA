@@ -66,7 +66,8 @@ with sync_playwright() as p:
     assert page.locator('.band-frequency input').evaluate_all('(els)=>els.map(x=>Number(x.value))') == [31,62,125,250,500,1000,2000,4000,8000,16000]
     page.locator('[data-preset="fps"]').click()
     assert page.locator('#profileName').inner_text() == 'FPS 모드'
-    assert page.locator('.band-frequency input').nth(4).input_value() == '500'
+    assert page.locator('.band-frequency input').nth(4).input_value() == '1000'
+    assert page.locator('.band-frequency input').evaluate_all('(els)=>els.map(x=>Number(x.value))') == [50,125,250,500,1000,2000,4000,8000,11000,16000]
     gain = page.locator('.band-gain input').nth(4)
     gain.fill('2.5')
     gain.press('Tab')
@@ -74,7 +75,7 @@ with sync_playwright() as p:
     assert page.locator('.gain-slider').nth(4).input_value() == '2.5'
     page.locator('#resetBtn').click()
     assert page.locator('#profileName').inner_text() == 'FPS 모드'
-    assert page.locator('.band-gain input').nth(4).input_value() == '0'
+    assert page.locator('.band-gain input').nth(4).input_value() == '4'
     page.locator('#advancedToggle').check()
     q = page.locator('.band-q input').nth(0)
     q.fill('1.13'); q.press('Tab')
@@ -111,6 +112,9 @@ with sync_playwright() as p:
     assert page.evaluate('window.__writes.map(x=>x.bytes)') == [[128,9,0]]
     page.locator('[data-preset="fps"]').click()
     page.locator('#applyBtn').click()
+    assert page.locator('#riskDialog').is_visible()
+    assert len(page.evaluate('window.__writes')) == 1, 'No EQ writes before confirming the clipping warning'
+    page.locator('#confirmRiskBtn').click()
     assert page.locator('#connectBtn').is_disabled()
     assert page.locator('.gain-slider').nth(0).is_disabled()
     page.wait_for_function("document.querySelector('#applyStatus').textContent==='Flash 저장 명령 전송 완료'", timeout=15000)
@@ -125,7 +129,7 @@ with sync_playwright() as p:
     page.locator('[data-preset="flat"]').click()
     page.locator('[data-current-state]').click()
     assert page.locator('#profileName').inner_text() == '현재 상태'
-    assert page.locator('.band-gain input').nth(0).input_value() == '-4'
+    assert page.locator('.band-gain input').nth(0).input_value() == '-7'
     page.locator('.band-gain input').nth(0).fill('-1')
     page.locator('.band-gain input').nth(0).press('Tab')
     assert len(page.evaluate('window.__writes')) == 14

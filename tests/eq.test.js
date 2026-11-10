@@ -75,24 +75,28 @@ test('five production sound modes use the requested bands, gains and shared 1.4 
   assert.ok(QS.every(q=>q===1.4));
   const expected={
     flat:[0,0,0,0,0,0,0,0,0,0],
-    fps:[-4,-3,0,-2,0,1,4,3,-1,0],
-    vocal:[-1,0,-1,-2,0,0,3,4,0,2],
-    'music-balanced':[2,2,1,0,0,0,0,1,1,2],
-    cinema:[3,4,0,-1,0,1,3,2,1,2]
+    fps:[-7,5,4,3,4,4,3.5,4,3,1],
+    vocal:[-3,-2,-3,-3,3,2,4,4,-1,-2],
+    'music-balanced':[1.5,1.5,0.5,0,0,0,0,0.5,0.5,1],
+    cinema:[3,4,5,2,0,4,2,4.5,2,2]
   };
   for (const preset of PRESETS) {
     validateEq(preset.eq);
     assert.ok(Object.isFrozen(preset.eq.gains));
-    assert.ok(peakResponse(buildAnalyticModel(preset.eq)).db<=6, preset.id);
+    assert.deepEqual(preset.eq.freqs,['fps','cinema'].includes(preset.id)?[50,125,250,500,1000,2000,4000,8000,11000,16000]:[31,62,125,250,500,1000,2000,4000,8000,16000]);
+    assert.ok(Number.isFinite(peakResponse(buildAnalyticModel(preset.eq)).db),preset.id);
     assert.ok(preset.eq.qs.every(q=>q===1.4),preset.id);
     assert.ok(preset.eq.filterTypes.every(type=>type===2),preset.id);
     assert.deepEqual(preset.eq.gains,expected[preset.id]);
     if (preset.id!=='flat') {
-      assert.match(preset.reference,/10밴드 EQ 프리셋 추천 문서/);
-      assert.ok(preset.eq.gains.every(gain=>gain>=-4 && gain<=4),preset.id);
+      assert.match(preset.reference,preset.id==='music-balanced'?/자체 조정/:/제조사 프리셋/);
+      assert.ok(preset.eq.gains.every(gain=>gain>=-12 && gain<=12),preset.id);
     }
   }
   assert.ok(expected.fps[0]<0 && expected.fps[6]>0);
+  assert.ok(peakResponse(buildAnalyticModel(PRESETS.find(p=>p.id==='fps').eq)).db>6);
+  assert.ok(peakResponse(buildAnalyticModel(PRESETS.find(p=>p.id==='cinema').eq)).db>6);
+  assert.ok(peakResponse(buildAnalyticModel(PRESETS.find(p=>p.id==='music-balanced').eq)).db<3);
   assert.ok(expected.vocal[6]>0 && expected.vocal[7]>0);
   assert.ok(expected['music-balanced'][0]>0 && expected.cinema[1]>0);
 });

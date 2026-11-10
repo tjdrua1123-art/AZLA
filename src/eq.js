@@ -1,17 +1,18 @@
 /**
  * AZLA EQ data and offline response model.
  * Analytic curves are previews, not vendor coefficients or acoustic measurements.
- * Starting points follow the user-supplied 2026-11-10 recommendation document.
+ * Starting points follow manufacturer preset screenshots with Q fixed to 1.4.
  * They are not measured corrections for any particular earphone.
  */
 export const BANDS = 10;
 export const FREQUENCIES = Object.freeze([31, 62, 125, 250, 500, 1000, 2000, 4000, 8000, 16000]);
+export const MANUFACTURER_FREQUENCIES = Object.freeze([50, 125, 250, 500, 1000, 2000, 4000, 8000, 11000, 16000]);
 export const QS = Object.freeze(Array(BANDS).fill(1.4));
 export const SAMPLE_RATE = 96000;
 export const FILTERS = Object.freeze({
   1: 'LOW SHELF', 2: 'PEAK', 3: 'HIGH SHELF', 4: 'LOW PASS', 5: 'HIGH PASS'
 });
-export const PRESET_REFERENCE = '10밴드 EQ 프리셋 추천 문서(2026-11-10) 기반 · 이어폰별 조절 필요';
+export const PRESET_REFERENCE = '제조사 프리셋 화면 기반 · 공통 Q 1.4 적용 · 이어폰별 조절 필요';
 
 function makeEq(gains = Array(BANDS).fill(0), options = {}) {
   return {
@@ -24,21 +25,21 @@ function makeEq(gains = Array(BANDS).fill(0), options = {}) {
 
 const preset = (id, name, category, description, icon, gains, options) => ({
   id, name, category, description, icon,
-  reference: id === 'flat' ? '보정 없는 기본 설정' : PRESET_REFERENCE,
+  reference: id === 'flat' ? '보정 없는 기본 설정' : options?.reference || PRESET_REFERENCE,
   eq: makeEq(gains, options)
 });
 
 /** Every preset is an editable starting point; none is a measured correction. */
 export const PRESETS = [
   preset('flat', '기본 모드', 'REFERENCE', '원래의 소리를 그대로. 모든 밴드 0 dB.', 'flat', Array(BANDS).fill(0), {tag: 13}),
-  preset('fps', 'FPS 모드', 'FPS', '저음의 울림을 줄이고 발소리와 효과음의 명료도를 높입니다.', 'crosshair',
-    [-4,-3,0,-2,0,1,4,3,-1,0], {tag: 11}),
-  preset('vocal', '음악 보컬', '음악', '저음의 탁함을 줄이고 보컬의 명료도와 존재감을 살립니다.', 'mic',
-    [-1,0,-1,-2,0,0,3,4,0,2], {tag: 16}),
+  preset('fps', 'FPS 모드', 'FPS', '극저음을 줄이고 중역과 효과음의 선명도를 강조합니다.', 'crosshair',
+    [-7,5,4,3,4,4,3.5,4,3,1], {tag: 11, freqs: MANUFACTURER_FREQUENCIES}),
+  preset('vocal', '음악 보컬', '음악', '저음과 초고역을 정리하고 목소리의 중역을 앞으로 가져옵니다.', 'mic',
+    [-3,-2,-3,-3,3,2,4,4,-1,-2], {tag: 16}),
   preset('music-balanced', '음악 밸런스', '음악', '중역은 유지하면서 저음과 고음을 부드럽게 보완합니다.', 'music',
-    [2,2,1,0,0,0,0,1,1,2], {tag: 12}),
+    [1.5,1.5,0.5,0,0,0,0,0.5,0.5,1], {tag: 12, reference: '자체 조정 음악 밸런스 · 중역 유지와 완만한 저·고역 보완'}),
   preset('cinema', '영화', '영화', '저음의 웅장함과 대사·효과음의 선명도를 함께 살립니다.', 'film',
-    [3,4,0,-1,0,1,3,2,1,2], {tag: 20})
+    [3,4,5,2,0,4,2,4.5,2,2], {tag: 20, freqs: MANUFACTURER_FREQUENCIES})
 ];
 for (const entry of PRESETS) {
   for (const value of Object.values(entry.eq)) if (Array.isArray(value)) Object.freeze(value);
