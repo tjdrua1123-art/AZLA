@@ -33,8 +33,8 @@ const preset = (id, name, category, description, icon, gains, options) => ({
 /** Every preset is an editable starting point; none is a measured correction. */
 export const PRESETS = [
   preset('flat', '기본 모드', 'REFERENCE', '원래의 소리를 그대로. 모든 밴드 0 dB.', 'flat', Array(BANDS).fill(0), {tag: 13}),
-  preset('fps', 'FPS 모드', 'FPS', '발걸음의 무게감과 움직임의 세부 소리를 함께 강조합니다.', 'crosshair',
-    [-1.5,-1.5,1.5,0,-1,2,3,4,2,0], {tag: 11, freqs: FPS_FREQUENCIES, reference: 'PUBG·VALORANT 공개 게임 음향 분석 참고 · 자체 조정값 · 실제 게임 청취 검증 필요'}),
+  preset('fps', 'FPS 모드', 'FPS', '저역의 울림을 정리하고 발걸음의 무게감과 세부 소리를 강조합니다.', 'crosshair',
+    [-4,-4,3,0,-2,3,3,4,2,0], {tag: 11, freqs: FPS_FREQUENCIES, reference: 'PUBG·VALORANT 공개 게임 음향 분석 참고 · 자체 조정값 · 실제 게임 청취 검증 필요'}),
   preset('vocal', '음악 보컬', '음악', '목소리의 두께를 남기면서 가사와 보컬의 존재감을 강조합니다.', 'mic',
     [-0.5,-0.5,0,-0.5,0,2,4,3,0,0], {tag: 16}),
   preset('music-balanced', '음악 밸런스', '음악', '중역은 유지하면서 저음의 탄력과 고음의 선명도를 더합니다.', 'music',

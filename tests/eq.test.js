@@ -75,7 +75,7 @@ test('five production sound modes use the requested bands, gains and shared 1.4 
   assert.ok(QS.every(q=>q===1.4));
   const expected={
     flat:[0,0,0,0,0,0,0,0,0,0],
-    fps:[-1.5,-1.5,1.5,0,-1,2,3,4,2,0],
+    fps:[-4,-4,3,0,-2,3,3,4,2,0],
     vocal:[-0.5,-0.5,0,-0.5,0,2,4,3,0,0],
     'music-balanced':[2,3,1,0,-0.5,0,0,1.5,2.5,1.5],
     cinema:[3,4.5,2,0,-1,0.5,2.5,2.5,1,0]
@@ -96,7 +96,7 @@ test('five production sound modes use the requested bands, gains and shared 1.4 
     }
   }
   const fpsPeak = peakResponse(buildAnalyticModel(PRESETS.find(p=>p.id==='fps').eq));
-  assert.ok(fpsPeak.minDb >= -3, 'FPS must preserve low-end body instead of the old deep cut');
+  assert.ok(fpsPeak.minDb >= -6, 'FPS combined cuts must stay within the PEAK-only design envelope');
   assert.ok(expected.fps[0]<0 && expected.fps[6]>0);
   assert.ok(peakResponse(buildAnalyticModel(PRESETS.find(p=>p.id==='music-balanced').eq)).db<4);
   assert.ok(expected.vocal[6]>0 && expected.vocal[7]>0);

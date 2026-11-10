@@ -75,7 +75,7 @@ with sync_playwright() as p:
     assert page.locator('.gain-slider').nth(4).input_value() == '2.5'
     page.locator('#resetBtn').click()
     assert page.locator('#profileName').inner_text() == 'FPS 모드'
-    assert page.locator('.band-gain input').nth(4).input_value() == '-1'
+    assert page.locator('.band-gain input').nth(4).input_value() == '-2'
     page.locator('#advancedToggle').check()
     q = page.locator('.band-q input').nth(0)
     q.fill('1.13'); q.press('Tab')
@@ -127,7 +127,7 @@ with sync_playwright() as p:
     page.locator('[data-preset="flat"]').click()
     page.locator('[data-current-state]').click()
     assert page.locator('#profileName').inner_text() == '현재 상태'
-    assert page.locator('.band-gain input').nth(0).input_value() == '-1.5'
+    assert page.locator('.band-gain input').nth(0).input_value() == '-4'
     page.locator('.band-gain input').nth(0).fill('-1')
     page.locator('.band-gain input').nth(0).press('Tab')
     assert len(page.evaluate('window.__writes')) == 14
