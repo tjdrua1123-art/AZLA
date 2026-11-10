@@ -75,7 +75,7 @@ test('five production sound modes use the requested bands, gains and shared 1.4 
   assert.ok(QS.every(q=>q===1.4));
   const expected={
     flat:[0,0,0,0,0,0,0,0,0,0],
-    fps:[-1.5,-1.5,-0.5,0,-0.5,1,3.5,4.5,0.5,0],
+    fps:[-1.5,-1.5,1.5,0,-1,2,3,4,2,0],
     vocal:[-0.5,-0.5,0,-0.5,0,2,4,3,0,0],
     'music-balanced':[2,3,1,0,-0.5,0,0,1.5,2.5,1.5],
     cinema:[3,4.5,2,0,-1,0.5,2.5,2.5,1,0]
@@ -83,13 +83,13 @@ test('five production sound modes use the requested bands, gains and shared 1.4 
   for (const preset of PRESETS) {
     validateEq(preset.eq);
     assert.ok(Object.isFrozen(preset.eq.gains));
-    assert.deepEqual(preset.eq.freqs,[32,63,125,250,500,1000,2000,4000,8000,16000]);
+    assert.deepEqual(preset.eq.freqs,preset.id==='fps'?[32,63,125,250,500,1000,2000,4000,6000,16000]:[32,63,125,250,500,1000,2000,4000,8000,16000]);
     assert.ok(peakResponse(buildAnalyticModel(preset.eq)).db<=5.5,`${preset.id}: keep combined boost at most 5.5 dB, below the 6 dB warning`);
     assert.ok(preset.eq.qs.every(q=>q===1.4),preset.id);
     assert.ok(preset.eq.filterTypes.every(type=>type===2),preset.id);
     assert.deepEqual(preset.eq.gains,expected[preset.id]);
     if (preset.id!=='flat') {
-      assert.match(preset.reference,/공개 음향 자료 기반 자체 설계/);
+      assert.match(preset.reference,preset.id==='fps'?/PUBG·VALORANT 공개 게임 음향 분석/:/공개 음향 자료 기반 자체 설계/);
       assert.ok(preset.eq.gains.some(gain=>gain>0),`${preset.id}: listening modes must include actual positive gain`);
       assert.ok(peakResponse(buildAnalyticModel(preset.eq)).db>=3,`${preset.id}: keep the requested stronger boost`);
       assert.ok(preset.eq.gains.every(gain=>gain>=-12 && gain<=12),preset.id);
