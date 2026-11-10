@@ -33,13 +33,13 @@ const preset = (id, name, category, description, icon, gains, options) => ({
 export const PRESETS = [
   preset('flat', '기본 모드', 'REFERENCE', '원래의 소리를 그대로. 모든 밴드 0 dB.', 'flat', Array(BANDS).fill(0), {tag: 13}),
   preset('fps', 'FPS 모드', 'FPS', '저음의 무게감을 남기면서 이동음과 효과음의 선명도를 강조합니다.', 'crosshair',
-    [-2,-2,-1,0,-0.5,1,3,3.5,0.5,0], {tag: 11}),
+    [-1.5,-1.5,-0.5,0,-0.5,1,3.5,4.5,0.5,0], {tag: 11}),
   preset('vocal', '음악 보컬', '음악', '목소리의 두께를 남기면서 가사와 보컬의 존재감을 강조합니다.', 'mic',
-    [-1,-1,-0.5,-0.5,0,1.5,3,2.5,0,0], {tag: 16}),
+    [-0.5,-0.5,0,-0.5,0,2,4,3,0,0], {tag: 16}),
   preset('music-balanced', '음악 밸런스', '음악', '중역은 유지하면서 저음의 탄력과 고음의 선명도를 더합니다.', 'music',
-    [1,2,1,0,0,0,0,0.5,1,0.5], {tag: 12}),
+    [2,3,1,0,-0.5,0,0,1.5,2.5,1.5], {tag: 12}),
   preset('cinema', '영화', '영화', '깊은 저음과 선명한 대사를 강조해 영화의 몰입감을 더합니다.', 'film',
-    [2.5,3.5,1.5,0,-1,0.5,2,2,1,0], {tag: 20})
+    [3,4.5,2,0,-1,0.5,2.5,2.5,1,0], {tag: 20})
 ];
 for (const entry of PRESETS) {
   for (const value of Object.values(entry.eq)) if (Array.isArray(value)) Object.freeze(value);

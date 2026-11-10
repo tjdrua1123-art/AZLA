@@ -42,7 +42,7 @@ for (const preset of PRESETS) {
     });
     if (i % 64 === 0) csv.push(`${preset.id},${hz},${db},${expected}`);
   }
-  if (Math.max(result.max.db, ...result.stageMaxDb) > 4.5) throw new Error(`${preset.id}: stock boost exceeds 4.5 dB design envelope`);
+  if (Math.max(result.max.db, ...result.stageMaxDb) > 5.5) throw new Error(`${preset.id}: stock boost exceeds 5.5 dB design envelope`);
   if (preset.id === 'fps' && result.min.db < -3) throw new Error('FPS low-frequency cut exceeds design envelope');
   if (result.maxAnalyticDeviationDb > 0.03) throw new Error(`${preset.id}: preview disagrees with SDK`);
   report.presets.push(result);

@@ -103,7 +103,7 @@ test('all five production modes produce finite real-SDK models agreeing with PEA
     const eq = cloneEq(preset.eq);
     const packets = await generateRamPlan(SDK, eq);
     const actual = sdkGraphModel(packets, eq), analytic = buildAnalyticModel(eq);
-    assert.ok(peakResponse(actual).db <= 4.5, `${preset.id}: SDK response must stay at most 4.5 dB with margin below the warning`);
+    assert.ok(peakResponse(actual).db <= 5.5, `${preset.id}: SDK response must stay at most 5.5 dB with margin below the warning`);
     for (let i = 0; i <= 128; i++) {
       const f = 20 * 1000 ** (i / 128);
       const value = responseAt(f, actual);

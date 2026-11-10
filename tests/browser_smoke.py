@@ -127,7 +127,7 @@ with sync_playwright() as p:
     page.locator('[data-preset="flat"]').click()
     page.locator('[data-current-state]').click()
     assert page.locator('#profileName').inner_text() == '현재 상태'
-    assert page.locator('.band-gain input').nth(0).input_value() == '-2'
+    assert page.locator('.band-gain input').nth(0).input_value() == '-1.5'
     page.locator('.band-gain input').nth(0).fill('-1')
     page.locator('.band-gain input').nth(0).press('Tab')
     assert len(page.evaluate('window.__writes')) == 14
