@@ -34,13 +34,13 @@ const preset = (id, name, category, description, icon, gains, options) => ({
 export const PRESETS = [
   preset('flat', '기본 모드', 'REFERENCE', '원래의 소리를 그대로. 모든 밴드 0 dB.', 'flat', Array(BANDS).fill(0), {tag: 13}),
   preset('fps', 'FPS 모드', 'FPS', '중역과 고역을 강조해 발걸음과 효과음의 존재감을 높입니다.', 'crosshair',
-    [0,0,2.8,1.6,4.6,4.2,3.3,3.7,4.2,0], {tag: 11, freqs: FPS_FREQUENCIES, reference: '사용자 제공 FPS 설정의 게인 비율을 약 46.49%로 조정 · 오디오 기기별 조절 필요'}),
+    [0,0,3,1.8,5,4.5,3.5,4,4.5,0], {tag: 11, freqs: FPS_FREQUENCIES, reference: '사용자 제공 FPS 설정의 게인 비율을 50%로 조정 · 오디오 기기별 조절 필요'}),
   preset('vocal', '음악 보컬', '음악', '목소리의 두께를 남기면서 가사와 보컬의 존재감을 강조합니다.', 'mic',
-    [-0.5,-0.5,0,-0.5,0,2,4,3,0,0], {tag: 16}),
+    [-0.6,-0.6,0,-0.6,0,2.5,5,3.8,0,0], {tag: 16}),
   preset('music-balanced', '음악 밸런스', '음악', '중역은 유지하면서 저음의 탄력과 고음의 선명도를 더합니다.', 'music',
-    [2,3,1,0,-0.5,0,0,1.5,2.5,1.5], {tag: 12}),
+    [3.3,5,1.7,0,-0.8,0,0,2.5,4.2,2.5], {tag: 12}),
   preset('cinema', '영화', '영화', '깊은 저음과 선명한 대사를 강조해 영화의 몰입감을 더합니다.', 'film',
-    [3,4.5,2,0,-1,0.5,2.5,2.5,1,0], {tag: 20})
+    [3.3,5,2.2,0,-1.1,0.6,2.8,2.8,1.1,0], {tag: 20})
 ];
 for (const entry of PRESETS) {
   for (const value of Object.values(entry.eq)) if (Array.isArray(value)) Object.freeze(value);

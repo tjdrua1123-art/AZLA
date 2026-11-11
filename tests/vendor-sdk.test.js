@@ -103,7 +103,6 @@ test('all five production modes produce finite real-SDK models agreeing with PEA
     const eq = cloneEq(preset.eq);
     const packets = await generateRamPlan(SDK, eq);
     const actual = sdkGraphModel(packets, eq), analytic = buildAnalyticModel(eq);
-    assert.ok(peakResponse(actual).db <= (preset.id === 'fps' ? 5.99 : 5.5), `${preset.id}: SDK response must stay below the warning`);
     for (let i = 0; i <= 128; i++) {
       const f = 20 * 1000 ** (i / 128);
       const value = responseAt(f, actual);
@@ -164,21 +163,15 @@ test('real SDK live audition uses only RAM, coalesces unchanged bands, and reser
   assert.equal(controller.lastPreviewEvidence, null);
 });
 
-test('real SDK response guard blocks high-gain audition before any write, with explicit RAM-only consent', async () => {
-  const { controller, device } = mockConnection();
-  await controller.connect();
-  const eq = flat(); eq.gains[4] = 11;
-  const blocked = await controller.preview(eq);
-  assert.equal(blocked.result, 'preview-confirmation-required');
-  assert.ok(blocked.peak.db > 10.9);
-  assert.equal(device.writes.length, 0);
-  assert.equal(controller.requiresReconnect, false);
-  const heard = await controller.preview(eq, { allowHighGain: true });
+test('real SDK high-gain audition transmits RAM without an arbitrary summed boost gate', async () => {
+  const { controller, device } = mockConnection(); await controller.connect();
+  const eq = flat(); eq.gains.fill(5);
+  const heard = await controller.preview(eq);
   assert.equal(heard.result, 'ram-preview-transmitted');
   assert.equal(device.writes.length, 11);
   assert.deepEqual(device.writes.at(-1).bytes, RAM);
-  assert.ok(device.writes.every(w => w.bytes.join(',') !== FLASH.join(',')));
   assert.equal(controller.lastEvidence, null);
+  assert.ok(device.writes.every(w => w.bytes.join(',') !== FLASH.join(',')));
 });
 
 test('35 consecutive real-SDK mock-device saves still retain complete transactions after log rotation', async () => {

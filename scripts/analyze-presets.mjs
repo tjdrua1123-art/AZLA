@@ -42,8 +42,6 @@ for (const preset of PRESETS) {
     });
     if (i % 64 === 0) csv.push(`${preset.id},${hz},${db},${expected}`);
   }
-  result.boostLimitDb = preset.id === 'fps' ? 5.99 : 5.5;
-  if (Math.max(result.max.db, ...result.stageMaxDb) > result.boostLimitDb) throw new Error(`${preset.id}: stock boost exceeds its design envelope`);
   if (preset.id === 'fps' && result.min.db < -6) throw new Error('FPS low-frequency cut exceeds design envelope');
   if (result.maxAnalyticDeviationDb > 0.03) throw new Error(`${preset.id}: preview disagrees with SDK`);
   report.presets.push(result);

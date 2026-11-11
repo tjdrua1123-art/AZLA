@@ -1,4 +1,4 @@
-"""Rendered track follows the thumb; warning changes cannot move desktop sliders."""
+"""Rendered track follows the thumb; gain changes cannot move desktop sliders."""
 import ast
 import io
 import json
@@ -34,8 +34,8 @@ with sync_playwright() as p:
             assert abs(page.locator('.equalizer-panel').bounding_box()['height']-panel['height'])<1
             assert bar['y']+bar['height']<=height
             if value>6:
-                assert page.locator('#previewRiskBtn').is_visible()
-                for selector in ['#previewRiskBtn','#applyBtn']:
+                assert page.locator('#previewRiskBtn').count()==0
+                for selector in ['#applyBtn']:
                     assert page.locator(selector).evaluate('el=>{const r=el.getBoundingClientRect();return el.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2))}'),(width,value,selector)
             # Inspect actual rendered pixels outside the 13px thumb, not a CSS variable.
             image=Image.open(io.BytesIO(page.screenshot())).convert('RGB')
@@ -48,5 +48,5 @@ with sync_playwright() as p:
                 assert (red>220 and 45<green<140 and blue<80)==orange,(width,value,delta,(red,green,blue))
         assert not errors,errors
         context.close()
-        print('PASS:',width,height,'slider position and footer stable across warning threshold; orange follows thumb')
+        print('PASS:',width,height,'slider position and footer stable across gain changes; orange follows thumb')
     browser.close()

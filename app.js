@@ -12,8 +12,8 @@ const safeStorage = {
   removeItem: key => { try { localStorage.removeItem(key); } catch { /* storage may be unavailable */ } }
 };
 const previous = restore(safeStorage);
-const state = { eq: previous.current, selected: previous.selected, baseSelected: previous.selected, baseEq: cloneEq(previous.current), advanced: previous.advanced, lastApplied: null, activeBand: 4, busy: false, off: null, on: null, model: null, peak: null, error: null, deviceSnapshot: restoreDeviceSnapshot(safeStorage), deviceTag: null, deviceTagStatus: 'disconnected', connectionBusy: false, previewApproved: null, previewBlocked: null };
-let devices = [], controller, discoveredDevice = null, chartFrame = null, modelToken = 0, chartGeometry = null, toastTimer, sdkTimer, livePreview, riskRequest = null;
+const state = { eq: previous.current, selected: previous.selected, baseSelected: previous.selected, baseEq: cloneEq(previous.current), advanced: previous.advanced, lastApplied: null, activeBand: 4, busy: false, off: null, on: null, model: null, peak: null, error: null, deviceSnapshot: restoreDeviceSnapshot(safeStorage), deviceTag: null, deviceTagStatus: 'disconnected', connectionBusy: false };
+let devices = [], controller, discoveredDevice = null, chartFrame = null, modelToken = 0, chartGeometry = null, toastTimer, sdkTimer, livePreview;
 const canvas = $('responseChart');
 const ctx = canvas.getContext('2d');
 const colors = Array(BANDS).fill('#FF5B24');
@@ -206,24 +206,17 @@ function updateGraphLabels() {
   $('modelLabel').textContent = AUDIO_DEVICE_GUIDANCE;
   $('peakLabel').replaceChildren(document.createTextNode('최대 변화 '));
   const number = document.createElement('b'); number.textContent = `${formatDb(state.peak.db)} dB`; $('peakLabel').append(number);
-  $('peakLabel').classList.toggle('risk', state.peak.db > 6);
   $('peakLabel').title = '양의 게인에는 클리핑 가능성이 있습니다. 전체 출력은 자동으로 줄이지 않습니다.';
 }
 function scheduleLivePreview() {
   if (!livePreview || state.busy || state.connectionBusy || !controller?.device?.opened || controller.requiresReconnect) return;
   if ($('bandControls').querySelector('[aria-invalid="true"]')) { livePreview.cancel(); return; }
-  const sig = signature(state.eq);
-  if (state.peak.db > 6 && state.previewApproved !== sig) {
-    state.previewBlocked = sig; livePreview.cancel(); updateApplyState(); return;
-  }
-  state.previewBlocked = null;
   livePreview.enqueue(state.eq);
 }
 function updateApplyState() {
   const linked = !!controller?.device, needsReconnect = controller?.requiresReconnect;
   const invalid = !!$('bandControls').querySelector('[aria-invalid="true"]');
   const sig = signature(state.eq);
-  const blocked = state.previewBlocked === sig || (state.peak?.db > 6 && state.previewApproved !== sig);
   $('connectBtn').disabled = state.busy || state.connectionBusy;
   $('connectBtn').querySelector('span').textContent = linked ? '연결 해제' : needsReconnect ? '다시 연결' : '기기 연결';
   $('connectionLabel').replaceChildren();
@@ -231,8 +224,6 @@ function updateApplyState() {
   $('connectionLabel').append(dot, document.createTextNode(linked ? 'USB 연결됨' : '연결 대기'));
   $('deviceName').textContent = linked ? devices.find(d => d.vendorId === controller.device.vendorId && d.productId === controller.device.productId)?.name || 'AZLA USB DAC' : 'AZLA USB DAC';
   $('applyBtn').disabled = state.busy || state.connectionBusy || !linked || needsReconnect || invalid;
-  $('previewRiskBtn').hidden = !linked || needsReconnect || !blocked || state.connectionBusy;
-  $('previewRiskBtn').disabled = state.busy || invalid;
   if (state.busy) return;
   $('applyProgress').hidden = true;
   if (state.connectionBusy) { $('applyStatus').textContent = '기기 상태 확인 중'; $('applyDetail').textContent = '연결 후 조절하면 소리를 미리 들을 수 있습니다.'; }
@@ -240,7 +231,6 @@ function updateApplyState() {
   else if (!linked) { $('applyStatus').textContent = '연결 후 실시간으로 미리 들어 보세요'; $('applyDetail').textContent = '조절한 소리를 확인하고, 결정한 뒤 기기에 저장하세요.'; }
   else if (needsReconnect) { $('applyStatus').textContent = '기기 재연결이 필요합니다'; $('applyDetail').textContent = '연결을 해제한 뒤 다시 연결해 주세요.'; }
   else if (invalid) { $('applyStatus').textContent = '입력값을 확인해 주세요'; $('applyDetail').textContent = '유효한 값을 입력하면 미리듣기를 다시 반영합니다.'; }
-  else if (blocked) { $('applyStatus').textContent = '큰 증폭 · 미리듣기 확인이 필요합니다'; $('applyDetail').textContent = '새 설정은 아직 미리듣기에 반영하지 않았습니다. 볼륨을 낮추고 확인해 주세요.'; }
   else if (livePreview?.busy) { $('applyStatus').textContent = '미리듣기 반영 중'; $('applyDetail').textContent = '변경 중에도 조절할 수 있습니다. 아직 기기에 저장하지 않았습니다.'; }
   else if (state.lastApplied === sig && (!controller.lastPreviewEvidence || signature(controller.lastPreviewEvidence.eq) === sig)) { $('applyStatus').textContent = '설정 전송 완료'; $('applyDetail').textContent = '전원 재연결 후 설정 유지 여부를 확인해 주세요.'; }
   else if (controller.lastPreviewEvidence && signature(controller.lastPreviewEvidence.eq) === sig) { $('applyStatus').textContent = '미리듣기 중 · 저장 전'; $('applyDetail').textContent = '현재 소리를 확인하고 마음에 들면 기기에 저장을 눌러 주세요.'; }
@@ -248,7 +238,7 @@ function updateApplyState() {
 }
 function lockUI(flag) {
   state.busy = flag;
-  for (const node of document.querySelectorAll('#bandControls input, #bandControls select, #presetList button, #advancedToggle, #resetBtn, #flatBtn, #confirmRiskBtn')) node.disabled = flag;
+  for (const node of document.querySelectorAll('#bandControls input, #bandControls select, #presetList button, #advancedToggle, #resetBtn, #flatBtn')) node.disabled = flag;
   $('applyBtn').querySelector('span').textContent = flag ? '저장 중' : '기기에 저장';
   updateApplyState();
 }
@@ -267,21 +257,14 @@ async function apply() {
     catch { snapshotRecorded = false; }
     try { const read = await controller.readEqTag(); state.deviceTag = read.tag; state.deviceTagStatus = 'known'; }
     catch { state.deviceTag = null; state.deviceTagStatus = 'error'; }
-    state.previewBlocked = null; state.previewApproved = currentSignature; renderPresets();
+    renderPresets();
     toast(snapshotRecorded ? '기기에 설정을 전송했습니다.' : '기기 저장은 완료됐지만 저장 설정 기록을 이 브라우저에 보관하지 못했습니다.', !snapshotRecorded);
   } catch (error) { state.lastApplied = null; state.error = error.message; toast(error.message, true); }
   finally { lockUI(false); }
 }
-function showRisk(kind) {
-  riskRequest = { kind, signature: signature(state.eq) };
-  $('riskText').textContent = `필터 중첩 예상 최대 ${formatDb(state.peak.db)} dB입니다. 입력 신호에 따라 클리핑이 발생할 수 있습니다. 전체 출력은 자동으로 변경하지 않습니다. ${kind === 'preview' ? '확인하면 현재 설정을 미리듣기에만 반영합니다. 기기에 저장을 눌러야 저장됩니다.' : '확인하면 현재 설정을 기기에 저장합니다.'}`;
-  $('confirmRiskBtn').textContent = kind === 'preview' ? '확인 후 미리듣기' : '확인 후 저장';
-  $('riskDialog').showModal();
-}
 function requestApply() {
   if (state.busy || state.connectionBusy || !controller?.device || controller.requiresReconnect) return;
-  if (state.peak.db > 6 || state.previewBlocked === signature(state.eq)) showRisk('save');
-  else apply();
+  apply();
 }
 
 function scheduleDraw() { if (chartFrame === null) chartFrame = requestAnimationFrame(() => { chartFrame = null; drawGraph(); }); }
@@ -386,15 +369,6 @@ $('rewOffInput').addEventListener('change', e => loadMeasurement('off', e.target
 $('rewOnInput').addEventListener('change', e => loadMeasurement('on', e.target.files[0]));
 $('clearRewBtn').addEventListener('click', () => { state.off = null; state.on = null; $('rewOffInput').value = ''; $('rewOnInput').value = ''; renderComparison(); scheduleDraw(); });
 $('applyBtn').addEventListener('click', requestApply);
-$('cancelRiskBtn').addEventListener('click', () => { riskRequest = null; $('riskDialog').close(); });
-$('previewRiskBtn').addEventListener('click', () => showRisk('preview'));
-$('riskDialog').addEventListener('cancel', () => { riskRequest = null; });
-$('confirmRiskBtn').addEventListener('click', () => {
-  const request = riskRequest; riskRequest = null; $('riskDialog').close();
-  if (!request || request.signature !== signature(state.eq)) { toast('설정이 변경됐습니다. 현재 값을 다시 확인해 주세요.', true); return; }
-  if (request.kind === 'preview') { state.previewApproved = request.signature; state.previewBlocked = null; scheduleLivePreview(); }
-  else apply();
-});
 window.addEventListener('beforeunload', event => { if (state.busy) { event.preventDefault(); event.returnValue = ''; } });
 
 async function initialize() {
@@ -404,17 +378,12 @@ async function initialize() {
     $('applyProgress').value = value * 100; $('applyStatus').textContent = value === 1 ? '설정 전송 완료' : label; $('applyDetail').textContent = '장치 저장이 끝날 때까지 USB를 연결해 두세요.';
   } });
   livePreview = new PreviewQueue({
-    send: (eq, isCurrent) => controller.preview(eq, { isCurrent, allowHighGain: state.previewApproved === signature(eq) }),
-    onResult: result => {
-      if (result.result === 'preview-confirmation-required' && signature(result.eq) === signature(state.eq)) {
-        state.previewBlocked = signature(result.eq); state.peak = result.peak; updateGraphLabels();
-      }
-    },
+    send: (eq, isCurrent) => controller.preview(eq, { isCurrent }),
     onError: error => { state.error = `미리듣기를 반영하지 못했습니다. ${error.message}`; toast(state.error, true); },
     onChange: () => { renderPresets(); updateApplyState(); }
   });
   controller.onDisconnect = () => {
-    livePreview.cancel(); state.previewApproved = null; state.previewBlocked = null;
+    livePreview.cancel();
     state.lastApplied = null; state.deviceTag = null; state.deviceTagStatus = 'disconnected';
     state.error = 'USB 연결이 끊어졌습니다. 장치를 다시 연결해 주세요.';
     renderPresets(); updateApplyState(); toast(state.error, true);
@@ -423,7 +392,7 @@ async function initialize() {
     if (state.busy || state.connectionBusy) return;
     state.connectionBusy = true;
     const revisionAtConnect = modelToken;
-    livePreview.cancel(); state.previewApproved = null; state.previewBlocked = null;
+    livePreview.cancel();
     updateApplyState();
     try {
       if (controller.device) {

@@ -75,7 +75,7 @@ with sync_playwright() as p:
     assert page.locator('.gain-slider').nth(4).input_value() == '2.5'
     page.locator('#resetBtn').click()
     assert page.locator('#profileName').inner_text() == 'FPS 모드'
-    assert page.locator('.band-gain input').nth(4).input_value() == '4.6'
+    assert page.locator('.band-gain input').nth(4).input_value() == '5'
     page.locator('#advancedToggle').check()
     q = page.locator('.band-q input').nth(0)
     q.fill('1.13'); q.press('Tab')
@@ -139,18 +139,17 @@ with sync_playwright() as p:
         page.locator('#applyBtn').click()
         assert not page.locator('#riskDialog').is_visible(), f'{mode} must apply without a warning'
         page.wait_for_function("document.querySelector('#applyStatus').textContent==='설정 전송 완료'", timeout=15000)
-    # Manual boosts still require confirmation: the warning itself remains active.
+    # Summed gain is informational; manual boosts preview and save without a modal.
     page.locator('[data-preset="flat"]').click()
-    page.wait_for_function("document.querySelector('#applyStatus').textContent==='미리듣기 중 · 저장 전'", timeout=10000)
     gain = page.locator('.band-gain input').nth(4)
     gain.fill('12'); gain.press('Tab')
-    page.wait_for_timeout(200)
-    before = len(page.evaluate('window.__writes'))
+    page.wait_for_function("document.querySelector('#applyStatus').textContent==='미리듣기 중 · 저장 전'", timeout=10000)
+    assert page.locator('#riskDialog').count() == 0
     page.locator('#applyBtn').click()
-    assert page.locator('#riskDialog').is_visible()
-    assert len(page.evaluate('window.__writes')) == before
+    page.wait_for_function("document.querySelector('#applyStatus').textContent==='설정 전송 완료'", timeout=15000)
+    assert page.locator('.volume-guidance').is_visible()
     assert not errors, errors
-    print('PASS: all five presets apply without clipping warnings; excessive manual boosts still warn')
+    print('PASS: all five presets apply without clipping warnings; manual boosts preview and save without a summed-gain gate')
     print('PASS: browser original SDK + mock HID Tag read, current-state snapshot, 10 EQ + RAM + Flash, UI lock, edited state')
     context.close()
     context = browser.new_context(viewport={'width':1366,'height':768})

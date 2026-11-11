@@ -1,7 +1,7 @@
 // Protocol bytes are generated exclusively by the original manufacturer SDK.
 // The unmodified SDK is bundled from the user's latest GitHub main. Synthetic
 // test fixtures are never imported by this module or included in distribution.
-import { validateEq, cloneEq, peakResponse } from './eq.js';
+import { validateEq, cloneEq } from './eq.js';
 
 export const TIMING = Object.freeze({ gap: 130, beforeFlash: 1100, afterFlash: 350, timeout: 8000 });
 const RAM_COMMAND = Object.freeze([1, 10, 4, 0, 0, 255, 255]);
@@ -234,7 +234,7 @@ export class DeviceController {
       throw error;
     } finally { this.busy = false; }
   }
-  async preview(input, { allowHighGain = false, isCurrent = () => true } = {}) {
+  async preview(input, { isCurrent = () => true } = {}) {
     if (this.busy) throw new Error('현재 기기 전송이 진행 중입니다.');
     if (!this.device?.opened || this.requiresReconnect) throw new Error('먼저 AZLA 장치를 연결해 주세요.');
     if (!this.allows(this.device)) throw new Error('지원되지 않는 장치입니다.');
@@ -243,8 +243,6 @@ export class DeviceController {
     try {
       const eq = cloneEq(input), packets = await generateRamPlan(this.SDK, eq);
       if (!isCurrent()) return { result: 'preview-skipped' };
-      const peak = peakResponse({ ...sdkGraphModel(packets, eq), freqs: eq.freqs });
-      if (peak.db > 6 && !allowHighGain) return { result: 'preview-confirmation-required', eq, peak };
       // Reuse only validated SDK bytes. A fresh connection receives all bands;
       // later edits send changed bands and the original RAM refresh, never Flash.
       const changed = packets.slice(0, 10).filter((p, i) => !this.ramPackets || !same(p.bytes, this.ramPackets[i].bytes));

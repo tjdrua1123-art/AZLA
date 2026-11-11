@@ -75,16 +75,15 @@ test('five production sound modes use the requested bands, gains and shared 1.4 
   assert.ok(QS.every(q=>q===1.4));
   const expected={
     flat:[0,0,0,0,0,0,0,0,0,0],
-    fps:[0,0,2.8,1.6,4.6,4.2,3.3,3.7,4.2,0],
-    vocal:[-0.5,-0.5,0,-0.5,0,2,4,3,0,0],
-    'music-balanced':[2,3,1,0,-0.5,0,0,1.5,2.5,1.5],
-    cinema:[3,4.5,2,0,-1,0.5,2.5,2.5,1,0]
+    fps:[0,0,3,1.8,5,4.5,3.5,4,4.5,0],
+    vocal:[-0.6,-0.6,0,-0.6,0,2.5,5,3.8,0,0],
+    'music-balanced':[3.3,5,1.7,0,-0.8,0,0,2.5,4.2,2.5],
+    cinema:[3.3,5,2.2,0,-1.1,0.6,2.8,2.8,1.1,0]
   };
   for (const preset of PRESETS) {
     validateEq(preset.eq);
     assert.ok(Object.isFrozen(preset.eq.gains));
     assert.deepEqual(preset.eq.freqs,preset.id==='fps'?[31,62,125,250,500,1000,2000,4000,8000,16000]:[32,63,125,250,500,1000,2000,4000,8000,16000]);
-    assert.ok(peakResponse(buildAnalyticModel(preset.eq)).db<=(preset.id==='fps'?5.99:5.5),`${preset.id}: stay below the warning threshold`);
     assert.ok(preset.eq.qs.every(q=>q===1.4),preset.id);
     assert.ok(preset.eq.filterTypes.every(type=>type===2),preset.id);
     assert.deepEqual(preset.eq.gains,expected[preset.id]);
@@ -92,15 +91,13 @@ test('five production sound modes use the requested bands, gains and shared 1.4 
       assert.match(preset.reference,preset.id==='fps'?/사용자 제공 FPS 설정/:/공개 음향 자료 기반 자체 설계/);
       assert.ok(preset.eq.gains.some(gain=>gain>0),`${preset.id}: listening modes must include actual positive gain`);
       assert.ok(peakResponse(buildAnalyticModel(preset.eq)).db>=3,`${preset.id}: keep the requested stronger boost`);
-      assert.ok(preset.eq.gains.every(gain=>gain>=-12 && gain<=12),preset.id);
+      assert.ok(preset.eq.gains.every(gain=>gain>=-5 && gain<=5),preset.id);
+      assert.equal(Math.max(...preset.eq.gains),5);
     }
   }
   const fpsPeak = peakResponse(buildAnalyticModel(PRESETS.find(p=>p.id==='fps').eq));
   assert.ok(fpsPeak.minDb >= -6, 'FPS combined cuts must stay within the PEAK-only design envelope');
-  assert.deepEqual(expected.fps,[0,0,6,3.5,10,9,7,8,9,0].map(g=>Math.round(g*.4649*10)/10));
-  const nextScale=structuredClone(PRESETS.find(p=>p.id==='fps').eq);nextScale.gains[4]=4.7;
-  assert.ok(peakResponse(buildAnalyticModel(nextScale)).db>6,'next rounded gain step crosses the warning threshold');
-  assert.ok(peakResponse(buildAnalyticModel(PRESETS.find(p=>p.id==='music-balanced').eq)).db<4);
+  assert.deepEqual(expected.fps,[0,0,6,3.5,10,9,7,8,9,0].map(g=>Math.round(g*.5*10)/10));
   assert.ok(expected.vocal[6]>0 && expected.vocal[7]>0);
   assert.ok(expected['music-balanced'][0]>0 && expected.cinema[1]>0);
 });

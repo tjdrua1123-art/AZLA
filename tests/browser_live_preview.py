@@ -74,43 +74,14 @@ with sync_playwright() as p:
     assert page.evaluate('window.__writes.length')==before,'no stale preview may follow the saved snapshot'
     print('PASS: no writes on connection; latest RAM-only audition; exact Flash save after in-flight preview; no stale writes')
 
-    change(4,11)
-    page.wait_for_selector('#previewRiskBtn:not([hidden])');page.wait_for_timeout(600)
-    assert page.evaluate('window.__writes.length')==before
-    assert not page.locator('#riskDialog').is_visible(),'slider edits should not repeatedly open modals'
-    page.locator('#previewRiskBtn').click()
-    assert page.locator('#confirmRiskBtn').inner_text()=='확인 후 미리듣기'
-    assert '출력이 강해' in page.locator('.risk-volume-notice').inner_text()
-    page.locator('#cancelRiskBtn').click();page.wait_for_timeout(300)
-    assert page.evaluate('window.__writes.length')==before
-    page.locator('#previewRiskBtn').click();page.locator('#confirmRiskBtn').click();heard()
+    change(4,11);heard()
     assert page.evaluate('window.__flashCount()')==1
+    assert page.locator('#riskDialog').count()==0
+    assert page.locator('#previewRiskBtn').count()==0
+    assert page.locator('.volume-guidance').is_visible()
     assert page.evaluate("JSON.parse(localStorage.getItem('azla_equalizer_device_state_v1')).eq.gains[4]")==2.5
-    change(4,11.1);page.wait_for_timeout(500)
-    assert page.locator('#previewRiskBtn').is_visible(),'consent applies to the confirmed EQ values only'
-    before=page.evaluate('window.__writes.length')
-    # Both audition and save controls remain reachable without scrolling on desktop.
-    for width,height in [(1920,1080),(1366,768),(1024,600),(901,600)]:
-        page.set_viewport_size({'width':width,'height':height})
-        for selector in ['#previewRiskBtn','#applyBtn']:
-            box=page.locator(selector).bounding_box()
-            assert box['y']>=0 and box['y']+box['height']<=height,(width,height,selector,box)
-        assert page.evaluate('document.documentElement.scrollWidth<=innerWidth and document.documentElement.scrollHeight<=innerHeight'.replace(' and ',' && '))
-    page.set_viewport_size({'width':1366,'height':768})
-    page.screenshot(path='docs/screenshots/AZLA-Live-Preview-Confirmation-1366.png')
-    page.locator('#applyBtn').click()
-    assert page.locator('#confirmRiskBtn').inner_text()=='확인 후 저장'
-    assert page.evaluate('window.__writes.length')==before
-    page.locator('#cancelRiskBtn').click()
-    page.set_viewport_size({'width':390,'height':844})
-    page.locator('#previewRiskBtn').scroll_into_view_if_needed()
-    assert page.evaluate('document.documentElement.scrollWidth<=innerWidth')
-    page.locator('#previewRiskBtn').click()
-    dialog=page.locator('#riskDialog').bounding_box()
-    assert dialog['x']>=0 and dialog['x']+dialog['width']<=390
-    page.locator('#cancelRiskBtn').click()
-    page.set_viewport_size({'width':1366,'height':768})
-    print('PASS: high-gain automatic audition blocked; separate volume consent and save; Flash audit unchanged; desktop actions visible')
+    change(4,11.1);heard()
+    print('PASS: high gain previews without summed-gain gate; explicit saving and volume guidance retained')
 
     change(4,3);heard()
     page.screenshot(path='docs/screenshots/AZLA-Live-Preview-1366.png')
