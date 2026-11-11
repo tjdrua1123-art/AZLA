@@ -34,14 +34,14 @@ const preset = (id, name, category, description, icon, gains, options) => ({
 /** Every preset is an editable starting point; none is a measured correction. */
 export const PRESETS = [
   preset('flat', '기본 모드', 'REFERENCE', '원래의 소리를 그대로. 모든 밴드 0 dB.', 'flat', Array(BANDS).fill(0), {tag: 13}),
-  preset('fps', 'FPS 모드', 'FPS', '1~4 kHz를 강하게 강조해 발걸음과 효과음의 세부 소리를 부각합니다.', 'crosshair',
-    [0,0.5,1,2,3,6,6,6,4,3], {tag: 11, freqs: FPS_FREQUENCIES, reference: '제공 자료 A · PUBG 인벤 게인 ×0.5 · PEAK/Q 1.4로 적용 · 실제 게임 청취 검증 필요'}),
-  preset('vocal', '음악 보컬', '음악', '저역의 비중을 줄이고 노랫말과 보컬의 명료도를 강조합니다.', 'mic',
-    [-6,-4.5,-3,0,1.5,4.5,6,4.5,1.5,0], {tag: 16, freqs: GRAPHIC_FREQUENCIES, reference: '제공 자료 E · ProMedia Vocal Clarity 게인 ×1.5 · PEAK/Q 1.4로 적용'}),
-  preset('music-balanced', '음악 밸런스', '음악', '저음과 고음을 함께 강조해 풍성하고 선명한 감상을 돕습니다.', 'music',
-    [6,5,2,0,-1,-1,0,2,4,6], {tag: 12, freqs: GRAPHIC_FREQUENCIES, reference: '제공 자료 F · ProMedia Loudness 게인 ×1.0 · 중립 보정이 아닌 저고역 강조'}),
-  preset('cinema', '영화', '영화', '저역의 충격감과 고역 효과음을 함께 강조해 영화 감상을 풍성하게 합니다.', 'film',
-    [5.3,4.5,2.6,0.8,-1.1,-0.8,1.5,4.1,5.6,6], {tag: 20, freqs: [32,64,125,250,500,1000,2000,4000,8000,16000], reference: '제공 자료 H · Reev Immersive 게인 ×0.75 · 원문 리미터/프리앰프는 미구현'})
+  preset('fps', 'FPS 모드', 'FPS', '저역의 울림을 줄이고 발걸음의 몸통과 중고역 디테일을 강조합니다.', 'crosshair',
+    [-2,-1,1.5,0,-1,3,5,6,3,0], {tag: 11, freqs: FPS_FREQUENCIES, reference: '제공 자료 A · PUBG·게임 음향 자료 참고 · PEAK 합성 응답 재검토 자체 조정 · 실제 게임 청취 검증 필요'}),
+  preset('vocal', '음악 보컬', '음악', '목소리의 두께와 노랫말의 선명도를 함께 살립니다.', 'mic',
+    [-3,-2,-1,0,1,3,6,3,0.5,0], {tag: 16, freqs: GRAPHIC_FREQUENCIES, reference: '제공 자료 E · Vocal Clarity 참고 · 저역 감쇄·중역 중첩 재검토 자체 조정'}),
+  preset('music-balanced', '음악 밸런스', '음악', '저음의 탄력을 더하고 중역을 살려 음악을 풍성하게 감상합니다.', 'music',
+    [4,6,2,0,0,0,1,2,3,2], {tag: 12, freqs: GRAPHIC_FREQUENCIES, reference: '제공 자료 F · Loudness 참고 · 중역·초고역 재검토 자체 조정'}),
+  preset('cinema', '영화', '영화', '저음의 충격감과 대사 전달력을 살리고 날카로운 고역을 완화합니다.', 'film',
+    [6,5,2.5,0,-1,0,2,3,3,1.5], {tag: 20, freqs: [32,64,125,250,500,1000,2000,4000,8000,16000], reference: '제공 자료 H · Immersive 참고 · 저역 충격감·대사·고역 재검토 자체 조정'})
 ];
 for (const entry of PRESETS) {
   for (const value of Object.values(entry.eq)) if (Array.isArray(value)) Object.freeze(value);
