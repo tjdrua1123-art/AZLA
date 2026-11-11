@@ -244,6 +244,15 @@ body{font-weight:500}
 }
 
 /* Audition and permanent saving are separate actions. */
+.controls-footnote{position:sticky;bottom:0;z-index:2;background:var(--surface-wash);padding-bottom:5px}
+.controls-footnote>span:first-child{font-size:14px;font-weight:650;line-height:1.7;color:#111111}
+.apply-copy strong{font-size:20px;font-weight:750;line-height:1.45;color:#000000}
+.apply-copy p{font-size:16px;font-weight:550;line-height:1.65;color:#111111}
+@media(max-width:520px){
+ .controls-footnote>span:first-child{font-size:13px}
+ .apply-copy strong{font-size:18px}
+ .apply-copy p{font-size:14px;max-width:none}
+}
 .preview-risk-button{min-height:48px;padding:10px 14px;border:2px solid var(--accent);border-radius:9px;background:#FFF1E6;color:#111111;font-size:14px;font-weight:700}
 .preview-risk-button:hover:not(:disabled){background:#F9A66C}
 .apply-bar:has(.preview-risk-button:not([hidden])){flex-wrap:wrap}
