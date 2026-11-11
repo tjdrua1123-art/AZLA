@@ -448,7 +448,7 @@ async function initialize() {
   $('supportStatus').textContent = window.isSecureContext && navigator.hid ? 'WebHID 지원' : 'Windows Chrome / Edge 필요';
   $('sdkStatus').textContent = SDK?.default ? '원본 SDK 준비됨' : '제조사 SDK 본체 추가 필요';
   $('connectionHelp').textContent = [!SDK?.default ? '제조사 SDK 본체가 아직 포함되지 않았습니다.' : '', connectionMode === 'manufacturer' ? '기존 프로그램과 같은 장치 검색 방식을 사용합니다. 사용 중인 AZLA DAC를 선택해 주세요.' : !devices.length ? '최종 제품의 USB 식별 정보 등록이 필요합니다.' : '', configError ? '장치 설정 파일을 읽을 수 없습니다.' : '', '조절하면 실시간으로 미리 듣고, 기기에 저장을 눌러야 저장합니다.'].filter(Boolean).join(' ');
-  const note = document.createElement('p'); note.className = 'help-text preset-reference-note'; note.textContent = `${PRESET_REFERENCE}. FPS는 공개 게임 음향 분석을 참고해 6kHz 대역을 사용하며, 모든 모드는 핵심 대역을 강조한 시작값입니다. 사용하는 오디오 기기에 맞게 조절해 주세요.`;
+  const note = document.createElement('p'); note.className = 'help-text preset-reference-note'; note.textContent = `${PRESET_REFERENCE}. FPS는 제공된 설정의 강조 비율을 유지하도록 조정했으며, 모든 모드는 오디오 기기에 맞게 조절할 수 있는 시작값입니다. 사용하는 오디오 기기에 맞게 조절해 주세요.`;
   $('settingsDialog').querySelector('.settings-section').append(note);
   const discoverRow = document.createElement('div'); discoverRow.className = 'discovery-row';
   const inspect = document.createElement('button'); inspect.type = 'button'; inspect.id = 'inspectDeviceBtn'; inspect.className = 'secondary-button'; inspect.textContent = '연결된 장치 확인';
