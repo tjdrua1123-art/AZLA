@@ -3,7 +3,7 @@ import { DeviceController, supportedDevices, generateRamPlan, sdkGraphModel, dis
 import { restore, persist, restoreDeviceSnapshot, persistDeviceSnapshot } from './src/storage.js';
 
 const $ = id => document.getElementById(id);
-const EARPHONE_GUIDANCE = '이어폰마다 소리 특성이 다르므로, 사용하는 이어폰에 맞게 EQ를 조절해 주세요.';
+const AUDIO_DEVICE_GUIDANCE = '오디오 기기마다 소리 특성이 다르므로, 사용하는 오디오 기기에 맞게 EQ를 조절해 주세요.';
 const SDK = window.WalkPlayWebEqSDK;
 const safeStorage = {
   getItem: key => { try { return localStorage.getItem(key); } catch { return null; } },
@@ -194,11 +194,11 @@ function refresh(rebuild = false) {
       if (token !== modelToken) return;
       state.model = sdkGraphModel(packets, eq); state.model.freqs = eq.freqs;
       state.peak = peakResponse(state.model); updateGraphLabels(); scheduleDraw(); renderComparison();
-    } catch { if (token === modelToken) $('modelLabel').textContent = EARPHONE_GUIDANCE; }
+    } catch { if (token === modelToken) $('modelLabel').textContent = AUDIO_DEVICE_GUIDANCE; }
   }, 90);
 }
 function updateGraphLabels() {
-  $('modelLabel').textContent = EARPHONE_GUIDANCE;
+  $('modelLabel').textContent = AUDIO_DEVICE_GUIDANCE;
   $('peakLabel').replaceChildren(document.createTextNode('최대 변화 '));
   const number = document.createElement('b'); number.textContent = `${formatDb(state.peak.db)} dB`; $('peakLabel').append(number);
   $('peakLabel').classList.toggle('risk', state.peak.db > 6);
@@ -387,7 +387,7 @@ async function initialize() {
   $('supportStatus').textContent = window.isSecureContext && navigator.hid ? 'WebHID 지원' : 'Windows Chrome / Edge 필요';
   $('sdkStatus').textContent = SDK?.default ? '원본 SDK 준비됨' : '제조사 SDK 본체 추가 필요';
   $('connectionHelp').textContent = [!SDK?.default ? '제조사 SDK 본체가 아직 포함되지 않았습니다.' : '', connectionMode === 'manufacturer' ? '기존 프로그램과 같은 장치 검색 방식을 사용합니다. 사용 중인 AZLA DAC를 선택해 주세요.' : !devices.length ? '최종 제품의 USB 식별 정보 등록이 필요합니다.' : '', configError ? '장치 설정 파일을 읽을 수 없습니다.' : '', 'EQ 적용을 누르면 현재 설정 1개를 기기에 저장합니다.'].filter(Boolean).join(' ');
-  const note = document.createElement('p'); note.className = 'help-text preset-reference-note'; note.textContent = `${PRESET_REFERENCE}. FPS는 공개 게임 음향 분석을 참고해 6kHz 대역을 사용하며, 모든 모드는 핵심 대역을 강조한 시작값입니다. 사용하는 이어폰에 맞게 조절해 주세요.`;
+  const note = document.createElement('p'); note.className = 'help-text preset-reference-note'; note.textContent = `${PRESET_REFERENCE}. FPS는 공개 게임 음향 분석을 참고해 6kHz 대역을 사용하며, 모든 모드는 핵심 대역을 강조한 시작값입니다. 사용하는 오디오 기기에 맞게 조절해 주세요.`;
   $('settingsDialog').querySelector('.settings-section').append(note);
   const discoverRow = document.createElement('div'); discoverRow.className = 'discovery-row';
   const inspect = document.createElement('button'); inspect.type = 'button'; inspect.id = 'inspectDeviceBtn'; inspect.className = 'secondary-button'; inspect.textContent = '연결된 장치 확인';

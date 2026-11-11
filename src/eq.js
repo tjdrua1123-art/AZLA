@@ -13,7 +13,7 @@ export const SAMPLE_RATE = 96000;
 export const FILTERS = Object.freeze({
   1: 'LOW SHELF', 2: 'PEAK', 3: 'HIGH SHELF', 4: 'LOW PASS', 5: 'HIGH PASS'
 });
-export const PRESET_REFERENCE = '공개 음향 자료 기반 자체 설계(2026-11-10) · Q 1.4 · 이어폰별 조절 필요';
+export const PRESET_REFERENCE = '공개 음향 자료 기반 자체 설계(2026-11-10) · Q 1.4 · 오디오 기기별 조절 필요';
 
 function makeEq(gains = Array(BANDS).fill(0), options = {}) {
   return {
