@@ -148,6 +148,7 @@ function renderBands() {
     const db = document.createElement('small'); db.textContent = 'dB'; gain.append(db);
     const shell = document.createElement('div'); shell.className = 'slider-shell';
     const slider = document.createElement('input'); slider.type = 'range'; slider.className = 'gain-slider'; slider.min = -12; slider.max = 12; slider.step = .1; slider.value = state.eq.gains[i];
+    updateSlider(slider, state.eq.gains[i]);
     slider.dataset.band = i; slider.setAttribute('aria-label', `${i + 1}번 밴드 게인 슬라이더`); slider.setAttribute('aria-orientation', 'vertical');
     slider.addEventListener('input', () => { selectBand(i); editBand(i, 'gains', Number(slider.value)); });
     slider.addEventListener('dblclick', () => editBand(i, 'gains', 0));
@@ -166,6 +167,12 @@ function selectBand(i) {
   $('bandControls').querySelectorAll('.band-column').forEach((el, j) => el.classList.toggle('selected', i === j));
   scheduleDraw();
 }
+function updateSlider(slider, gain) {
+  slider.value = gain;
+  // Range thumbs travel within the track, inset by half their 13px height.
+  const ratio = (12 - gain) / 24;
+  slider.style.setProperty('--gain-stop', `calc(${ratio * 100}% + ${(0.5 - ratio) * 13}px)`);
+}
 function editBand(i, prop, value) {
   if (state.busy) return;
   const next = cloneEq(state.eq); next[prop][i] = value; next.tag = 14;
@@ -177,7 +184,7 @@ function editBand(i, prop, value) {
     const input = column.querySelector(selector);
     if (document.activeElement !== input) { input.value = state.eq[key][i]; input.removeAttribute('aria-invalid'); }
   }
-  column.querySelector('.gain-slider').value = state.eq.gains[i];
+  updateSlider(column.querySelector('.gain-slider'), state.eq.gains[i]);
   column.querySelector('select').value = state.eq.filterTypes[i];
   refresh(false, true); saveLocal();
 }
