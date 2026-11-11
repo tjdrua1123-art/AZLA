@@ -65,9 +65,9 @@
       "id": "fps",
       "name": "FPS 모드",
       "category": "FPS",
-      "description": "저역의 울림을 줄이고 발걸음의 몸통과 중고역 디테일을 강조합니다.",
+      "description": "1~4 kHz를 강하게 강조해 발걸음과 효과음의 세부 소리를 부각합니다.",
       "icon": "crosshair",
-      "reference": "제공 자료 A · PUBG·게임 음향 자료 참고 · PEAK 합성 응답 재검토 자체 조정 · 실제 게임 청취 검증 필요",
+      "reference": "제공 자료 A · PUBG 인벤 게인 ×0.5 · PEAK/Q 1.4로 적용 · 실제 게임 청취 검증 필요",
       "eq": {
         "freqs": [
           31,
@@ -94,16 +94,16 @@
           1.4
         ],
         "gains": [
-          -2,
-          -1,
-          1.5,
           0,
-          -1,
+          0.5,
+          1,
+          2,
           3,
-          5,
           6,
-          3,
-          0
+          6,
+          6,
+          4,
+          3
         ],
         "filterTypes": [
           2,
@@ -125,9 +125,9 @@
       "id": "vocal",
       "name": "음악 보컬",
       "category": "음악",
-      "description": "목소리의 두께와 노랫말의 선명도를 함께 살립니다.",
+      "description": "저역의 비중을 줄이고 노랫말과 보컬의 명료도를 강조합니다.",
       "icon": "mic",
-      "reference": "제공 자료 E · Vocal Clarity 참고 · 저역 감쇄·중역 중첩 재검토 자체 조정",
+      "reference": "제공 자료 E · ProMedia Vocal Clarity 게인 ×1.5 · PEAK/Q 1.4로 적용",
       "eq": {
         "freqs": [
           31,
@@ -154,15 +154,15 @@
           1.4
         ],
         "gains": [
+          -6,
+          -4.5,
           -3,
-          -2,
-          -1,
           0,
-          1,
-          3,
+          1.5,
+          4.5,
           6,
-          3,
-          0.5,
+          4.5,
+          1.5,
           0
         ],
         "filterTypes": [
@@ -185,9 +185,9 @@
       "id": "music-balanced",
       "name": "음악 밸런스",
       "category": "음악",
-      "description": "저음의 탄력을 더하고 중역을 살려 음악을 풍성하게 감상합니다.",
+      "description": "저음과 고음을 함께 강조해 풍성하고 선명한 감상을 돕습니다.",
       "icon": "music",
-      "reference": "제공 자료 F · Loudness 참고 · 중역·초고역 재검토 자체 조정",
+      "reference": "제공 자료 F · ProMedia Loudness 게인 ×1.0 · 중립 보정이 아닌 저고역 강조",
       "eq": {
         "freqs": [
           31,
@@ -214,16 +214,16 @@
           1.4
         ],
         "gains": [
-          4,
           6,
+          5,
           2,
           0,
+          -1,
+          -1,
           0,
-          0,
-          1,
           2,
-          3,
-          2
+          4,
+          6
         ],
         "filterTypes": [
           2,
@@ -245,9 +245,9 @@
       "id": "cinema",
       "name": "영화",
       "category": "영화",
-      "description": "저음의 충격감과 대사 전달력을 살리고 날카로운 고역을 완화합니다.",
+      "description": "저역의 충격감과 고역 효과음을 함께 강조해 영화 감상을 풍성하게 합니다.",
       "icon": "film",
-      "reference": "제공 자료 H · Immersive 참고 · 저역 충격감·대사·고역 재검토 자체 조정",
+      "reference": "제공 자료 H · Reev Immersive 게인 ×0.75 · 원문 리미터/프리앰프는 미구현",
       "eq": {
         "freqs": [
           32,
@@ -274,16 +274,16 @@
           1.4
         ],
         "gains": [
-          6,
-          5,
-          2.5,
-          0,
-          -1,
-          0,
-          2,
-          3,
-          3,
-          1.5
+          5.3,
+          4.5,
+          2.6,
+          0.8,
+          -1.1,
+          -0.8,
+          1.5,
+          4.1,
+          5.6,
+          6
         ],
         "filterTypes": [
           2,

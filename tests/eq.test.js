@@ -75,10 +75,16 @@ test('five production sound modes use the requested bands, gains and shared 1.4 
   assert.ok(QS.every(q=>q===1.4));
   const expected={
     flat:[0,0,0,0,0,0,0,0,0,0],
-    fps:[-2,-1,1.5,0,-1,3,5,6,3,0],
-    vocal:[-3,-2,-1,0,1,3,6,3,0.5,0],
-    'music-balanced':[4,6,2,0,0,0,1,2,3,2],
-    cinema:[6,5,2.5,0,-1,0,2,3,3,1.5]
+    fps:[0,0.5,1,2,3,6,6,6,4,3],
+    vocal:[-6,-4.5,-3,0,1.5,4.5,6,4.5,1.5,0],
+    'music-balanced':[6,5,2,0,-1,-1,0,2,4,6],
+    cinema:[5.3,4.5,2.6,0.8,-1.1,-0.8,1.5,4.1,5.6,6]
+  };
+  const source={
+    fps:[0,1,2,4,6,12,12,12,8,6],
+    vocal:[-4,-3,-2,0,1,3,4,3,1,0],
+    'music-balanced':[6,5,2,0,-1,-1,0,2,4,6],
+    cinema:[7,6,3.5,1,-1.5,-1,2,5.5,7.5,8]
   };
   for (const preset of PRESETS) {
     validateEq(preset.eq);
@@ -93,12 +99,16 @@ test('five production sound modes use the requested bands, gains and shared 1.4 
       assert.ok(peakResponse(buildAnalyticModel(preset.eq)).db>=3,`${preset.id}: keep the requested stronger boost`);
       assert.ok(preset.eq.gains.every(gain=>gain>=-6 && gain<=6),preset.id);
       assert.equal(Math.max(...preset.eq.gains),6,`${preset.id}: highest stock band must be +6 dB`);
-
+      const sourceMax=Math.max(...source[preset.id]);
+      source[preset.id].forEach((gain,i)=>{
+        assert.equal(Math.sign(preset.eq.gains[i]),Math.sign(gain),'preserve original boosts, cuts and zero bands');
+        assert.ok(Math.abs(preset.eq.gains[i]*sourceMax-gain*6)<=0.050001*sourceMax,'preserve source ratios within 0.1 dB rounding');
+      });
     }
   }
   const fpsPeak = peakResponse(buildAnalyticModel(PRESETS.find(p=>p.id==='fps').eq));
   assert.ok(fpsPeak.minDb >= -6, 'FPS combined cuts must stay within the PEAK-only design envelope');
-  assert.deepEqual(expected.fps,[-2,-1,1.5,0,-1,3,5,6,3,0]);
+  assert.deepEqual(expected.fps,[0,0.5,1,2,3,6,6,6,4,3]);
   assert.ok(expected.vocal[6]>0 && expected.vocal[7]>0);
   assert.ok(expected['music-balanced'][0]>0 && expected.cinema[1]>0);
 });
