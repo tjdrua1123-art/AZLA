@@ -35,13 +35,13 @@ const preset = (id, name, category, description, icon, gains, options) => ({
 export const PRESETS = [
   preset('flat', '기본 모드', 'REFERENCE', '원래의 소리를 그대로. 모든 밴드 0 dB.', 'flat', Array(BANDS).fill(0), {tag: 13}),
   preset('fps', 'FPS 모드', 'FPS', '1~4 kHz를 강하게 강조해 발걸음과 효과음의 세부 소리를 부각합니다.', 'crosshair',
-    [0,1,2,4,6,12,12,12,8,6], {tag: 11, freqs: FPS_FREQUENCIES, reference: '제공 자료 A · PUBG 인벤 공개 게인 · PEAK/Q 1.4로 적용 · 실제 게임 청취 검증 필요'}),
+    [0,0.5,1,2,3,6,6,6,4,3], {tag: 11, freqs: FPS_FREQUENCIES, reference: '제공 자료 A · PUBG 인벤 게인 ×0.5 · PEAK/Q 1.4로 적용 · 실제 게임 청취 검증 필요'}),
   preset('vocal', '음악 보컬', '음악', '저역의 비중을 줄이고 노랫말과 보컬의 명료도를 강조합니다.', 'mic',
-    [-4,-3,-2,0,1,3,4,3,1,0], {tag: 16, freqs: GRAPHIC_FREQUENCIES, reference: '제공 자료 E · ProMedia Vocal Clarity 게인 · PEAK/Q 1.4로 적용'}),
+    [-6,-4.5,-3,0,1.5,4.5,6,4.5,1.5,0], {tag: 16, freqs: GRAPHIC_FREQUENCIES, reference: '제공 자료 E · ProMedia Vocal Clarity 게인 ×1.5 · PEAK/Q 1.4로 적용'}),
   preset('music-balanced', '음악 밸런스', '음악', '저음과 고음을 함께 강조해 풍성하고 선명한 감상을 돕습니다.', 'music',
-    [6,5,2,0,-1,-1,0,2,4,6], {tag: 12, freqs: GRAPHIC_FREQUENCIES, reference: '제공 자료 F · ProMedia Loudness 게인 · 중립 보정이 아닌 저고역 강조'}),
+    [6,5,2,0,-1,-1,0,2,4,6], {tag: 12, freqs: GRAPHIC_FREQUENCIES, reference: '제공 자료 F · ProMedia Loudness 게인 ×1.0 · 중립 보정이 아닌 저고역 강조'}),
   preset('cinema', '영화', '영화', '저역의 충격감과 고역 효과음을 함께 강조해 영화 감상을 풍성하게 합니다.', 'film',
-    [7,6,3.5,1,-1.5,-1,2,5.5,7.5,8], {tag: 20, freqs: [32,64,125,250,500,1000,2000,4000,8000,16000], reference: '제공 자료 H · Reev Immersive 게인 · 원문 리미터/프리앰프는 미구현'})
+    [5.3,4.5,2.6,0.8,-1.1,-0.8,1.5,4.1,5.6,6], {tag: 20, freqs: [32,64,125,250,500,1000,2000,4000,8000,16000], reference: '제공 자료 H · Reev Immersive 게인 ×0.75 · 원문 리미터/프리앰프는 미구현'})
 ];
 for (const entry of PRESETS) {
   for (const value of Object.values(entry.eq)) if (Array.isArray(value)) Object.freeze(value);
