@@ -139,6 +139,9 @@ function renderBands() {
   for (let i = 0; i < BANDS; i++) {
     const column = document.createElement('div'); column.className = 'band-column'; column.dataset.band = i;
     column.classList.toggle('selected', i === state.activeBand);
+    const selectColumn = () => { if (!state.busy) selectBand(i); };
+    column.addEventListener('click', selectColumn);
+    column.addEventListener('focusin', selectColumn);
     const num = document.createElement('span'); num.className = 'band-number'; num.textContent = String(i + 1).padStart(2, '0');
     const freq = document.createElement('label'); freq.className = 'band-frequency';
     freq.append(numberInput('주파수 Hz', state.eq.freqs[i], 20, 20000, 1, 'freqs', i));
