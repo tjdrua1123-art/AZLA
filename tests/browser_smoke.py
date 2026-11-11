@@ -108,7 +108,7 @@ with sync_playwright() as p:
     page.locator('#connectBtn').click()
     page.wait_for_function("!document.querySelector('#applyBtn').disabled")
     assert page.locator('[data-current-state]').inner_text().startswith('현재 상태')
-    assert '기본 모드' in page.locator('[data-current-state]').inner_text()
+    assert page.locator('[data-current-state] .preset-caption').inner_text() == '기기 연결됨'
     assert page.evaluate('window.__writes.map(x=>x.bytes)') == [[128,9,0]]
     page.locator('[data-preset="fps"]').click()
     page.locator('#applyBtn').click()

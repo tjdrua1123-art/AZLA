@@ -302,7 +302,7 @@ body{font-weight:500}
 .preset-item[aria-pressed=true] .preset-name{font-weight:750}
 .preset-item.device-current{margin:0 10px 10px;padding:17px 10px;border-top:1px solid var(--line-soft);border-bottom:1px solid var(--line-soft);border-radius:0;width:calc(100% - 20px)}
 .device-current .preset-copy{flex-direction:row;align-items:center;justify-content:space-between;gap:10px}.device-current .preset-name{font-size:14px;white-space:nowrap}
-.device-current .preset-caption{display:block;font-size:11px;font-weight:400;max-width:95px;text-align:right;line-height:1.5}
+.device-current .preset-caption{display:block;font-size:11px;font-weight:400;max-width:none;flex-shrink:0;white-space:nowrap;text-align:right;line-height:1.5}
 .sidebar-spacer{min-height:12px}.sidebar-note{margin:0 20px;padding:18px 0 0;border-top:1px solid var(--line-soft);font-size:10px;letter-spacing:2px;color:#666666}
 .main-content{max-width:none;margin:0;padding:0 32px 16px}
 .equalizer-panel{border:0;border-radius:0;box-shadow:none;background:#FFFFFF}

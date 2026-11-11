@@ -67,15 +67,15 @@ function currentDeviceView() {
     const preset = PRESETS.find(profile => profile.eq.tag === state.deviceTag);
     if (preset) return {
       eq: preset.eq,
-      caption: preset.name,
+      caption: '기기 연결됨',
       description: `${preset.name}의 기본 설정을 표시합니다.`,
       reference: '개별 조절값은 저장된 기록이 있을 때 표시됩니다.'
     };
     return { eq: null, caption: '설정 확인 필요', description: '기기의 설정을 표시할 수 없습니다. 사운드 모드를 선택하거나 EQ를 직접 조절해 주세요.' };
   }
   if (device && state.deviceTagStatus === 'reading') return { eq: matchingSnapshot ? snapshot.eq : null, caption: '기기 상태 확인 중', description: '기기에 저장된 설정을 확인하고 있습니다.' };
-  if (device && state.deviceTagStatus === 'error') return { eq: matchingSnapshot ? snapshot.eq : null, caption: matchingSnapshot ? '마지막 저장 설정 · 연결 확인 필요' : '기기 응답 없음', description: matchingSnapshot ? '현재 상태를 확인하지 못했습니다. 표시된 값은 마지막 저장 기록입니다.' : '현재 상태를 확인하지 못했습니다. 기기 연결을 확인해 주세요.' };
-  if (snapshot) return { eq: snapshot.eq, caption: '마지막 저장 설정 · 연결해 확인', description: '마지막으로 저장한 설정입니다. 기기를 연결하면 현재 상태를 확인할 수 있습니다.' };
+  if (device && state.deviceTagStatus === 'error') return { eq: matchingSnapshot ? snapshot.eq : null, caption: '연결 확인 필요', description: matchingSnapshot ? '현재 상태를 확인하지 못했습니다. 표시된 값은 마지막 저장 기록입니다.' : '현재 상태를 확인하지 못했습니다. 기기 연결을 확인해 주세요.' };
+  if (snapshot) return { eq: snapshot.eq, caption: '마지막 저장 설정', description: '마지막으로 저장한 설정입니다. 기기를 연결하면 현재 상태를 확인할 수 있습니다.' };
   return { eq: null, caption: '기기 연결 후 확인', description: '기기를 연결하면 현재 상태를 확인할 수 있습니다.' };
 }
 function renderPresets() {
