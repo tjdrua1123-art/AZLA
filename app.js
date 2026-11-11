@@ -41,46 +41,33 @@ function download(name, value) {
 }
 function selectedProfile() {
   if (state.selected === 'device-current') {
-    const current = currentDeviceView();
-    return { name: '현재 상태', description: current?.description || '기기에 저장된 상태를 확인할 수 없습니다.', eq: current?.eq || state.eq, reference: current?.reference || '기기를 연결하면 현재 상태를 확인할 수 있습니다.' };
+    const current = savedDeviceView();
+    return { name: '저장된 설정', description: current?.description || '불러올 저장 설정이 없습니다.', eq: current?.eq || state.eq, reference: current?.reference || '기기에 저장한 설정을 불러옵니다.' };
   }
   if (state.selected === 'manual') return { name: '직접 조절', description: '선택한 사운드를 슬라이더로 직접 조절한 상태입니다.', eq: state.eq, reference: '현재 세션의 임시 조절값' };
   return PRESETS.find(p => p.id === state.selected) || PRESETS[0];
 }
 function sameDevice(snapshot, device) { return !!snapshot && !!device && snapshot.vendorId === device.vendorId && snapshot.productId === device.productId; }
-function currentDeviceView() {
-  const device = controller?.device, snapshot = state.deviceSnapshot;
-  const matchingSnapshot = sameDevice(snapshot, device);
-  const preview = controller?.lastPreviewEvidence;
-  if (device && preview && !controller.requiresReconnect) return {
-    eq: preview.eq, caption: '미리듣기 중 · 저장 전',
-    description: '현재 기기에서 임시로 듣는 설정입니다. 기기에 저장을 눌러야 저장됩니다.',
-    reference: '미리듣기 설정입니다. 기기에 저장을 눌러야 저장됩니다.'
+function savedDeviceView() {
+  const device = controller?.device;
+  // A RAM preview must never replace the last explicitly saved snapshot.
+  const evidence = controller?.lastEvidence;
+  const snapshot = evidence?.result === 'flash-command-transmitted' && device
+    && sameDevice(evidence.device, device) ? { ...evidence.device, eq: evidence.eq } : state.deviceSnapshot;
+  if (snapshot && (!device || sameDevice(snapshot, device))) return {
+    eq: snapshot.eq,
+    description: '이 프로그램에서 마지막으로 저장한 설정입니다.',
+    reference: '조절 중인 값과 별도로 보관한 마지막 저장 설정을 불러옵니다.'
   };
-  if (device && state.deviceTagStatus === 'known') {
-    if (matchingSnapshot && snapshot.tag === state.deviceTag) return {
-      eq: snapshot.eq,
-      caption: '마지막 저장 설정',
-      description: '이 프로그램에서 마지막으로 저장한 설정입니다.',
-      reference: '표시된 값은 마지막 저장 기록을 기준으로 합니다.'
-    };
-    const preset = PRESETS.find(profile => profile.eq.tag === state.deviceTag);
-    if (preset) return {
-      eq: preset.eq,
-      caption: '기기 연결됨',
-      description: `${preset.name}의 기본 설정을 표시합니다.`,
-      reference: '개별 조절값은 저장된 기록이 있을 때 표시됩니다.'
-    };
-    return { eq: null, caption: '설정 확인 필요', description: '기기의 설정을 표시할 수 없습니다. 사운드 모드를 선택하거나 EQ를 직접 조절해 주세요.' };
-  }
-  if (device && state.deviceTagStatus === 'reading') return { eq: matchingSnapshot ? snapshot.eq : null, caption: '기기 상태 확인 중', description: '기기에 저장된 설정을 확인하고 있습니다.' };
-  if (device && state.deviceTagStatus === 'error') return { eq: matchingSnapshot ? snapshot.eq : null, caption: '연결 확인 필요', description: matchingSnapshot ? '현재 상태를 확인하지 못했습니다. 표시된 값은 마지막 저장 기록입니다.' : '현재 상태를 확인하지 못했습니다. 기기 연결을 확인해 주세요.' };
-  if (snapshot) return { eq: snapshot.eq, caption: '마지막 저장 설정', description: '마지막으로 저장한 설정입니다. 기기를 연결하면 현재 상태를 확인할 수 있습니다.' };
-  return { eq: null, caption: '기기 연결 후 확인', description: '기기를 연결하면 현재 상태를 확인할 수 있습니다.' };
+  return {
+    eq: null,
+    description: device ? '이 기기에 저장한 설정이 없습니다. EQ를 조절한 뒤 기기에 저장을 눌러 주세요.' : '불러올 저장 설정이 없습니다. 기기를 연결하고 원하는 EQ를 저장해 주세요.',
+    reference: '저장한 설정이 있을 때 불러올 수 있습니다.'
+  };
 }
 function renderPresets() {
   const root = $('presetList'); root.replaceChildren();
-  const current = currentDeviceView();
+  const current = savedDeviceView();
   const currentButton = document.createElement('button'); currentButton.type = 'button'; currentButton.className = 'preset-item device-current';
   currentButton.dataset.currentState = 'true'; currentButton.setAttribute('aria-pressed', String(state.selected === 'device-current')); currentButton.disabled = state.busy;
   currentButton.title = current.description;
@@ -88,12 +75,12 @@ function renderPresets() {
   const currentSymbol = document.createElement('span'); currentSymbol.className = 'preset-icon';
   currentSymbol.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v12H4zM8 21h8m-4-4v4"/><path d="M8 10h2l2-3 2 6 2-3h2"/></svg>';
   const currentCopy = document.createElement('span'); currentCopy.className = 'preset-copy';
-  const currentName = document.createElement('span'); currentName.className = 'preset-name'; currentName.textContent = '현재 상태';
+  const currentName = document.createElement('span'); currentName.className = 'preset-name'; currentName.textContent = '저장된 설정';
   currentCopy.append(currentName);
   const currentDot = document.createElement('span'); currentDot.className = 'preset-active-mark'; currentDot.setAttribute('aria-hidden', 'true');
   currentButton.append(currentSymbol, currentCopy, currentDot);
   currentButton.addEventListener('click', () => {
-    const value = currentDeviceView();
+    const value = savedDeviceView();
     if (!value.eq) { toast(value.description, true); return; }
     state.eq = cloneEq(value.eq); state.baseEq = cloneEq(value.eq); state.selected = 'device-current'; state.baseSelected = 'device-current'; state.error = null;
     refresh(true, true);
@@ -281,7 +268,7 @@ async function apply() {
     try { const read = await controller.readEqTag(); state.deviceTag = read.tag; state.deviceTagStatus = 'known'; }
     catch { state.deviceTag = null; state.deviceTagStatus = 'error'; }
     state.previewBlocked = null; state.previewApproved = currentSignature; renderPresets();
-    toast(snapshotRecorded ? '기기에 설정을 전송했습니다.' : '기기 저장은 완료됐지만 현재 상태 기록을 이 브라우저에 보관하지 못했습니다.', !snapshotRecorded);
+    toast(snapshotRecorded ? '기기에 설정을 전송했습니다.' : '기기 저장은 완료됐지만 저장 설정 기록을 이 브라우저에 보관하지 못했습니다.', !snapshotRecorded);
   } catch (error) { state.lastApplied = null; state.error = error.message; toast(error.message, true); }
   finally { lockUI(false); }
 }
