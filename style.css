@@ -301,8 +301,7 @@ body{font-weight:500}
 .preset-item[aria-pressed=true]{background:#FFF0E4;border:0;box-shadow:inset 5px 0 var(--accent);color:#000000}
 .preset-item[aria-pressed=true] .preset-name{font-weight:750}
 .preset-item.device-current{margin:0 10px 10px;padding:17px 10px;border-top:1px solid var(--line-soft);border-bottom:1px solid var(--line-soft);border-radius:0;width:calc(100% - 20px)}
-.device-current .preset-copy{flex-direction:row;align-items:center;justify-content:space-between;gap:10px}.device-current .preset-name{font-size:14px;white-space:nowrap}
-.device-current .preset-caption{display:block;font-size:11px;font-weight:400;max-width:none;flex-shrink:0;white-space:nowrap;text-align:right;line-height:1.5}
+.device-current .preset-copy{flex-direction:row;align-items:center;gap:0}.preset-item.device-current .preset-name{font-size:17px;font-weight:650;white-space:nowrap}
 .sidebar-spacer{min-height:12px}.sidebar-note{margin:0 20px;padding:18px 0 0;border-top:1px solid var(--line-soft);font-size:10px;letter-spacing:2px;color:#666666}
 .main-content{max-width:none;margin:0;padding:0 32px 16px}
 .equalizer-panel{border:0;border-radius:0;box-shadow:none;background:#FFFFFF}
@@ -355,7 +354,7 @@ body{font-weight:500}
  .brand-header{height:70px;padding:0 20px;gap:12px}.brand-wordmark{width:126px}.brand-header .device-card{gap:12px}.device-copy strong{font-size:11px;max-width:115px}.device-copy>span{font-size:10px}.connect-button{min-width:98px;min-height:42px;font-size:13px;padding:8px 12px}
  .app-shell{display:block;height:auto;min-height:calc(100dvh - 70px)}.sidebar{position:static;height:auto;padding:16px 20px 0;border-right:0;border-bottom:1px solid var(--line)}
  .sidebar-heading{padding:0 0 12px;font-size:14px}.preset-list{display:flex;flex-direction:row;overflow-x:auto;padding:0 0 12px;gap:8px}.preset-item{width:auto;min-width:104px;min-height:48px;padding:10px 12px;gap:8px;flex-shrink:0;white-space:nowrap}.preset-name{font-size:13px}.preset-item[data-preset]::before{font-size:10px;width:auto}
- .preset-item.device-current{width:130px;margin:0;padding:10px 12px;border:1px solid var(--line-soft);border-radius:4px}.device-current .preset-copy{display:block}.device-current .preset-name{font-size:12px}.device-current .preset-caption{text-align:left;font-size:9px}.sidebar-spacer,.sidebar-note{display:none}
+ .preset-item.device-current{width:130px;margin:0;padding:10px 12px;border:1px solid var(--line-soft);border-radius:4px}.device-current .preset-copy{display:block}.preset-item.device-current .preset-name{font-size:14px}.sidebar-spacer,.sidebar-note{display:none}
  .main-content{height:auto;padding:0 20px 20px}.equalizer-panel{overflow:visible}.profile-header{padding:22px 0 16px}.profile-intro h2{font-size:23px}.profile-intro p{font-size:13px;max-width:none}.profile-actions .quiet-button{font-size:12px}
  .chart-section{padding:0 0 18px}.chart-wrap{height:235px}.chart-bottom #modelLabel{font-size:14px}.controls-section{padding:18px 0 0}.controls-title h3{font-size:16px}.controls-heading{margin-bottom:14px}
  .bands-scroll{overflow-x:auto;padding-left:28px}.band-controls{min-width:800px;gap:6px}.slider-shell,.gain-slider,.band-scale{height:145px}.band-frequency input{font-size:13px}.band-scale{top:91px}

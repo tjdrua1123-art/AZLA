@@ -89,8 +89,7 @@ function renderPresets() {
   currentSymbol.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v12H4zM8 21h8m-4-4v4"/><path d="M8 10h2l2-3 2 6 2-3h2"/></svg>';
   const currentCopy = document.createElement('span'); currentCopy.className = 'preset-copy';
   const currentName = document.createElement('span'); currentName.className = 'preset-name'; currentName.textContent = '현재 상태';
-  const currentCaption = document.createElement('span'); currentCaption.className = 'preset-caption'; currentCaption.textContent = current.caption;
-  currentCopy.append(currentName, currentCaption);
+  currentCopy.append(currentName);
   const currentDot = document.createElement('span'); currentDot.className = 'preset-active-mark'; currentDot.setAttribute('aria-hidden', 'true');
   currentButton.append(currentSymbol, currentCopy, currentDot);
   currentButton.addEventListener('click', () => {

@@ -108,7 +108,7 @@ with sync_playwright() as p:
     page.locator('#connectBtn').click()
     page.wait_for_function("!document.querySelector('#applyBtn').disabled")
     assert page.locator('[data-current-state]').inner_text().startswith('현재 상태')
-    assert page.locator('[data-current-state] .preset-caption').inner_text() == '기기 연결됨'
+    assert page.locator('[data-current-state]').inner_text() == '현재 상태'
     assert page.evaluate('window.__writes.map(x=>x.bytes)') == [[128,9,0]]
     page.locator('[data-preset="fps"]').click()
     page.locator('#applyBtn').click()
@@ -122,7 +122,7 @@ with sync_playwright() as p:
     assert len(mutation_writes) == 12
     assert [w['bytes'][4] for w in mutation_writes[:10]] == list(range(10))
     assert mutation_writes[-1]['bytes'] == [1,1,0]
-    assert '마지막 저장 설정' in page.locator('[data-current-state]').inner_text()
+    assert page.locator('[data-current-state]').inner_text() == '현재 상태'
     assert page.evaluate("localStorage.getItem('azla_equalizer_device_state_v1')") is not None
     page.locator('[data-preset="flat"]').click()
     page.locator('[data-current-state]').click()
