@@ -37,7 +37,9 @@ function fixtureSDK({bandCount=10, duplicateBand=false, wrongFilter=false, badRe
         const payload=new Uint8Array(36);
         payload[0]=1;payload[1]=9;payload[4]=duplicateBand?0:index;
         payload[33]=wrongFilter?5:eq.filterTypes[index];
-        new DataView(payload.buffer).setInt32(7,2**30,true);
+        const view=new DataView(payload.buffer);view.setInt32(7,2**30,true);
+        view.setUint16(27,eq.freqs[index],true);view.setUint16(29,Math.round(eq.qs[index]*256),true);
+        view.setInt16(31,Math.round(eq.gains[index]*256),true);payload[35]=eq.tag;
         this.device.sendReport(75,payload);
       }
       this.device.sendReport(75,Uint8Array.from(badRefresh?[1,9,0,0,0,0,0]:[1,10,4,0,0,255,255]));
@@ -102,6 +104,71 @@ test('Flash apply sends every flat band, RAM refresh, waits, and one Flash comma
   assert.equal(progress.at(-1).label,'Flash 저장 명령 전송 완료');
   assert.equal(progress.at(-1).fraction,1);
   assert.equal(controller.busy,false);assert.equal(controller.requiresReconnect,false);
+});
+
+test('preview sends only RAM, coalesces unchanged SDK packets, and preserves Flash evidence',async()=>{
+  const {controller,device,waits}=await connected();
+  const saved=await controller.apply(flat());
+  device.writes.length=0;waits.length=0;
+  const eq=flat();eq.gains[4]=2;
+  const preview=await controller.preview(eq);
+  assert.equal(preview.result,'ram-preview-transmitted');
+  assert.equal(device.writes.length,2);
+  assert.equal(device.writes[0].bytes[4],4);
+  assert.deepEqual(device.writes[1].bytes,[1,10,4,0,0,255,255]);
+  assert.deepEqual(waits,[130,130]);
+  assert.equal(controller.lastEvidence,saved);
+  assert.equal(controller.lastPreviewEvidence,preview);
+  await controller.preview(eq);
+  assert.equal(device.writes.length,2,'unchanged packets are not retransmitted');
+  await controller.apply(eq);
+  assert.deepEqual(device.writes.at(-1).bytes,[1,1,0]);
+  assert.equal(controller.lastPreviewEvidence,null);
+});
+
+test('first preview sends a full baseline and reconnect invalidates the differential cache',async()=>{
+  const {controller,device}=await connected();
+  await controller.preview(flat());
+  assert.equal(device.writes.length,11);
+  assert.deepEqual(device.writes.at(-1).bytes,[1,10,4,0,0,255,255]);
+  assert.equal(controller.lastEvidence,null);
+  await controller.disconnect();await controller.connect();
+  await controller.preview(flat());
+  assert.equal(device.writes.length,22);
+  assert.ok(device.writes.every(p=>p.bytes.join(',')!=='1,1,0'));
+});
+
+test('preview and Flash transactions cannot interleave; cancelled preparation sends nothing',async()=>{
+  const {controller,device}=await connected();
+  const first=controller.preview(flat());
+  await assert.rejects(controller.apply(flat()),/진행 중/);
+  await assert.rejects(controller.preview(flat()),/진행 중/);
+  await first;
+  const before=device.writes.length;
+  assert.equal((await controller.preview(flat(),{isCurrent:()=>false})).result,'preview-skipped');
+  assert.equal(device.writes.length,before);
+});
+
+test('preview failure stops writes, never sends Flash and requires reconnect',async()=>{
+  const {controller,device}=await connected({device:fixtureDevice({failAt:3})});
+  await assert.rejects(controller.preview(flat()),/Synthetic HID/);
+  assert.equal(device.writes.length,4);
+  assert.equal(controller.requiresReconnect,true);
+  assert.equal(controller.ramPackets,null);
+  assert.equal(controller.lastEvidence,null);
+  await assert.rejects(controller.preview(flat()),/연결/);
+});
+
+test('disconnect and timeout during preview never send Flash',async()=>{
+  let chosen;
+  const connection=await connected({wait:async()=>chosen.emitDisconnect()});chosen=connection.hid;
+  await assert.rejects(connection.controller.preview(flat()),/연결/);
+  assert.equal(connection.device.writes.length,1);
+  assert.equal(connection.controller.requiresReconnect,true);
+  const hanging=await connected({timing:{...TIMING,timeout:8},device:fixtureDevice({neverResolve:true})});
+  await assert.rejects(hanging.controller.preview(flat()),/응답 시간/);
+  assert.equal(hanging.device.writes.length,1);
+  assert.equal(hanging.controller.requiresReconnect,true);
 });
 
 test('incomplete, duplicate, wrong-filter and invalid Flash SDK plans cause no physical writes',async()=>{

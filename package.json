@@ -7,7 +7,7 @@
   "main": "desktop/main.cjs",
   "scripts": {
     "start": "node server.mjs",
-    "test": "node --test tests/eq.test.js tests/device.test.js tests/storage.test.js tests/vendor-sdk.test.js",
+    "test": "node --test tests/eq.test.js tests/device.test.js tests/storage.test.js tests/vendor-sdk.test.js tests/preview.test.js",
     "desktop": "electron desktop/main.cjs",
     "package:win": "electron-builder --win nsis --x64",
     "package:folder": "electron-builder --win --x64 --dir -c.win.signAndEditExecutable=false"

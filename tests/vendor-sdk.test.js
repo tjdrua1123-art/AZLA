@@ -143,6 +143,44 @@ test('app transmits real SDK 10-band, RAM and Flash bytes in order and preserves
   assert.equal(evidence.persistenceVerified, false);
 });
 
+test('real SDK live audition uses only RAM, coalesces unchanged bands, and reserves Flash for explicit save', async () => {
+  const { controller, device } = mockConnection();
+  await controller.connect();
+  const eq = flat();
+  const first = await controller.preview(eq);
+  assert.deepEqual(device.writes, await generateRamPlan(SDK, eq));
+  assert.equal(first.result, 'ram-preview-transmitted');
+  assert.equal(controller.lastEvidence, null);
+  const edited = cloneEq(eq); edited.gains[4] = 3;
+  const second = await controller.preview(edited);
+  const plan = await generateRamPlan(SDK, edited);
+  assert.deepEqual(second.reports.map(({ reportId, bytes }) => ({ reportId, bytes })), [plan[4], plan[10]]);
+  const before = device.writes.length;
+  await controller.preview(edited);
+  assert.equal(device.writes.length, before, 'identical editor values do not resend USB commands');
+  assert.ok(device.writes.every(w => w.bytes.join(',') !== FLASH.join(',')));
+  await controller.apply(edited);
+  assert.equal(device.writes.filter(w => w.bytes.join(',') === FLASH.join(',')).length, 1);
+  assert.equal(controller.lastPreviewEvidence, null);
+});
+
+test('real SDK response guard blocks high-gain audition before any write, with explicit RAM-only consent', async () => {
+  const { controller, device } = mockConnection();
+  await controller.connect();
+  const eq = flat(); eq.gains[4] = 11;
+  const blocked = await controller.preview(eq);
+  assert.equal(blocked.result, 'preview-confirmation-required');
+  assert.ok(blocked.peak.db > 10.9);
+  assert.equal(device.writes.length, 0);
+  assert.equal(controller.requiresReconnect, false);
+  const heard = await controller.preview(eq, { allowHighGain: true });
+  assert.equal(heard.result, 'ram-preview-transmitted');
+  assert.equal(device.writes.length, 11);
+  assert.deepEqual(device.writes.at(-1).bytes, RAM);
+  assert.ok(device.writes.every(w => w.bytes.join(',') !== FLASH.join(',')));
+  assert.equal(controller.lastEvidence, null);
+});
+
 test('35 consecutive real-SDK mock-device saves still retain complete transactions after log rotation', async () => {
   const { controller, device } = mockConnection();
   await controller.connect();

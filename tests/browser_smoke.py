@@ -130,16 +130,17 @@ with sync_playwright() as p:
     assert page.locator('.band-gain input').nth(0).input_value() == '-4'
     page.locator('.band-gain input').nth(0).fill('-1')
     page.locator('.band-gain input').nth(0).press('Tab')
-    assert len(page.evaluate('window.__writes')) == 14
-    assert page.locator('#applyStatus').inner_text() == '적용할 준비가 되었습니다'
+    page.wait_for_function("document.querySelector('#applyStatus').textContent==='미리듣기 중 · 저장 전'", timeout=10000)
+    assert page.evaluate("window.__writes.filter(w=>w.bytes.join(',')==='1,1,0').length") == 1
     for mode in ['flat','vocal','music-balanced','cinema']:
         page.locator(f'[data-preset="{mode}"]').click()
-        page.wait_for_timeout(200)
+        page.wait_for_function("document.querySelector('#applyStatus').textContent==='미리듣기 중 · 저장 전'", timeout=10000)
         page.locator('#applyBtn').click()
         assert not page.locator('#riskDialog').is_visible(), f'{mode} must apply without a warning'
         page.wait_for_function("document.querySelector('#applyStatus').textContent==='Flash 저장 명령 전송 완료'", timeout=15000)
     # Manual boosts still require confirmation: the warning itself remains active.
     page.locator('[data-preset="flat"]').click()
+    page.wait_for_function("document.querySelector('#applyStatus').textContent==='미리듣기 중 · 저장 전'", timeout=10000)
     gain = page.locator('.band-gain input').nth(4)
     gain.fill('12'); gain.press('Tab')
     page.wait_for_timeout(200)

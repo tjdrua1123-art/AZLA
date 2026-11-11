@@ -242,3 +242,16 @@ body{font-weight:500}
  .risk-dialog .dialog-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
  .risk-dialog .dialog-actions>button{min-width:0;padding:12px 8px}
 }
+
+/* Audition and permanent saving are separate actions. */
+.preview-risk-button{min-height:48px;padding:10px 14px;border:2px solid var(--accent);border-radius:9px;background:#FFF1E6;color:#111111;font-size:14px;font-weight:700}
+.preview-risk-button:hover:not(:disabled){background:#F9A66C}
+.apply-bar:has(.preview-risk-button:not([hidden])){flex-wrap:wrap}
+.apply-bar:has(.preview-risk-button:not([hidden])) .apply-copy{flex-basis:100%}
+.apply-bar:has(.preview-risk-button:not([hidden])) .apply-actions{margin-left:auto;flex-wrap:wrap}
+@media(max-width:520px){
+ .controls-hint{font-size:9px}
+ .preview-risk-button{min-height:44px;font-size:13px;padding:10px}
+ .apply-bar:has(.preview-risk-button:not([hidden])) .apply-actions{flex-direction:row;width:100%;justify-content:flex-end}
+ .apply-bar:has(.preview-risk-button:not([hidden])) .preview-risk-button{flex:1}
+}

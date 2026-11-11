@@ -1,7 +1,7 @@
 // Protocol bytes are generated exclusively by the original manufacturer SDK.
 // The unmodified SDK is bundled from the user's latest GitHub main. Synthetic
 // test fixtures are never imported by this module or included in distribution.
-import { validateEq, cloneEq } from './eq.js';
+import { validateEq, cloneEq, peakResponse } from './eq.js';
 
 export const TIMING = Object.freeze({ gap: 130, beforeFlash: 1100, afterFlash: 350, timeout: 8000 });
 const RAM_COMMAND = Object.freeze([1, 10, 4, 0, 0, 255, 255]);
@@ -105,12 +105,12 @@ export class DeviceController {
     this.connecting = false;
     this.timing = timing; this.wait = wait; this.onProgress = onProgress;
     this.device = null; this.busy = false; this.requiresReconnect = false;
-    this.sequence = 0; this.log = []; this.lastEvidence = null; this.abort = null;
+    this.sequence = 0; this.log = []; this.lastEvidence = null; this.lastPreviewEvidence = null; this.ramPackets = null; this.abort = null;
     this.lastTagRead = null;
     this.onDisconnect = null;
     this.disconnectListener = event => {
       if (event.device === this.device) {
-        this.abort?.abort(); this.device = null; this.requiresReconnect = true; this.lastTagRead = null;
+        this.abort?.abort(); this.device = null; this.requiresReconnect = true; this.lastTagRead = null; this.ramPackets = null; this.lastPreviewEvidence = null;
         this.onDisconnect?.();
       }
     };
@@ -137,7 +137,7 @@ export class DeviceController {
       try { if (!device.opened) await device.open(); }
       catch { throw new Error('장치를 열 수 없습니다. 다른 EQ 프로그램을 닫고 다시 연결해 주세요.'); }
       this.device = device; this.requiresReconnect = false; this.abort = new AbortController();
-      this.lastEvidence = null;
+      this.lastEvidence = null; this.lastPreviewEvidence = null; this.ramPackets = null;
       return device;
     } finally { this.connecting = false; }
   }
@@ -147,6 +147,7 @@ export class DeviceController {
     if (old?.opened) await old.close().catch(() => {});
     this.requiresReconnect = false;
     this.lastTagRead = null;
+    this.ramPackets = null; this.lastPreviewEvidence = null;
   }
   async readEqTag(timeout = 1800) {
     if (this.busy) throw new Error('저장이 끝난 뒤 현재 상태를 확인해 주세요.');
@@ -220,15 +221,52 @@ export class DeviceController {
         device: { vendorId: this.device.vendorId, productId: this.device.productId },
         reports, result: 'flash-command-transmitted', persistenceVerified: false
       };
+      this.ramPackets = plan.ram.slice(0, 10);
+      this.lastPreviewEvidence = null;
       this.onProgress(1, 'Flash 저장 명령 전송 완료');
       return this.lastEvidence;
     } catch (error) {
       // A failed/timeout write may have changed RAM or Flash partially. Never
       // resume the transaction or claim success; require a clean reconnect.
       this.requiresReconnect = true;
+      this.ramPackets = null; this.lastPreviewEvidence = null;
       this.onProgress(0, '저장 실패 · 다시 연결해 주세요');
       throw error;
     } finally { this.busy = false; }
   }
-  diagnostics() { return { version: '2.0.0', sdkPresent: !!this.SDK?.default, connectionMode: this.connectionMode, supportedDeviceCount: this.devices.length, requiresReconnect: this.requiresReconnect, lastTagRead: this.lastTagRead, lastEvidence: this.lastEvidence, recentReports: this.log }; }
+  async preview(input, { allowHighGain = false, isCurrent = () => true } = {}) {
+    if (this.busy) throw new Error('현재 기기 전송이 진행 중입니다.');
+    if (!this.device?.opened || this.requiresReconnect) throw new Error('먼저 AZLA 장치를 연결해 주세요.');
+    if (!this.allows(this.device)) throw new Error('지원되지 않는 장치입니다.');
+    this.busy = true;
+    const device = this.device, signal = this.abort.signal;
+    try {
+      const eq = cloneEq(input), packets = await generateRamPlan(this.SDK, eq);
+      if (!isCurrent()) return { result: 'preview-skipped' };
+      const peak = peakResponse({ ...sdkGraphModel(packets, eq), freqs: eq.freqs });
+      if (peak.db > 6 && !allowHighGain) return { result: 'preview-confirmation-required', eq, peak };
+      // Reuse only validated SDK bytes. A fresh connection receives all bands;
+      // later edits send changed bands and the original RAM refresh, never Flash.
+      const changed = packets.slice(0, 10).filter((p, i) => !this.ramPackets || !same(p.bytes, this.ramPackets[i].bytes));
+      const reports = [];
+      if (changed.length) {
+        for (const packet of changed) reports.push(await this.transmit(packet, 'preview-eq', signal));
+        reports.push(await this.transmit(packets[10], 'preview-ram', signal));
+      }
+      if (signal.aborted || this.device !== device) throw new Error('미리듣기 중 USB 연결이 끊어졌습니다.');
+      this.ramPackets = packets.slice(0, 10);
+      this.lastPreviewEvidence = {
+        time: new Date().toISOString(), eq,
+        device: { vendorId: device.vendorId, productId: device.productId },
+        reports, result: 'ram-preview-transmitted', persistenceVerified: false
+      };
+      return this.lastPreviewEvidence;
+    } catch (error) {
+      // An old connection must not poison a newly opened connection.
+      if (this.abort?.signal === signal && this.device === device) this.requiresReconnect = true;
+      this.ramPackets = null; this.lastPreviewEvidence = null;
+      throw error;
+    } finally { this.busy = false; }
+  }
+  diagnostics() { return { version: '2.0.0', sdkPresent: !!this.SDK?.default, connectionMode: this.connectionMode, supportedDeviceCount: this.devices.length, requiresReconnect: this.requiresReconnect, lastTagRead: this.lastTagRead, lastEvidence: this.lastEvidence, lastPreviewEvidence: this.lastPreviewEvidence, recentReports: this.log }; }
 }
