@@ -62,7 +62,7 @@ with sync_playwright() as p:
     assert page.locator('.gain-slider').first.is_disabled()
     assert page.evaluate('window.__flashCount()')==0
     page.evaluate('window.__release()')
-    page.wait_for_function("document.querySelector('#applyStatus').textContent==='Flash 저장 명령 전송 완료'",timeout=15000)
+    page.wait_for_function("document.querySelector('#applyStatus').textContent==='설정 전송 완료'",timeout=15000)
     assert page.evaluate('window.__flashCount()')==1
     snapshot=page.evaluate("JSON.parse(localStorage.getItem('azla_equalizer_device_state_v1'))")
     assert snapshot['eq']['gains'][4]==2.5,'save freezes the latest editor snapshot after the RAM barrier'

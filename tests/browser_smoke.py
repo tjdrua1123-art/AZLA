@@ -115,14 +115,14 @@ with sync_playwright() as p:
     assert not page.locator('#riskDialog').is_visible(), 'FPS preset must apply without a warning'
     assert page.locator('#connectBtn').is_disabled()
     assert page.locator('.gain-slider').nth(0).is_disabled()
-    page.wait_for_function("document.querySelector('#applyStatus').textContent==='Flash 저장 명령 전송 완료'", timeout=15000)
+    page.wait_for_function("document.querySelector('#applyStatus').textContent==='설정 전송 완료'", timeout=15000)
     writes = page.evaluate('window.__writes')
     mutation_writes = [w for w in writes if w['bytes'] != [128,9,0]]
     assert len(writes) == 14
     assert len(mutation_writes) == 12
     assert [w['bytes'][4] for w in mutation_writes[:10]] == list(range(10))
     assert mutation_writes[-1]['bytes'] == [1,1,0]
-    assert 'Tag 11' in page.locator('[data-current-state]').inner_text()
+    assert '마지막 저장 설정' in page.locator('[data-current-state]').inner_text()
     assert page.evaluate("localStorage.getItem('azla_equalizer_device_state_v1')") is not None
     page.locator('[data-preset="flat"]').click()
     page.locator('[data-current-state]').click()
@@ -137,7 +137,7 @@ with sync_playwright() as p:
         page.wait_for_function("document.querySelector('#applyStatus').textContent==='미리듣기 중 · 저장 전'", timeout=10000)
         page.locator('#applyBtn').click()
         assert not page.locator('#riskDialog').is_visible(), f'{mode} must apply without a warning'
-        page.wait_for_function("document.querySelector('#applyStatus').textContent==='Flash 저장 명령 전송 완료'", timeout=15000)
+        page.wait_for_function("document.querySelector('#applyStatus').textContent==='설정 전송 완료'", timeout=15000)
     # Manual boosts still require confirmation: the warning itself remains active.
     page.locator('[data-preset="flat"]').click()
     page.wait_for_function("document.querySelector('#applyStatus').textContent==='미리듣기 중 · 저장 전'", timeout=10000)

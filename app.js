@@ -42,7 +42,7 @@ function download(name, value) {
 function selectedProfile() {
   if (state.selected === 'device-current') {
     const current = currentDeviceView();
-    return { name: '현재 상태', description: current?.description || '기기에 저장된 상태를 확인할 수 없습니다.', eq: current?.eq || state.eq, reference: current?.reference || '제조사 SDK는 EQ Tag ID만 읽을 수 있습니다.' };
+    return { name: '현재 상태', description: current?.description || '기기에 저장된 상태를 확인할 수 없습니다.', eq: current?.eq || state.eq, reference: current?.reference || '기기를 연결하면 현재 상태를 확인할 수 있습니다.' };
   }
   if (state.selected === 'manual') return { name: '직접 조절', description: '선택한 사운드를 슬라이더로 직접 조절한 상태입니다.', eq: state.eq, reference: '현재 세션의 임시 조절값' };
   return PRESETS.find(p => p.id === state.selected) || PRESETS[0];
@@ -55,28 +55,28 @@ function currentDeviceView() {
   if (device && preview && !controller.requiresReconnect) return {
     eq: preview.eq, caption: '미리듣기 중 · 저장 전',
     description: '현재 기기에서 임시로 듣는 설정입니다. 기기에 저장을 눌러야 저장됩니다.',
-    reference: 'RAM에만 반영한 값이며 Flash 저장값을 읽은 결과가 아닙니다.'
+    reference: '미리듣기 설정입니다. 기기에 저장을 눌러야 저장됩니다.'
   };
   if (device && state.deviceTagStatus === 'known') {
     if (matchingSnapshot && snapshot.tag === state.deviceTag) return {
       eq: snapshot.eq,
-      caption: `Tag ${state.deviceTag} 일치 · 마지막 저장값`,
-      description: '기기에서 읽은 Tag ID와 이 프로그램이 마지막으로 Flash에 보낸 10밴드 값이 일치합니다.',
-      reference: '10밴드 값은 마지막 전송 기록이며, 제조사 SDK는 Flash의 밴드별 값을 직접 읽지 않습니다.'
+      caption: '마지막 저장 설정',
+      description: '이 프로그램에서 마지막으로 저장한 설정입니다.',
+      reference: '표시된 값은 마지막 저장 기록을 기준으로 합니다.'
     };
     const preset = PRESETS.find(profile => profile.eq.tag === state.deviceTag);
     if (preset) return {
       eq: preset.eq,
-      caption: `기기 Tag ${state.deviceTag} · ${preset.name}`,
-      description: `기기에서 ${preset.name} Tag ID를 확인했습니다. 화면에는 해당 모드의 기준값을 표시합니다.`,
-      reference: 'Tag ID로 모드를 식별한 값이며, Flash의 10밴드 직접 읽기 결과는 아닙니다.'
+      caption: preset.name,
+      description: `${preset.name}의 기본 설정을 표시합니다.`,
+      reference: '개별 조절값은 저장된 기록이 있을 때 표시됩니다.'
     };
-    return { eq: null, caption: `기기 Tag ${state.deviceTag} · 상세 값 미지원`, description: '기기 Tag ID는 확인했지만 제조사 SDK가 Flash의 10밴드 값을 직접 읽지 않습니다.' };
+    return { eq: null, caption: '설정 확인 필요', description: '기기의 설정을 표시할 수 없습니다. 사운드 모드를 선택하거나 EQ를 직접 조절해 주세요.' };
   }
-  if (device && state.deviceTagStatus === 'reading') return { eq: matchingSnapshot ? snapshot.eq : null, caption: '기기 상태 확인 중', description: '기기의 EQ Tag ID 응답을 기다리고 있습니다.' };
-  if (device && state.deviceTagStatus === 'error') return { eq: matchingSnapshot ? snapshot.eq : null, caption: matchingSnapshot ? '마지막 저장값 · Tag 확인 실패' : '기기 응답 없음', description: '기기의 Tag ID 응답을 받지 못했습니다. 표시 가능한 값은 이 프로그램의 마지막 전송 기록입니다.' };
-  if (snapshot) return { eq: snapshot.eq, caption: '마지막 저장 기록 · 연결해 확인', description: '이 프로그램이 마지막으로 Flash 저장 명령과 함께 보낸 값입니다. 기기를 연결하면 Tag ID를 확인합니다.' };
-  return { eq: null, caption: '기기 연결 후 확인', description: '기기를 연결하면 저장된 EQ의 Tag ID를 읽습니다.' };
+  if (device && state.deviceTagStatus === 'reading') return { eq: matchingSnapshot ? snapshot.eq : null, caption: '기기 상태 확인 중', description: '기기에 저장된 설정을 확인하고 있습니다.' };
+  if (device && state.deviceTagStatus === 'error') return { eq: matchingSnapshot ? snapshot.eq : null, caption: matchingSnapshot ? '마지막 저장 설정 · 연결 확인 필요' : '기기 응답 없음', description: matchingSnapshot ? '현재 상태를 확인하지 못했습니다. 표시된 값은 마지막 저장 기록입니다.' : '현재 상태를 확인하지 못했습니다. 기기 연결을 확인해 주세요.' };
+  if (snapshot) return { eq: snapshot.eq, caption: '마지막 저장 설정 · 연결해 확인', description: '마지막으로 저장한 설정입니다. 기기를 연결하면 현재 상태를 확인할 수 있습니다.' };
+  return { eq: null, caption: '기기 연결 후 확인', description: '기기를 연결하면 현재 상태를 확인할 수 있습니다.' };
 }
 function renderPresets() {
   const root = $('presetList'); root.replaceChildren();
@@ -256,7 +256,7 @@ function updateApplyState() {
   else if (invalid) { $('applyStatus').textContent = '입력값을 확인해 주세요'; $('applyDetail').textContent = '유효한 값을 입력하면 미리듣기를 다시 반영합니다.'; }
   else if (blocked) { $('applyStatus').textContent = '큰 증폭 · 미리듣기 확인이 필요합니다'; $('applyDetail').textContent = '새 설정은 아직 미리듣기에 반영하지 않았습니다. 볼륨을 낮추고 확인해 주세요.'; }
   else if (livePreview?.busy) { $('applyStatus').textContent = '미리듣기 반영 중'; $('applyDetail').textContent = '변경 중에도 조절할 수 있습니다. 아직 기기에 저장하지 않았습니다.'; }
-  else if (state.lastApplied === sig && (!controller.lastPreviewEvidence || signature(controller.lastPreviewEvidence.eq) === sig)) { $('applyStatus').textContent = 'Flash 저장 명령 전송 완료'; $('applyDetail').textContent = '전원 재연결 후 설정 유지 여부를 확인해 주세요.'; }
+  else if (state.lastApplied === sig && (!controller.lastPreviewEvidence || signature(controller.lastPreviewEvidence.eq) === sig)) { $('applyStatus').textContent = '설정 전송 완료'; $('applyDetail').textContent = '전원 재연결 후 설정 유지 여부를 확인해 주세요.'; }
   else if (controller.lastPreviewEvidence && signature(controller.lastPreviewEvidence.eq) === sig) { $('applyStatus').textContent = '미리듣기 중 · 저장 전'; $('applyDetail').textContent = '현재 소리를 확인하고 마음에 들면 기기에 저장을 눌러 주세요.'; }
   else { $('applyStatus').textContent = '조절하면 바로 미리듣기'; $('applyDetail').textContent = '소리만 임시로 반영합니다. 기기에 저장을 눌러야 저장됩니다.'; }
 }
@@ -282,7 +282,7 @@ async function apply() {
     try { const read = await controller.readEqTag(); state.deviceTag = read.tag; state.deviceTagStatus = 'known'; }
     catch { state.deviceTag = null; state.deviceTagStatus = 'error'; }
     state.previewBlocked = null; state.previewApproved = currentSignature; renderPresets();
-    toast(snapshotRecorded ? 'Flash 저장 명령을 전송했습니다.' : '기기 저장은 완료됐지만 현재 상태 기록을 이 브라우저에 보관하지 못했습니다.', !snapshotRecorded);
+    toast(snapshotRecorded ? '기기에 설정을 전송했습니다.' : '기기 저장은 완료됐지만 현재 상태 기록을 이 브라우저에 보관하지 못했습니다.', !snapshotRecorded);
   } catch (error) { state.lastApplied = null; state.error = error.message; toast(error.message, true); }
   finally { lockUI(false); }
 }
@@ -415,7 +415,7 @@ async function initialize() {
   let configError = false, connectionMode = 'registered';
   try { const response = await fetch('device-config.json', { cache: 'no-store' }); if (!response.ok) throw new Error(); const config = await response.json(); devices = supportedDevices(config); connectionMode = config.connectionMode === 'manufacturer' ? 'manufacturer' : 'registered'; } catch { configError = true; }
   controller = new DeviceController({ SDK, hid: navigator.hid, devices, connectionMode, onProgress: (value, label) => {
-    $('applyProgress').value = value * 100; $('applyStatus').textContent = label; $('applyDetail').textContent = '장치 저장이 끝날 때까지 USB를 연결해 두세요.';
+    $('applyProgress').value = value * 100; $('applyStatus').textContent = value === 1 ? '설정 전송 완료' : label; $('applyDetail').textContent = '장치 저장이 끝날 때까지 USB를 연결해 두세요.';
   } });
   livePreview = new PreviewQueue({
     send: (eq, isCurrent) => controller.preview(eq, { isCurrent, allowHighGain: state.previewApproved === signature(eq) }),
