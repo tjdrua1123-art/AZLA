@@ -7,13 +7,14 @@
  */
 export const BANDS = 10;
 export const FREQUENCIES = Object.freeze([32, 63, 125, 250, 500, 1000, 2000, 4000, 8000, 16000]);
-export const FPS_FREQUENCIES = Object.freeze([31, 62, 125, 250, 500, 1000, 2000, 4000, 8000, 16000]);
+export const GRAPHIC_FREQUENCIES = Object.freeze([31, 62, 125, 250, 500, 1000, 2000, 4000, 8000, 16000]);
+export const FPS_FREQUENCIES = GRAPHIC_FREQUENCIES;
 export const QS = Object.freeze(Array(BANDS).fill(1.4));
 export const SAMPLE_RATE = 96000;
 export const FILTERS = Object.freeze({
   1: 'LOW SHELF', 2: 'PEAK', 3: 'HIGH SHELF', 4: 'LOW PASS', 5: 'HIGH PASS'
 });
-export const PRESET_REFERENCE = '공개 음향 자료 기반 자체 설계(2026-11-10) · Q 1.4 · 오디오 기기별 조절 필요';
+export const PRESET_REFERENCE = '사용자 제공 공개 EQ 조사 자료 반영(2026-11-11) · PEAK · Q 1.4 · 오디오 기기별 조절 필요';
 
 function makeEq(gains = Array(BANDS).fill(0), options = {}) {
   return {
@@ -33,14 +34,14 @@ const preset = (id, name, category, description, icon, gains, options) => ({
 /** Every preset is an editable starting point; none is a measured correction. */
 export const PRESETS = [
   preset('flat', '기본 모드', 'REFERENCE', '원래의 소리를 그대로. 모든 밴드 0 dB.', 'flat', Array(BANDS).fill(0), {tag: 13}),
-  preset('fps', 'FPS 모드', 'FPS', '중역과 고역을 강조해 발걸음과 효과음의 존재감을 높입니다.', 'crosshair',
-    [0,0,3,1.8,5,4.5,3.5,4,4.5,0], {tag: 11, freqs: FPS_FREQUENCIES, reference: '사용자 제공 FPS 설정의 게인 비율을 50%로 조정 · 오디오 기기별 조절 필요'}),
-  preset('vocal', '음악 보컬', '음악', '목소리의 두께를 남기면서 가사와 보컬의 존재감을 강조합니다.', 'mic',
-    [-0.6,-0.6,0,-0.6,0,2.5,5,3.8,0,0], {tag: 16}),
-  preset('music-balanced', '음악 밸런스', '음악', '중역은 유지하면서 저음의 탄력과 고음의 선명도를 더합니다.', 'music',
-    [3.3,5,1.7,0,-0.8,0,0,2.5,4.2,2.5], {tag: 12}),
-  preset('cinema', '영화', '영화', '깊은 저음과 선명한 대사를 강조해 영화의 몰입감을 더합니다.', 'film',
-    [3.3,5,2.2,0,-1.1,0.6,2.8,2.8,1.1,0], {tag: 20})
+  preset('fps', 'FPS 모드', 'FPS', '1~4 kHz를 강하게 강조해 발걸음과 효과음의 세부 소리를 부각합니다.', 'crosshair',
+    [0,1,2,4,6,12,12,12,8,6], {tag: 11, freqs: FPS_FREQUENCIES, reference: '제공 자료 A · PUBG 인벤 공개 게인 · PEAK/Q 1.4로 적용 · 실제 게임 청취 검증 필요'}),
+  preset('vocal', '음악 보컬', '음악', '저역의 비중을 줄이고 노랫말과 보컬의 명료도를 강조합니다.', 'mic',
+    [-4,-3,-2,0,1,3,4,3,1,0], {tag: 16, freqs: GRAPHIC_FREQUENCIES, reference: '제공 자료 E · ProMedia Vocal Clarity 게인 · PEAK/Q 1.4로 적용'}),
+  preset('music-balanced', '음악 밸런스', '음악', '저음과 고음을 함께 강조해 풍성하고 선명한 감상을 돕습니다.', 'music',
+    [6,5,2,0,-1,-1,0,2,4,6], {tag: 12, freqs: GRAPHIC_FREQUENCIES, reference: '제공 자료 F · ProMedia Loudness 게인 · 중립 보정이 아닌 저고역 강조'}),
+  preset('cinema', '영화', '영화', '저역의 충격감과 고역 효과음을 함께 강조해 영화 감상을 풍성하게 합니다.', 'film',
+    [7,6,3.5,1,-1.5,-1,2,5.5,7.5,8], {tag: 20, freqs: [32,64,125,250,500,1000,2000,4000,8000,16000], reference: '제공 자료 H · Reev Immersive 게인 · 원문 리미터/프리앰프는 미구현'})
 ];
 for (const entry of PRESETS) {
   for (const value of Object.values(entry.eq)) if (Array.isArray(value)) Object.freeze(value);

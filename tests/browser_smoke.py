@@ -75,7 +75,7 @@ with sync_playwright() as p:
     assert page.locator('.gain-slider').nth(4).input_value() == '2.5'
     page.locator('#resetBtn').click()
     assert page.locator('#profileName').inner_text() == 'FPS 모드'
-    assert page.locator('.band-gain input').nth(4).input_value() == '5'
+    assert page.locator('.band-gain input').nth(4).input_value() == '6'
     page.locator('#advancedToggle').check()
     q = page.locator('.band-q input').nth(0)
     q.fill('1.13'); q.press('Tab')
