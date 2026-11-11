@@ -16,7 +16,7 @@ const state = { eq: previous.current, selected: previous.selected, baseSelected:
 let devices = [], controller, discoveredDevice = null, chartFrame = null, modelToken = 0, chartGeometry = null, toastTimer, sdkTimer, livePreview, riskRequest = null;
 const canvas = $('responseChart');
 const ctx = canvas.getContext('2d');
-const colors = ['#bc531d', '#c85b20', '#d56122', '#e36622', '#f26a21', '#e97732', '#dc7433', '#ce6930', '#bd5c27', '#ad5121'];
+const colors = Array(BANDS).fill('#FF5B24');
 const formatDb = value => `${value > 0 ? '+' : ''}${Number(value).toFixed(1)}`;
 const freqLabel = value => value >= 1000 ? `${Number((value / 1000).toFixed(1))}k` : String(Math.round(value));
 const icons = {
@@ -317,8 +317,6 @@ function drawGraph() {
   }
   ctx.save(); ctx.beginPath(); ctx.rect(left - 3, top - 5, w - left - right + 6, h - top - bottom + 10); ctx.clip();
   const points = Array.from({ length: 650 }, (_, i) => { const f = 20 * 1000 ** (i / 649); return { f, x: x(f), y: y(responseAt(f, state.model)) }; });
-  const fill = ctx.createLinearGradient(0, top, 0, h - bottom); fill.addColorStop(0, `${color('fill', '#4b99d5')}24`); fill.addColorStop(.5, `${color('fill', '#4b99d5')}0d`); fill.addColorStop(1, `${color('fill', '#4b99d5')}00`);
-  ctx.beginPath(); ctx.moveTo(points[0].x, y(0)); for (const p of points) ctx.lineTo(p.x, p.y); ctx.lineTo(points.at(-1).x, y(0)); ctx.closePath(); ctx.fillStyle = fill; ctx.fill();
   ctx.beginPath(); points.forEach((p, i) => i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y));
   const stroke = ctx.createLinearGradient(left, 0, w - right, 0); stroke.addColorStop(0, color('line-start', '#5e9fcd')); stroke.addColorStop(.5, color('line-mid', '#438bc4')); stroke.addColorStop(1, color('line-end', '#7a94be'));
   ctx.strokeStyle = stroke; ctx.lineWidth = 2.3; ctx.shadowBlur = 0; ctx.stroke();

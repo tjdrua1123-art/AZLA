@@ -1,3 +1,11 @@
+## 화이트 · Vivid Orange 디자인
+
+- 사용자 승인 시안에 맞춰 화이트 바탕과 #FF5B24 오렌지, #FFF0E4 선택 배경을 적용했습니다.
+- 로고와 기기 연결을 상단으로 옮기고 모드를 번호 목록으로 정돈했습니다. 활성 밴드·응답 곡선·저장 버튼을 선명하게 표시합니다.
+- PC 저장 버튼의 상시 노출과 모바일의 가로 모드·밴드 스크롤을 유지합니다. 안내 글자와 볼륨 확인창도 유지합니다.
+- EQ 값·필터·실시간 RAM 미리듣기·명시적 Flash 저장·장치 식별 로직은 바꾸지 않았습니다.
+- `npm test`, `tests/browser_smoke.py`, `tests/browser_live_preview.py`, `tests/browser_apply_layout.py`로 검증합니다. 실제 화면은 `docs/screenshots/AZLA-Vivid-Orange-*.png`입니다.
+
 ## RAM 미리듣기와 Flash 저장 분리
 
 - 연결 후 슬라이더·숫자·그래프·모드를 바꾸면 RAM에 임시 반영합니다. Flash 저장은 **기기에 저장**을 누를 때만 실행합니다. 기존 프리셋 값과 필터는 유지합니다.

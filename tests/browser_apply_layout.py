@@ -10,6 +10,8 @@ with sync_playwright() as p:
         page.on('pageerror',lambda error:errors.append(str(error)))
         page.goto('http://127.0.0.1:8768')
         page.wait_for_selector('.band-column')
+        for selector in ['.brand-header .brand','#connectBtn']:
+            assert page.locator(selector).evaluate('el=>{const r=el.getBoundingClientRect();return r.top>=0&&r.bottom<=innerHeight&&r.left>=0&&r.right<=innerWidth&&el.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2))}'), selector
         for advanced in [False,True]:
             if advanced:page.locator('#advancedToggle').check()
             for scroll in [False,True]:
@@ -32,12 +34,16 @@ with sync_playwright() as p:
             page.locator('#advancedToggle').uncheck()
             page.locator('.equalizer-panel').evaluate('(el)=>el.scrollTop=0')
             page.locator('.preset-list').evaluate('(el)=>el.scrollTop=0')
-            page.screenshot(path=str(Path('docs/screenshots')/f'AZLA-Apply-Visible-{width}.png'))
+            page.locator('[data-preset="music-balanced"]').click()
+            page.wait_for_timeout(200)
+            page.screenshot(path=str(Path('docs/screenshots')/f'AZLA-Vivid-Orange-{width}.png'))
         assert not errors,errors
         print('PASS:',width,height,'apply button visible; no overlap or page scrolling; advanced controls accessible')
         page.close()
     page=browser.new_page(viewport={'width':390,'height':844})
     page.goto('http://127.0.0.1:8768');page.wait_for_selector('.band-column')
+    assert page.locator('#connectBtn').evaluate('el=>{const r=el.getBoundingClientRect();return r.top>=0&&r.right<=innerWidth&&el.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2))}')
+    page.screenshot(path='docs/screenshots/AZLA-Vivid-Orange-Mobile.png',full_page=True)
     page.locator('#applyBtn').scroll_into_view_if_needed()
     assert page.locator('#applyBtn').is_visible()
     assert page.evaluate('document.documentElement.scrollWidth<=innerWidth')
