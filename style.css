@@ -468,3 +468,25 @@ body{font-weight:500}
  .preset-list{grid-row:4}
 }
 @media(max-width:520px){.saved-eq-dialog{padding:22px}.saved-eq-bands{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* One text edge for the desktop logo, section label, actions and mode names. */
+.create-sound-button{display:flex;align-items:center;justify-content:space-between;gap:8px}
+@media(min-width:901px){
+ .sidebar{padding-left:20px;padding-right:20px}
+ .sidebar .brand{display:flex;flex-direction:column;align-items:flex-start;gap:12px;padding:6px 12px 24px;margin:0}
+ .sidebar .brand-wordmark{width:184px;max-width:100%}
+ .sidebar .brand-tagline{margin:0;line-height:1.4;letter-spacing:1.8px}
+ .sidebar-heading{padding:8px 12px 20px;line-height:1.5}
+ .sidebar-utilities{margin:0 0 16px}
+ .sidebar-utilities button{min-height:44px;padding:9px 11px;text-align:left;font-size:16px;font-weight:600;line-height:1.5}
+ .create-sound-plus{width:32px;flex:none;text-align:center;font-size:18px;line-height:1}
+ .preset-item{padding:14px 12px;gap:12px;min-height:62px}
+ .preset-item[data-preset]::before{order:2;width:32px;margin-left:auto;text-align:center;font-size:12px;line-height:1.5;font-variant-numeric:tabular-nums}
+ .preset-name{font-size:18px;line-height:1.5}
+ .user-sound-row{gap:0}
+ .user-sound-row .user-sound{padding-left:12px;padding-right:12px}
+ .user-sound-row .sound-manage:last-child{margin-right:12px}
+ .sidebar-note{margin-left:12px;margin-right:12px}
+ .sidebar .device-card{margin-left:0;margin-right:0;padding:14px 11px 12px;border-width:1px}
+ .sidebar .connect-button{padding-left:11px;padding-right:11px}
+}
