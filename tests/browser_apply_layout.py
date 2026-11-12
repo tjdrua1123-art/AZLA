@@ -10,8 +10,9 @@ with sync_playwright() as p:
         page.on('pageerror',lambda error:errors.append(str(error)))
         page.goto('http://127.0.0.1:8768')
         page.wait_for_selector('.band-column')
-        for selector in ['.brand-header .brand','#connectBtn']:
+        for selector in ['.sidebar .brand','#connectBtn']:
             assert page.locator(selector).evaluate('el=>{const r=el.getBoundingClientRect();return r.top>=0&&r.bottom<=innerHeight&&r.left>=0&&r.right<=innerWidth&&el.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2))}'), selector
+        assert page.locator('#connectBtn').evaluate('el=>el.getBoundingClientRect().left<224&&el.getBoundingClientRect().top>innerHeight/2'), 'connection belongs at bottom left'
         for advanced in [False,True]:
             if advanced:page.locator('#advancedToggle').check()
             for scroll in [False,True]:
@@ -22,6 +23,7 @@ with sync_playwright() as p:
                   const b=document.querySelector('#applyBtn'),panel=document.querySelector('.equalizer-panel');
                   const r=b.getBoundingClientRect(),pr=panel.getBoundingClientRect();
                   return {top:r.top,bottom:r.bottom,left:r.left,right:r.right,panelBottom:pr.bottom,
+                    panelOverflow:panel.scrollHeight-panel.clientHeight,
                     height:innerHeight,width:innerWidth,scrollHeight:document.documentElement.scrollHeight,
                     scrollWidth:document.documentElement.scrollWidth,
                     clickable:b.contains(document.elementFromPoint((r.left+r.right)/2,(r.top+r.bottom)/2))};
@@ -29,6 +31,8 @@ with sync_playwright() as p:
                 assert 0<=result['top']<result['bottom']<=height,(width,height,advanced,scroll,result)
                 assert result['panelBottom']<=result['top'],('panel overlaps apply button',result)
                 assert result['clickable'],('apply button obscured',result)
+                if height>=768:
+                    assert result['panelOverflow']<=1,('unnecessary EQ panel scroll',width,height,advanced,result)
                 assert result['scrollWidth']<=width and result['scrollHeight']<=height,(width,height,result)
         if width in [1920,1366]:
             page.locator('#advancedToggle').uncheck()
