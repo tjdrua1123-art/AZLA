@@ -12,7 +12,7 @@ with sync_playwright() as p:
         page.wait_for_selector('.band-column')
         for selector in ['.sidebar .brand','#connectBtn']:
             assert page.locator(selector).evaluate('el=>{const r=el.getBoundingClientRect();return r.top>=0&&r.bottom<=innerHeight&&r.left>=0&&r.right<=innerWidth&&el.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2))}'), selector
-        assert page.locator('#connectBtn').evaluate('el=>el.getBoundingClientRect().left<224&&el.getBoundingClientRect().top>innerHeight/2'), 'connection belongs at bottom left'
+        assert page.locator('#connectBtn').evaluate("el=>el.closest('.sidebar').contains(el)&&el.getBoundingClientRect().right<=el.closest('.sidebar').getBoundingClientRect().right&&el.getBoundingClientRect().top>innerHeight/2"), 'connection belongs at bottom left'
         for advanced in [False,True]:
             if advanced:page.locator('#advancedToggle').check()
             for scroll in [False,True]:
