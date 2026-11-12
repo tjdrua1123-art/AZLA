@@ -1,7 +1,7 @@
 import { BANDS, FILTERS, PRESETS, PRESET_REFERENCE, cloneEq, validateEq, signature, buildAnalyticModel, responseAt, peakResponse, parseRew, interpolate, comparison } from './src/eq.js';
 import { DeviceController, supportedDevices, generateRamPlan, sdkGraphModel, discoverDevice } from './src/device.js';
 import { PreviewQueue } from './src/preview.js';
-import { restore, persist, persistDeviceSnapshot, restoreSounds, persistSounds, soundName } from './src/storage.js';
+import { restore, persist, persistDeviceSnapshot, restoreDeviceSnapshot, restoreSounds, persistSounds, soundName } from './src/storage.js';
 
 const $ = id => document.getElementById(id);
 const AUDIO_DEVICE_GUIDANCE = '오디오 기기마다 소리 특성이 다르므로, 사용하는 오디오 기기에 맞게 EQ를 조절해 주세요.';
@@ -12,7 +12,7 @@ const safeStorage = {
   removeItem: key => { try { localStorage.removeItem(key); } catch { /* storage may be unavailable */ } }
 };
 const previous = restore(safeStorage);
-const state = { eq: previous.current, selected: previous.selected, baseSelected: previous.selected, baseEq: cloneEq(previous.current), advanced: previous.advanced, sounds: restoreSounds(safeStorage), lastApplied: null, activeBand: 4, busy: false, off: null, on: null, model: null, peak: null, error: null, deviceTag: null, deviceTagStatus: 'disconnected', connectionBusy: false };
+const state = { eq: previous.current, selected: previous.selected, baseSelected: previous.selected, baseEq: cloneEq(previous.current), advanced: previous.advanced, sounds: restoreSounds(safeStorage), deviceSnapshot: restoreDeviceSnapshot(safeStorage), lastApplied: null, activeBand: 4, busy: false, off: null, on: null, model: null, peak: null, error: null, deviceTag: null, deviceTagStatus: 'disconnected', connectionBusy: false };
 let devices = [], controller, discoveredDevice = null, chartFrame = null, modelToken = 0, chartGeometry = null, toastTimer, sdkTimer, livePreview;
 const canvas = $('responseChart');
 const ctx = canvas.getContext('2d');
@@ -45,7 +45,7 @@ function currentSound() {
 function canSaveToDevice() { return !!controller?.device?.opened && !controller.requiresReconnect; }
 function selectedProfile() {
   const sound = currentSound();
-  if (sound) return { ...sound, description: signature(sound.eq) === signature(state.eq) ? '저장한 사운드입니다. 원하는 대로 조절해 보세요.' : '사운드를 조절 중입니다. 마음에 들면 변경사항을 저장해 주세요.' };
+  if (sound) return { ...sound, description: signature(sound.eq) === signature(state.eq) ? '저장한 사운드입니다. 원하는 대로 조절해 보세요.' : '사운드를 조절 중입니다. 마음에 들면 변경사항 적용을 눌러 주세요.' };
   if (state.selected === 'manual') return { name: '직접 조절', description: '선택한 사운드를 슬라이더로 직접 조절한 상태입니다.', eq: state.eq, reference: '현재 세션의 임시 조절값' };
   return PRESETS.find(p => p.id === state.selected) || PRESETS[0];
 }
@@ -120,9 +120,9 @@ function openSoundDialog(mode = 'create', sound = null) {
   closeSoundMenu();
   const eq = mode === 'copy' && currentSound()?.id !== sound.id ? sound.eq : state.eq;
   soundDraft = { id: mode === 'rename' ? sound.id : crypto.randomUUID(), eq: cloneEq(eq), mode };
-  $('soundDialogTitle').textContent = mode === 'rename' ? '이름 변경' : mode === 'copy' ? '새 사운드로 저장' : '사운드 저장';
+  $('soundDialogTitle').textContent = mode === 'rename' ? '이름 변경' : mode === 'copy' ? '사운드 복제' : '사운드 생성';
   $('soundName').value = mode === 'rename' ? sound.name : '';
-  $('soundFormError').textContent = ''; $('soundSubmit').textContent = mode === 'rename' ? '변경' : '저장';
+  $('soundFormError').textContent = ''; $('soundSubmit').textContent = mode === 'rename' ? '변경' : '생성';
   updateSaveDialogHelp(); $('soundDialog').showModal(); $('soundName').focus();
   if (mode === 'rename') $('soundName').select();
 }
@@ -154,7 +154,7 @@ function saveSoundRecord(record, errorId = null) {
   if ($('soundDialog').open) $('soundDialog').close();
   refresh(true);
   if (!existing) $('presetList').lastElementChild?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
-  toast('사운드를 목록에 저장했습니다. 기기에 저장하려면 EQ 적용을 눌러 주세요.');
+  toast(existing ? '사운드에 변경사항을 적용했습니다. 기기에 저장하려면 EQ 적용을 눌러 주세요.' : '사운드를 생성했습니다. 기기에 저장하려면 EQ 적용을 눌러 주세요.');
 }
 function submitSound(event) {
   event.preventDefault();
@@ -179,7 +179,7 @@ function deleteSound(event) {
   if (state.selected === selected) state.selected = 'manual';
   if (state.baseSelected === selected) state.baseSelected = 'manual';
   $('deleteSoundDialog').close(); refresh(true); toast('사운드를 삭제했습니다. 현재 EQ와 기기 설정은 유지됩니다.');
-  $('saveSoundBtn').focus();
+  $('createSoundBtn').focus();
 }
 
 function numberInput(label, value, min, max, step, prop, i) {
@@ -301,8 +301,10 @@ function updateApplyState() {
   $('deviceName').textContent = linked ? devices.find(d => d.vendorId === controller.device.vendorId && d.productId === controller.device.productId)?.name || 'AZLA USB DAC' : 'AZLA USB DAC';
   $('applyBtn').disabled = state.busy || state.connectionBusy || !canSaveToDevice() || invalid;
   $('applyBtn').querySelector('span').textContent = state.busy ? '적용 중' : 'EQ 적용';
+  $('saveSoundBtn').hidden = !currentSound();
   $('saveSoundBtn').disabled = state.busy || state.connectionBusy || invalid;
-  $('saveSoundBtn').textContent = currentSound() ? '변경사항 저장' : '사운드 저장';
+  $('createSoundBtn').disabled = state.busy || state.connectionBusy || invalid;
+  $('viewSavedEqBtn').disabled = state.busy || state.connectionBusy;
   $('soundMenu').querySelectorAll('button').forEach(button => { button.disabled = state.busy; });
   updateSaveDialogHelp();
   if (state.busy) return;
@@ -311,20 +313,20 @@ function updateApplyState() {
   else if (state.error) { $('applyStatus').textContent = '기기 반영을 확인해 주세요'; $('applyDetail').textContent = state.error; }
   else if (!linked) {
     const saved = currentSound() && signature(currentSound().eq) === sig;
-    $('applyStatus').textContent = saved ? '브라우저에 저장됨' : '마음에 드는 사운드를 저장하세요';
-    $('applyDetail').textContent = saved ? '기기를 연결하고 EQ 적용을 누르면 기기에 저장됩니다.' : '사운드 저장을 누르고 원하는 이름을 입력해 주세요.';
+    $('applyStatus').textContent = saved ? '내 사운드에 보관됨' : '나만의 사운드를 만들어 보세요';
+    $('applyDetail').textContent = saved ? '기기를 연결하고 EQ 적용을 누르면 기기에 저장됩니다.' : '왼쪽 사운드 생성에서 원하는 이름으로 보관할 수 있습니다.';
   }
   else if (needsReconnect) { $('applyStatus').textContent = '기기 재연결이 필요합니다'; $('applyDetail').textContent = '연결을 해제한 뒤 다시 연결해 주세요.'; }
   else if (invalid) { $('applyStatus').textContent = '입력값을 확인해 주세요'; $('applyDetail').textContent = '유효한 값을 입력하면 미리듣기를 다시 반영합니다.'; }
   else if (livePreview?.busy) { $('applyStatus').textContent = '미리듣기 반영 중'; $('applyDetail').textContent = '변경 중에도 조절할 수 있습니다. 아직 기기에 저장하지 않았습니다.'; }
   else if (state.lastApplied === sig && (!controller.lastPreviewEvidence || signature(controller.lastPreviewEvidence.eq) === sig)) { $('applyStatus').textContent = '설정 전송 완료'; $('applyDetail').textContent = '전원 재연결 후 설정 유지 여부를 확인해 주세요.'; }
-  else if (controller.lastPreviewEvidence && signature(controller.lastPreviewEvidence.eq) === sig) { $('applyStatus').textContent = '미리듣기 중 · 기기 저장 전'; $('applyDetail').textContent = '사운드 저장은 목록에 보관하고, EQ 적용은 기기에 저장합니다.'; }
-  else { $('applyStatus').textContent = '조절하면 바로 미리듣기'; $('applyDetail').textContent = '사운드 저장으로 보관하거나, EQ 적용으로 기기에 저장하세요.'; }
+  else if (controller.lastPreviewEvidence && signature(controller.lastPreviewEvidence.eq) === sig) { $('applyStatus').textContent = '미리듣기 중 · 기기 저장 전'; $('applyDetail').textContent = currentSound() ? '변경사항 적용은 내 사운드에, EQ 적용은 기기에 저장합니다.' : '사운드 생성은 왼쪽에서, 기기 저장은 EQ 적용을 눌러 주세요.'; }
+  else { $('applyStatus').textContent = '조절하면 바로 미리듣기'; $('applyDetail').textContent = currentSound() ? '변경사항 적용으로 보관하거나, EQ 적용으로 기기에 저장하세요.' : '왼쪽에서 사운드를 생성하거나, EQ 적용으로 기기에 저장하세요.'; }
   $('applyDetail').title = $('applyDetail').textContent;
 }
 function lockUI(flag) {
   state.busy = flag;
-  for (const node of document.querySelectorAll('#bandControls input, #bandControls select, #presetList button, #advancedToggle, #resetBtn, #flatBtn, #saveSoundBtn')) node.disabled = flag;
+  for (const node of document.querySelectorAll('#bandControls input, #bandControls select, #presetList button, #advancedToggle, #resetBtn, #flatBtn, #saveSoundBtn, #createSoundBtn, #viewSavedEqBtn')) node.disabled = flag;
   updateApplyState();
 }
 async function apply() {
@@ -337,12 +339,14 @@ async function apply() {
     // Finish an in-flight RAM transaction before committing this frozen snapshot.
     await livePreview.idle();
     const evidence = await controller.apply(current); state.lastApplied = currentSignature;
-    try { persistDeviceSnapshot(safeStorage, evidence); }
-    catch { /* Device application must not depend on optional browser audit storage. */ }
+    state.deviceSnapshot = { ...evidence.device, eq: cloneEq(evidence.eq), tag: evidence.eq.tag, savedAt: evidence.time };
+    let recorded = true;
+    try { state.deviceSnapshot = persistDeviceSnapshot(safeStorage, evidence); }
+    catch { recorded = false; /* Keep this session's record available even if browser storage fails. */ }
     try { const read = await controller.readEqTag(); state.deviceTag = read.tag; state.deviceTagStatus = 'known'; }
     catch { state.deviceTag = null; state.deviceTagStatus = 'error'; }
     renderPresets();
-    toast('EQ를 기기에 적용하고 저장했습니다.');
+    toast(recorded ? 'EQ를 기기에 적용하고 저장했습니다.' : 'EQ는 기기에 저장했지만 이 브라우저에 기록을 보관하지 못했습니다.');
   } catch (error) { state.lastApplied = null; state.error = `기기 적용을 확인하지 못했습니다. ${error.message}`; toast(state.error, true); }
   finally { lockUI(false); }
 }
@@ -350,11 +354,40 @@ function requestSoundSave() {
   if (state.busy || state.connectionBusy || $('bandControls').querySelector('[aria-invalid="true"]')) return;
   const sound = currentSound();
   if (sound) void saveSoundRecord({ ...sound, eq: cloneEq(state.eq) });
-  else openSoundDialog();
 }
 function requestApply() {
   if (state.busy || state.connectionBusy || !canSaveToDevice() || $('bandControls').querySelector('[aria-invalid="true"]')) return;
   void apply();
+}
+
+function savedEqRecord() {
+  const snapshot = state.deviceSnapshot, device = controller?.device;
+  if (!snapshot) return { message: '기기에 저장한 EQ 기록이 없습니다. EQ 적용 후 다시 확인해 주세요.' };
+  if (device && (snapshot.vendorId !== device.vendorId || snapshot.productId !== device.productId)) {
+    return { message: '연결한 기기에 저장한 EQ 기록이 없습니다. EQ 적용 후 다시 확인해 주세요.' };
+  }
+  if (device && state.deviceTagStatus === 'known' && state.deviceTag !== snapshot.tag) {
+    return { message: '기기 설정이 저장 기록과 달라 확인할 수 없습니다. 원하는 EQ를 적용한 뒤 다시 확인해 주세요.' };
+  }
+  return { snapshot };
+}
+function showSavedEq() {
+  if (state.busy || state.connectionBusy) return;
+  const { snapshot, message } = savedEqRecord(), grid = $('savedEqBands');
+  grid.replaceChildren(); $('savedEqMessage').textContent = message || '이 프로그램에서 마지막으로 기기에 적용한 설정입니다. 다른 프로그램에서 변경한 값은 반영되지 않습니다.';
+  $('savedEqTime').textContent = '';
+  if (snapshot) {
+    const date = new Date(snapshot.savedAt);
+    if (Number.isFinite(date.getTime())) $('savedEqTime').textContent = `저장 기록 · ${new Intl.DateTimeFormat('ko-KR', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Seoul' }).format(date)}`;
+    snapshot.eq.freqs.forEach((freq, i) => {
+      const band = document.createElement('div'); band.className = 'saved-eq-band';
+      const frequency = document.createElement('strong'); frequency.textContent = `${freq} Hz`;
+      const gain = document.createElement('span'); gain.textContent = `${formatDb(snapshot.eq.gains[i])} dB`;
+      const details = document.createElement('small'); details.textContent = `${FILTERS[snapshot.eq.filterTypes[i]]} · Q ${snapshot.eq.qs[i]}`;
+      band.append(frequency, gain, details); grid.append(band);
+    });
+  }
+  $('savedEqDialog').showModal();
 }
 
 function scheduleDraw() { if (chartFrame === null) chartFrame = requestAnimationFrame(() => { chartFrame = null; drawGraph(); }); }
@@ -488,6 +521,9 @@ $('exportLogBtn').addEventListener('click', () => download('AZLA-Diagnostics.jso
 $('rewOffInput').addEventListener('change', e => loadMeasurement('off', e.target.files[0]));
 $('rewOnInput').addEventListener('change', e => loadMeasurement('on', e.target.files[0]));
 $('clearRewBtn').addEventListener('click', () => { state.off = null; state.on = null; $('rewOffInput').value = ''; $('rewOnInput').value = ''; renderComparison(); scheduleDraw(); });
+$('createSoundBtn').addEventListener('click', () => openSoundDialog());
+$('viewSavedEqBtn').addEventListener('click', showSavedEq);
+$('closeSavedEqBtn').addEventListener('click', () => $('savedEqDialog').close());
 $('saveSoundBtn').addEventListener('click', requestSoundSave);
 $('applyBtn').addEventListener('click', requestApply);
 window.addEventListener('beforeunload', event => { if (state.busy) { event.preventDefault(); event.returnValue = ''; } });

@@ -28,6 +28,7 @@
       <a class="brand" href="./" aria-label="AZLA Equalizer 홈"><span class="brand-wordmark"><svg class="brand-logo" viewBox="0 0 174 28" role="img" aria-label="AZLA"><g fill="none" stroke="#fff" stroke-width="2.6" stroke-linejoin="miter"><path d="M2 26 14 2h2l12 24M7 17h16M49 3h23L50 25h25M98 2v23h24M145 26l12-24h2l12 24M150 17h16"/></g></svg></span><span class="brand-tagline">SOUND BEYOND LIMITS</span></a>
 
       <div class="sidebar-heading"><span>사운드 모드</span><span class="library-count">05 MODES</span></div>
+      <div class="sidebar-utilities"><button id="createSoundBtn" class="create-sound-button" type="button">＋ 사운드 생성</button><button id="viewSavedEqBtn" class="saved-eq-button" type="button">기기 저장 EQ 보기</button></div>
       <nav id="presetList" class="preset-list" aria-label="사운드 라이브러리"></nav>
       <div class="sidebar-spacer"></div>
       <div class="sidebar-note">AZLA AUDIO</div>
@@ -48,25 +49,33 @@
 
         <div class="chart-section"><div class="chart-toolbar"><div class="chart-legends"><span class="chart-legend"><i class="legend-line"></i>EQ 응답</span><span class="chart-legend measured-legend" id="measurementLegend" hidden><i class="legend-line measured"></i>실측 변화량</span></div></div><div class="chart-wrap"><canvas id="responseChart" width="1200" height="270" aria-label="주파수에 따른 EQ 예상 응답. 아래 10밴드 조절로 변경할 수 있습니다." role="img"></canvas></div><div class="chart-bottom"><span id="modelLabel">오디오 기기마다 소리 특성이 다르므로, 사용하는 오디오 기기에 맞게 EQ를 조절해 주세요.</span><span id="peakLabel" class="peak-label">최대 변화 <b>0.0 dB</b></span></div></div>
 
-        <div class="controls-section"><div class="controls-heading"><div class="controls-title"><h3>10밴드 이퀄라이저</h3><span class="controls-hint">조절하면 실시간 미리듣기</span></div><div class="controls-actions"><label class="switch-label"><input id="advancedToggle" type="checkbox"><span class="switch-track"></span>세부 조절</label><span class="action-divider"></span><button id="flatBtn" class="text-button" type="button">전체 0 dB</button></div></div><div class="bands-scroll"><div class="band-scale" aria-hidden="true"><span>+12</span><span>0</span><span>−12</span></div><div id="bandControls" class="band-controls" aria-label="10밴드 주파수·게인·Q·필터 조절"></div></div><p class="volume-guidance">DAC의 출력이 강해 연결된 오디오 기기에서 소리가 크게 들릴 수 있습니다. 볼륨을 낮춘 뒤 조절해 주세요.</p><div class="controls-footnote"><span><span class="mini-dot"></span>조절하면 소리만 임시로 반영됩니다. 사운드 저장은 목록에, EQ 적용은 기기에 저장합니다.</span><span>20 Hz — 20 kHz</span></div></div>
+        <div class="controls-section"><div class="controls-heading"><div class="controls-title"><h3>10밴드 이퀄라이저</h3><span class="controls-hint">조절하면 실시간 미리듣기</span></div><div class="controls-actions"><label class="switch-label"><input id="advancedToggle" type="checkbox"><span class="switch-track"></span>세부 조절</label><span class="action-divider"></span><button id="flatBtn" class="text-button" type="button">전체 0 dB</button></div></div><div class="bands-scroll"><div class="band-scale" aria-hidden="true"><span>+12</span><span>0</span><span>−12</span></div><div id="bandControls" class="band-controls" aria-label="10밴드 주파수·게인·Q·필터 조절"></div></div><p class="volume-guidance">DAC의 출력이 강해 연결된 오디오 기기에서 소리가 크게 들릴 수 있습니다. 볼륨을 낮춘 뒤 조절해 주세요.</p><div class="controls-footnote"><span><span class="mini-dot"></span>조절하면 소리만 임시로 반영됩니다. EQ 적용을 눌러야 기기에 저장됩니다.</span><span>20 Hz — 20 kHz</span></div></div>
       </section>
 
-      <footer class="apply-bar"><div class="apply-copy"><span class="apply-symbol"><svg class="icon"><use href="#icon-shield"/></svg></span><div><strong id="applyStatus">사운드를 준비하세요</strong><p id="applyDetail">볼륨을 낮추고 조절한 뒤, 마음에 들면 사운드를 저장하세요.</p></div></div><div class="apply-actions"><progress id="applyProgress" max="100" value="0" aria-label="기기 저장 진행률" hidden></progress><button id="saveSoundBtn" class="sound-save-button" type="button">사운드 저장</button><button id="applyBtn" class="apply-button" type="button"><span>EQ 적용</span><svg class="icon"><use href="#icon-arrow"/></svg></button></div></footer>
+      <footer class="apply-bar"><div class="apply-copy"><span class="apply-symbol"><svg class="icon"><use href="#icon-shield"/></svg></span><div><strong id="applyStatus">사운드를 준비하세요</strong><p id="applyDetail">볼륨을 낮추고 조절한 뒤, 사운드를 생성해 보관하거나 EQ 적용으로 기기에 저장하세요.</p></div></div><div class="apply-actions"><progress id="applyProgress" max="100" value="0" aria-label="기기 저장 진행률" hidden></progress><button id="saveSoundBtn" class="sound-save-button" type="button" hidden>변경사항 적용</button><button id="applyBtn" class="apply-button" type="button"><span>EQ 적용</span><svg class="icon"><use href="#icon-arrow"/></svg></button></div></footer>
       <div class="bottom-caption"><span>ENGINEERED FOR THE WAY YOU LISTEN.</span><span>© AZLA. All rights reserved.</span></div>
     </main>
   </div>
 
   <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 
+  <dialog id="savedEqDialog" class="dialog saved-eq-dialog" aria-labelledby="savedEqTitle">
+    <h2 id="savedEqTitle">기기에 저장한 EQ</h2>
+    <p id="savedEqMessage" class="sound-dialog-help"></p>
+    <p id="savedEqTime" class="saved-eq-time"></p>
+    <div id="savedEqBands" class="saved-eq-bands" aria-label="기기 저장 EQ 10밴드"></div>
+    <div class="sound-dialog-actions"><button id="closeSavedEqBtn" class="primary-button" type="button">닫기</button></div>
+  </dialog>
+
   <div id="soundMenu" class="sound-menu" popover="auto" role="menu" aria-label="사운드 관리">
     <button type="button" role="menuitem" data-menu-action="rename">이름 변경</button>
-    <button type="button" role="menuitem" data-menu-action="copy">새 사운드로 저장</button>
+    <button type="button" role="menuitem" data-menu-action="copy">사운드 복제</button>
     <button type="button" role="menuitem" data-menu-action="delete">삭제</button>
   </div>
 
   <dialog id="soundDialog" class="dialog sound-dialog" aria-labelledby="soundDialogTitle">
     <form id="soundForm">
-      <h2 id="soundDialogTitle">사운드 저장</h2>
+      <h2 id="soundDialogTitle">사운드 생성</h2>
       <p id="soundDialogHelp" class="sound-dialog-help">원하는 이름으로 사운드를 저장합니다.</p>
       <label class="sound-name-label" for="soundName">사운드 이름</label>
       <input id="soundName" class="sound-name-input" type="text" maxlength="40" required autocomplete="off" placeholder="예: 내가 좋아하는 영화 사운드">

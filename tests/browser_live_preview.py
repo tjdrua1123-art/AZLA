@@ -89,7 +89,7 @@ with sync_playwright() as p:
     page.evaluate('window.__failNext=true');change(4,2)
     page.wait_for_function("document.querySelector('#applyDetail').textContent.includes('미리듣기를 반영하지 못했습니다')")
     assert page.locator('#applyBtn').is_disabled()
-    assert page.locator('#saveSoundBtn').is_enabled(),'local saving remains available while USB needs reconnect'
+    assert page.locator('#createSoundBtn').is_enabled(),'sound creation remains available while USB needs reconnect'
     before=page.evaluate('window.__writes.length')
     change(4,1);page.wait_for_timeout(500)
     assert page.evaluate('window.__writes.length')==before

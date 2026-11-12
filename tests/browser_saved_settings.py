@@ -26,23 +26,26 @@ with sync_playwright() as p:
     def menu(id,action):
         page.locator(f'[data-sound-id="{id}"]').click();page.locator(f'[data-menu-action="{action}"]').click()
     def new_save(name):
-        page.locator('#saveSoundBtn').click();page.locator('#soundName').fill(name);page.locator('#soundSubmit').click()
+        page.locator('#createSoundBtn').click();page.locator('#soundName').fill(name);page.locator('#soundSubmit').click()
         page.locator('#soundDialog').wait_for(state='hidden')
     def done():page.wait_for_function("document.querySelector('#applyStatus').textContent==='설정 전송 완료'",timeout=15000)
     def heard():page.wait_for_function("document.querySelector('#applyStatus').textContent==='미리듣기 중 · 기기 저장 전'",timeout=10000)
     def connect():
         page.locator('#connectBtn').click();page.wait_for_function("document.querySelector('#connectionLabel').textContent==='USB 연결됨'&&!document.querySelector('#connectBtn').disabled")
     assert page.locator('[data-current-state],#addSoundBtn,#soundOverwrite').count()==0
-    assert page.locator('#saveSoundBtn').is_enabled() and page.locator('#applyBtn').is_disabled()
+    assert page.locator('#saveSoundBtn').is_hidden() and page.locator('#createSoundBtn').is_enabled() and page.locator('#applyBtn').is_disabled()
     assert page.locator('#applyBtn span').inner_text()=='EQ 적용'
+    page.locator('#viewSavedEqBtn').click();assert page.locator('.saved-eq-band').count()==0
+    assert '기록이 없습니다' in page.locator('#savedEqMessage').inner_text()
+    page.locator('#closeSavedEqBtn').click()
     page.locator('#advancedToggle').check()
     page.locator('.band-frequency input').nth(0).fill('70');page.locator('.band-q input').nth(0).fill('0.9')
     page.locator('.band-filter select').nth(0).select_option('3');page.locator('.band-gain input').nth(0).fill('-3')
     saved=values();new_save('나의 영화');first=library()[0]['id']
     assert values()==saved and page.locator('#profileName').inner_text()=='나의 영화'
-    assert page.locator('#saveSoundBtn').inner_text()=='변경사항 저장'
+    assert page.locator('#saveSoundBtn').inner_text()=='변경사항 적용'
     assert page.evaluate('window.__writes.length')==0
-    assert page.locator('#applyStatus').inner_text()=='브라우저에 저장됨'
+    assert page.locator('#applyStatus').inner_text()=='내 사운드에 보관됨'
     page.reload();page.wait_for_selector('.band-column');page.locator(f'[data-sound="{first}"]').click()
     assert values()==saved and page.evaluate('window.__writes.length')==0
     # Updating a saved sound takes one click and never asks for its name again.
@@ -68,12 +71,26 @@ with sync_playwright() as p:
     page.locator('#saveSoundBtn').click();assert flashes()==0
     page.locator('#applyBtn').click();assert page.locator('#saveSoundBtn').is_disabled();done();assert flashes()==1
     # First save from a factory mode asks only for a name, then writes Flash once.
-    page.locator('[data-preset="cinema"]').click();heard();page.locator('#saveSoundBtn').click()
+    page.locator('[data-preset="cinema"]').click();heard();page.locator('#createSoundBtn').click()
     assert 'EQ 적용' in page.locator('#soundDialogHelp').inner_text()
     assert flashes()==1;page.locator('#cancelSoundBtn').click();assert flashes()==1
     new_save('연결 저장');assert flashes()==1 and len(library())==3
     page.locator('#applyBtn').click();done();assert flashes()==2
     third=library()[2]['id']
+    # The read-only viewer shows actual last Flash evidence, unaffected by RAM edits.
+    stored_record=page.evaluate("JSON.parse(localStorage.getItem('azla_equalizer_device_state_v1'))")
+    page.locator('.band-gain input').nth(0).fill('2.7');heard();before_view=values()
+    writes_before=page.evaluate('window.__writes.length')
+    page.locator('#viewSavedEqBtn').click()
+    assert page.locator('.saved-eq-band').count()==10
+    assert page.locator('.saved-eq-band span').first.inner_text()==f"+{stored_record['eq']['gains'][0]:.1f} dB"
+    assert page.locator('.saved-eq-band strong').all_text_contents()==[f'{freq} Hz' for freq in stored_record['eq']['freqs']]
+    assert '다른 프로그램' in page.locator('#savedEqMessage').inner_text()
+    page.locator('#closeSavedEqBtn').click()
+    assert values()==before_view and page.evaluate('window.__writes.length')==writes_before and flashes()==2
+    page.evaluate('window.__device.productId=33333');page.locator('#viewSavedEqBtn').click()
+    assert page.locator('.saved-eq-band').count()==0 and '연결한 기기' in page.locator('#savedEqMessage').inner_text()
+    page.locator('#closeSavedEqBtn').click();page.evaluate('window.__device.productId=22136')
     # A blocked local write must leave records unchanged and never start Flash.
     page.evaluate("()=>{window.__realSetItem=Storage.prototype.setItem;Storage.prototype.setItem=function(){throw new DOMException('blocked','QuotaExceededError')}}")
     page.locator('.band-gain input').nth(0).fill('1');heard();page.locator('#saveSoundBtn').click()
@@ -94,15 +111,24 @@ with sync_playwright() as p:
     menu(third,'delete');page.locator('#deleteSoundForm button[type="submit"]').click()
     assert values()==before and flashes()==4 and len(library())==2
     page.reload();page.wait_for_selector('.band-column');assert page.locator('[data-sound]').count()==2
-    before_copy=values();menu(first,'copy');page.locator('#soundName').fill('원본 보관 복사');page.locator('#soundSubmit').click()
+    page.locator('#viewSavedEqBtn').click();assert page.locator('.saved-eq-band').count()==10
+    assert page.locator('.saved-eq-band span').first.inner_text()=='+1.0 dB'
+    assert page.evaluate('window.__writes.length')==0
+    page.locator('#closeSavedEqBtn').click()
+    connect();page.locator('#viewSavedEqBtn').click()
+    assert page.locator('.saved-eq-band').count()==0 and '설정이 저장 기록과 달라' in page.locator('#savedEqMessage').inner_text()
+    page.locator('#closeSavedEqBtn').click();page.locator('#connectBtn').click();page.wait_for_function('!window.__device.opened')
+    before_copy=values();before_copy_writes=page.evaluate('window.__writes.length');menu(first,'copy');page.locator('#soundName').fill('원본 보관 복사');page.locator('#soundSubmit').click()
     page.locator('#soundDialog').wait_for(state='hidden')
     assert values()==before_copy and library()[-1]['eq']['gains'][0]==2,'copying an unselected sound must not change the editor'
-    assert page.evaluate('window.__writes.length')==0
+    assert page.evaluate('window.__writes.length')==before_copy_writes
     for i in range(7):
         page.locator('[data-preset="flat"]').click();new_save(f'추가 사운드 {i+1}')
     assert page.locator('.preset-list').evaluate('e=>e.scrollHeight>e.clientHeight')
     assert page.locator('#connectBtn').evaluate('e=>{let r=e.getBoundingClientRect();return r.bottom<=innerHeight&&e.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2))}')
     assert page.locator('.equalizer-panel').evaluate('e=>e.scrollHeight-e.clientHeight<=1')
+    for selector in ['#createSoundBtn','#viewSavedEqBtn','#saveSoundBtn','#applyBtn']:
+        assert page.locator(selector).evaluate('e=>{let r=e.getBoundingClientRect();return r.top>=0&&r.bottom<=innerHeight&&e.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2))}'),selector
     # Popover stays inside the viewport even for the lowest list item.
     last=library()[-1]['id'];page.locator(f'[data-sound-id="{last}"]').click()
     assert page.locator('#soundMenu').evaluate('e=>{let r=e.getBoundingClientRect();return r.top>=0&&r.bottom<=innerHeight&&r.left>=0&&r.right<=innerWidth}')
@@ -110,7 +136,9 @@ with sync_playwright() as p:
     page.keyboard.press('Escape')
     page.set_viewport_size({'width':390,'height':844});menu(last,'rename')
     assert page.locator('#soundName').is_visible();page.locator('#cancelSoundBtn').click()
+    page.locator('#viewSavedEqBtn').click();assert page.locator('.saved-eq-band').count()==10
+    page.locator('#closeSavedEqBtn').click()
     assert page.evaluate('document.documentElement.scrollWidth<=innerWidth')
     assert not errors,errors
-    print('PASS: separate local sound saving and DAC application; connected/offline named updates; no implicit Flash or library changes; independent storage failure and USB recovery; menu, scrolling and mobile access')
+    print('PASS: sidebar creation, conditional change application, independent DAC saves; read-only last Flash record survives RAM edits/reload; no inferred settings for missing/mismatched records; menu, scrolling and mobile access')
     browser.close()

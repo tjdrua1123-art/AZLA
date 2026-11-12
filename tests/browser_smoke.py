@@ -62,7 +62,8 @@ with sync_playwright() as p:
         assert page.evaluate('(key)=>localStorage.getItem(key)', key) is None
     assert all(v == '1.4' for v in page.locator('.band-q input').evaluate_all('(els)=>els.map(x=>x.value)'))
     assert page.locator('#applyBtn').is_disabled()
-    assert page.locator('#saveSoundBtn').is_enabled()
+    assert page.locator('#createSoundBtn').is_enabled()
+    assert page.locator('#saveSoundBtn').is_hidden()
     assert page.locator('.band-frequency input').evaluate_all('(els)=>els.map(x=>Number(x.value))') == [32,63,125,250,500,1000,2000,4000,8000,16000]
     page.locator('[data-preset="fps"]').click()
     assert page.locator('#profileName').inner_text() == 'FPS 모드'
@@ -163,7 +164,8 @@ with sync_playwright() as p:
     assert page.evaluate('window.__device.opened') is False
     page.locator('#closeSettingsBtn').click()
     assert page.locator('#applyBtn').is_disabled()
-    assert page.locator('#saveSoundBtn').is_enabled()
+    assert page.locator('#createSoundBtn').is_enabled()
+    assert page.locator('#saveSoundBtn').is_hidden()
     assert not errors, errors
     print('PASS: supplied manufacturer search method reads VID/PID without opening, writing, or authorizing apply')
     browser.close()
