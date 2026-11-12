@@ -435,3 +435,18 @@ body{font-weight:500}
 .sound-menu button{display:block;width:100%;padding:10px 12px;border:0;border-radius:3px;text-align:left;background:transparent;font-size:14px;color:inherit}
 .sound-menu button:hover,.sound-menu button:focus-visible{background:#FFF0E4}
 .sound-menu [data-menu-action=delete]{color:#AD2C16}
+
+/* Keep library storage and DAC application as two explicit footer actions. */
+.sound-save-button{min-width:180px;height:54px;padding:0 18px;border:1.5px solid var(--accent);border-radius:4px;background:#FFFFFF;color:#171717;font-size:17px;font-weight:650;white-space:nowrap}
+.sound-save-button:hover:not(:disabled){background:#FFF0E4}
+.apply-copy p{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
+@media(min-width:901px) and (max-width:1100px){
+ .apply-actions{gap:10px}.sound-save-button,#applyBtn{min-width:140px;padding:0 14px;font-size:15px}
+}
+@media(max-width:900px){
+ .apply-bar{flex-wrap:wrap}.apply-copy{width:100%}.apply-actions{width:100%;display:flex;flex-direction:row;justify-content:flex-end;gap:10px}
+ .sound-save-button{min-width:150px;font-size:16px}
+}
+@media(max-width:520px){.sound-save-button,#applyBtn{flex:1;min-width:0;height:50px;padding:0 12px;font-size:15px}}
+
+.toast{pointer-events:none}

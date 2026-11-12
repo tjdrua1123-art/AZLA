@@ -33,10 +33,10 @@ with sync_playwright() as p:
     page.wait_for_function("!document.querySelector('#applyBtn').disabled")
     page.wait_for_timeout(400)
     assert page.evaluate('window.__writes.map(w=>w.bytes)')==[[128,9,0]],'connection must not overwrite EQ'
-    assert page.locator('#applyBtn span').inner_text()=='사운드 저장'
+    assert page.locator('#applyBtn span').inner_text()=='EQ 적용'
 
     def heard():
-        page.wait_for_function("document.querySelector('#applyStatus').textContent==='미리듣기 중 · 저장 전'",timeout=10000)
+        page.wait_for_function("document.querySelector('#applyStatus').textContent==='미리듣기 중 · 기기 저장 전'",timeout=10000)
 
     def change(index,value):
         page.locator('.band-gain input').nth(index).fill(str(value))
@@ -59,7 +59,6 @@ with sync_playwright() as p:
     page.evaluate('window.__gateNext=true');change(4,3)
     page.wait_for_function("typeof window.__release==='function'")
     change(4,2.5);page.locator('#applyBtn').click()
-    page.locator('#soundName').fill('실시간 미리듣기');page.locator('#soundSubmit').click()
     assert page.locator('.gain-slider').first.is_disabled()
     assert page.evaluate('window.__flashCount()')==0
     page.evaluate('window.__release()')
@@ -89,7 +88,8 @@ with sync_playwright() as p:
     # Failed audition stops pending work and disables saving until reconnect.
     page.evaluate('window.__failNext=true');change(4,2)
     page.wait_for_function("document.querySelector('#applyDetail').textContent.includes('미리듣기를 반영하지 못했습니다')")
-    assert page.locator('#applyBtn').is_enabled(),'local saving remains available while USB needs reconnect'
+    assert page.locator('#applyBtn').is_disabled()
+    assert page.locator('#saveSoundBtn').is_enabled(),'local saving remains available while USB needs reconnect'
     before=page.evaluate('window.__writes.length')
     change(4,1);page.wait_for_timeout(500)
     assert page.evaluate('window.__writes.length')==before
