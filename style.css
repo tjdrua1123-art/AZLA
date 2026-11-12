@@ -274,7 +274,7 @@ body{font-weight:500}
 }
 .sidebar .brand{display:block;padding:8px 20px 28px;margin:0;flex-shrink:0}
 .brand-wordmark{max-width:none;width:164px;height:auto;padding:0;background:none;border-radius:0}
-.brand-logo g{stroke:#111111}
+.brand-logo g{stroke:#000000;stroke-width:4}
 .brand-tagline{margin:12px 0 0;padding:0;border:0;font-size:8px;letter-spacing:1.9px;white-space:nowrap}
 .sidebar .device-card{position:static;flex:none;margin:16px 8px 0;padding:14px 12px 12px;border:1.5px solid var(--accent);border-radius:6px;box-shadow:none;background:#FFFFFF}
 .device-icon{display:none}.device-card-top{display:flex;gap:0}.device-copy{flex-direction:column;align-items:flex-start;gap:6px}
