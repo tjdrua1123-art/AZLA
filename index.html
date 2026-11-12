@@ -29,7 +29,6 @@
 
       <div class="sidebar-heading"><span>사운드 모드</span><span class="library-count">05 MODES</span></div>
       <nav id="presetList" class="preset-list" aria-label="사운드 라이브러리"></nav>
-      <button id="addSoundBtn" class="add-sound-button" type="button">＋ 내 사운드로 추가</button>
       <div class="sidebar-spacer"></div>
       <div class="sidebar-note">AZLA AUDIO</div>
       <section class="device-card" aria-label="장치 연결">
@@ -49,26 +48,30 @@
 
         <div class="chart-section"><div class="chart-toolbar"><div class="chart-legends"><span class="chart-legend"><i class="legend-line"></i>EQ 응답</span><span class="chart-legend measured-legend" id="measurementLegend" hidden><i class="legend-line measured"></i>실측 변화량</span></div></div><div class="chart-wrap"><canvas id="responseChart" width="1200" height="270" aria-label="주파수에 따른 EQ 예상 응답. 아래 10밴드 조절로 변경할 수 있습니다." role="img"></canvas></div><div class="chart-bottom"><span id="modelLabel">오디오 기기마다 소리 특성이 다르므로, 사용하는 오디오 기기에 맞게 EQ를 조절해 주세요.</span><span id="peakLabel" class="peak-label">최대 변화 <b>0.0 dB</b></span></div></div>
 
-        <div class="controls-section"><div class="controls-heading"><div class="controls-title"><h3>10밴드 이퀄라이저</h3><span class="controls-hint">조절하면 실시간 미리듣기</span></div><div class="controls-actions"><label class="switch-label"><input id="advancedToggle" type="checkbox"><span class="switch-track"></span>세부 조절</label><span class="action-divider"></span><button id="flatBtn" class="text-button" type="button">전체 0 dB</button></div></div><div class="bands-scroll"><div class="band-scale" aria-hidden="true"><span>+12</span><span>0</span><span>−12</span></div><div id="bandControls" class="band-controls" aria-label="10밴드 주파수·게인·Q·필터 조절"></div></div><p class="volume-guidance">DAC의 출력이 강해 연결된 오디오 기기에서 소리가 크게 들릴 수 있습니다. 볼륨을 낮춘 뒤 조절해 주세요.</p><div class="controls-footnote"><span><span class="mini-dot"></span>조절하면 소리만 임시로 반영됩니다. ‘기기에 저장’을 눌러야 저장됩니다.</span><span>20 Hz — 20 kHz</span></div></div>
+        <div class="controls-section"><div class="controls-heading"><div class="controls-title"><h3>10밴드 이퀄라이저</h3><span class="controls-hint">조절하면 실시간 미리듣기</span></div><div class="controls-actions"><label class="switch-label"><input id="advancedToggle" type="checkbox"><span class="switch-track"></span>세부 조절</label><span class="action-divider"></span><button id="flatBtn" class="text-button" type="button">전체 0 dB</button></div></div><div class="bands-scroll"><div class="band-scale" aria-hidden="true"><span>+12</span><span>0</span><span>−12</span></div><div id="bandControls" class="band-controls" aria-label="10밴드 주파수·게인·Q·필터 조절"></div></div><p class="volume-guidance">DAC의 출력이 강해 연결된 오디오 기기에서 소리가 크게 들릴 수 있습니다. 볼륨을 낮춘 뒤 조절해 주세요.</p><div class="controls-footnote"><span><span class="mini-dot"></span>조절하면 소리만 임시로 반영됩니다. 마음에 들면 아래 저장 버튼을 눌러 주세요.</span><span>20 Hz — 20 kHz</span></div></div>
       </section>
 
-      <footer class="apply-bar"><div class="apply-copy"><span class="apply-symbol"><svg class="icon"><use href="#icon-shield"/></svg></span><div><strong id="applyStatus">사운드를 준비하세요</strong><p id="applyDetail">볼륨을 낮추고 조절한 뒤, 마음에 들면 기기에 저장하세요.</p></div></div><div class="apply-actions"><progress id="applyProgress" max="100" value="0" aria-label="기기 저장 진행률" hidden></progress><button id="applyBtn" class="apply-button" type="button"><span>기기에 저장</span><svg class="icon"><use href="#icon-arrow"/></svg></button></div></footer>
+      <footer class="apply-bar"><div class="apply-copy"><span class="apply-symbol"><svg class="icon"><use href="#icon-shield"/></svg></span><div><strong id="applyStatus">사운드를 준비하세요</strong><p id="applyDetail">볼륨을 낮추고 조절한 뒤, 마음에 들면 사운드를 저장하세요.</p></div></div><div class="apply-actions"><progress id="applyProgress" max="100" value="0" aria-label="기기 저장 진행률" hidden></progress><button id="applyBtn" class="apply-button" type="button"><span>사운드 저장</span><svg class="icon"><use href="#icon-arrow"/></svg></button></div></footer>
       <div class="bottom-caption"><span>ENGINEERED FOR THE WAY YOU LISTEN.</span><span>© AZLA. All rights reserved.</span></div>
     </main>
   </div>
 
   <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 
+  <div id="soundMenu" class="sound-menu" popover="auto" role="menu" aria-label="사운드 관리">
+    <button type="button" role="menuitem" data-menu-action="rename">이름 변경</button>
+    <button type="button" role="menuitem" data-menu-action="copy">새 사운드로 저장</button>
+    <button type="button" role="menuitem" data-menu-action="delete">삭제</button>
+  </div>
+
   <dialog id="soundDialog" class="dialog sound-dialog" aria-labelledby="soundDialogTitle">
     <form id="soundForm">
-      <h2 id="soundDialogTitle">내 사운드 추가</h2>
-      <p class="sound-dialog-help">현재 EQ를 원하는 이름으로 보관합니다. 추가한 사운드는 이 브라우저에 저장됩니다.</p>
+      <h2 id="soundDialogTitle">사운드 저장</h2>
+      <p id="soundDialogHelp" class="sound-dialog-help">원하는 이름으로 사운드를 저장합니다.</p>
       <label class="sound-name-label" for="soundName">사운드 이름</label>
       <input id="soundName" class="sound-name-input" type="text" maxlength="40" required autocomplete="off" placeholder="예: 내가 좋아하는 영화 사운드">
-      <label id="soundOverwriteLabel" class="sound-overwrite" hidden><input id="soundOverwrite" type="checkbox">현재 EQ 값으로도 변경</label>
-      <p class="sound-dialog-help">기기에 반영하려면 사운드를 선택한 뒤 ‘기기에 저장’을 눌러 주세요.</p>
       <p id="soundFormError" class="sound-form-error" role="alert"></p>
-      <div class="sound-dialog-actions"><button id="cancelSoundBtn" class="secondary-button" type="button">취소</button><button id="soundSubmit" class="primary-button" type="submit">추가</button></div>
+      <div class="sound-dialog-actions"><button id="cancelSoundBtn" class="secondary-button" type="button">취소</button><button id="soundSubmit" class="primary-button" type="submit">저장</button></div>
     </form>
   </dialog>
   <dialog id="deleteSoundDialog" class="dialog sound-dialog" aria-labelledby="deleteSoundTitle">
@@ -81,7 +84,7 @@
     </form>
   </dialog>
 
-  <dialog id="settingsDialog" class="dialog settings-dialog"><div class="dialog-heading"><div><div class="dialog-kicker">PREFERENCES</div><h2>설정 및 측정 도구</h2></div><button id="closeSettingsBtn" class="icon-button" type="button" aria-label="설정 닫기"><svg class="icon"><use href="#icon-close"/></svg></button></div><section class="settings-section"><h3>연결 환경</h3><dl class="settings-status"><div><dt>프로그램</dt><dd>AZLA Equalizer 2.0</dd></div><div><dt>장치 연결 지원</dt><dd id="supportStatus">확인 중</dd></div><div><dt>장치 연동 구성</dt><dd id="sdkStatus">확인 중</dd></div></dl><p id="connectionHelp" class="help-text">Windows의 Chrome 또는 Edge에서 USB DAC를 연결해 주세요.</p></section><section class="settings-section"><div class="settings-section-heading"><h3>REW 측정 비교</h3><button id="clearRewBtn" class="text-button" type="button">지우기</button></div><p class="help-text">동일 조건으로 측정한 EQ OFF·ON TXT/CSV 파일을 비교합니다. 파일은 외부로 전송되지 않습니다.</p><div class="measurement-upload-grid"><label class="measurement-upload"><span>01 <strong>EQ OFF</strong></span><input id="rewOffInput" type="file" accept=".txt,.csv,text/plain,text/csv"></label><label class="measurement-upload"><span>02 <strong>EQ ON</strong></span><input id="rewOnInput" type="file" accept=".txt,.csv,text/plain,text/csv"></label></div><p id="rewSummary" class="measurement-summary">측정 파일을 불러오면 예상 응답과의 차이를 확인할 수 있습니다.</p><div class="comparison-scroll"><table class="comparison-table"><thead><tr><th>밴드</th><th>Hz</th><th>예상 dB</th><th>실측 dB</th><th>차이 dB</th></tr></thead><tbody id="comparisonRows"></tbody></table></div></section><section class="settings-section diagnostics-row"><div><h3>진단 기록</h3><p class="help-text">문제 확인을 위한 연결·전송 기록을 저장합니다.</p></div><button id="exportLogBtn" class="secondary-button" type="button"><svg class="icon"><use href="#icon-export"/></svg>기록 저장</button></section><p class="settings-footer">조절 중에는 미리듣기에만 반영하고, 기기에 저장을 누르면 현재 설정 1개를 기록합니다. 저장 명령 전송과 전원 재연결 후 보존 확인은 구분됩니다.</p></dialog>
+  <dialog id="settingsDialog" class="dialog settings-dialog"><div class="dialog-heading"><div><div class="dialog-kicker">PREFERENCES</div><h2>설정 및 측정 도구</h2></div><button id="closeSettingsBtn" class="icon-button" type="button" aria-label="설정 닫기"><svg class="icon"><use href="#icon-close"/></svg></button></div><section class="settings-section"><h3>연결 환경</h3><dl class="settings-status"><div><dt>프로그램</dt><dd>AZLA Equalizer 2.0</dd></div><div><dt>장치 연결 지원</dt><dd id="supportStatus">확인 중</dd></div><div><dt>장치 연동 구성</dt><dd id="sdkStatus">확인 중</dd></div></dl><p id="connectionHelp" class="help-text">Windows의 Chrome 또는 Edge에서 USB DAC를 연결해 주세요.</p></section><section class="settings-section"><div class="settings-section-heading"><h3>REW 측정 비교</h3><button id="clearRewBtn" class="text-button" type="button">지우기</button></div><p class="help-text">동일 조건으로 측정한 EQ OFF·ON TXT/CSV 파일을 비교합니다. 파일은 외부로 전송되지 않습니다.</p><div class="measurement-upload-grid"><label class="measurement-upload"><span>01 <strong>EQ OFF</strong></span><input id="rewOffInput" type="file" accept=".txt,.csv,text/plain,text/csv"></label><label class="measurement-upload"><span>02 <strong>EQ ON</strong></span><input id="rewOnInput" type="file" accept=".txt,.csv,text/plain,text/csv"></label></div><p id="rewSummary" class="measurement-summary">측정 파일을 불러오면 예상 응답과의 차이를 확인할 수 있습니다.</p><div class="comparison-scroll"><table class="comparison-table"><thead><tr><th>밴드</th><th>Hz</th><th>예상 dB</th><th>실측 dB</th><th>차이 dB</th></tr></thead><tbody id="comparisonRows"></tbody></table></div></section><section class="settings-section diagnostics-row"><div><h3>진단 기록</h3><p class="help-text">문제 확인을 위한 연결·전송 기록을 저장합니다.</p></div><button id="exportLogBtn" class="secondary-button" type="button"><svg class="icon"><use href="#icon-export"/></svg>기록 저장</button></section><p class="settings-footer">조절 중에는 미리듣기에만 반영하고, 저장하면 현재 설정 1개를 기기에 기록합니다. 저장 명령 전송과 전원 재연결 후 보존 확인은 구분됩니다.</p></dialog>
 
   <script src="sdk/walk-play-web-eq-sdk.umd.js"></script>
   <script type="module" src="app.js"></script>

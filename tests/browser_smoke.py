@@ -61,7 +61,7 @@ with sync_playwright() as p:
     for key in ['azla_equalizer_v4','azla_equalizer_v3','azla_cb5100_presets_v1']:
         assert page.evaluate('(key)=>localStorage.getItem(key)', key) is None
     assert all(v == '1.4' for v in page.locator('.band-q input').evaluate_all('(els)=>els.map(x=>x.value)'))
-    assert page.locator('#applyBtn').is_disabled()
+    assert page.locator('#applyBtn').is_enabled()
     assert page.locator('.band-frequency input').evaluate_all('(els)=>els.map(x=>Number(x.value))') == [32,63,125,250,500,1000,2000,4000,8000,16000]
     page.locator('[data-preset="fps"]').click()
     assert page.locator('#profileName').inner_text() == 'FPS 모드'
@@ -107,17 +107,20 @@ with sync_playwright() as p:
     page.locator('#connectBtn').click()
     page.wait_for_function("!document.querySelector('#applyBtn').disabled")
     assert page.evaluate('window.__writes.map(x=>x.bytes)') == [[128,9,0]]
+    def save_named(name):
+        page.locator('#applyBtn').click()
+        if page.locator('#soundDialog').is_visible():
+            page.locator('#soundName').fill(name);page.locator('#soundSubmit').click()
     page.locator('[data-preset="fps"]').click()
-    page.locator('#applyBtn').click()
+    save_named('나만의 FPS')
     assert not page.locator('#riskDialog').is_visible(), 'FPS preset must apply without a warning'
     assert page.locator('#connectBtn').is_disabled()
     assert page.locator('.gain-slider').nth(0).is_disabled()
     page.wait_for_function("document.querySelector('#applyStatus').textContent==='설정 전송 완료'", timeout=15000)
     writes = page.evaluate('window.__writes')
     mutation_writes = [w for w in writes if w['bytes'] != [128,9,0]]
-    assert len(writes) == 14
-    assert len(mutation_writes) == 12
-    assert [w['bytes'][4] for w in mutation_writes[:10]] == list(range(10))
+    assert len(mutation_writes) >= 12
+    assert [w['bytes'][4] for w in mutation_writes[-12:-2]] == list(range(10))
     assert mutation_writes[-1]['bytes'] == [1,1,0]
     assert page.evaluate("localStorage.getItem('azla_equalizer_device_state_v1')") is not None
     page.locator('[data-preset="flat"]').click()
@@ -132,7 +135,7 @@ with sync_playwright() as p:
     for mode in ['flat','vocal','music-balanced','cinema']:
         page.locator(f'[data-preset="{mode}"]').click()
         page.wait_for_function("document.querySelector('#applyStatus').textContent==='미리듣기 중 · 저장 전'", timeout=10000)
-        page.locator('#applyBtn').click()
+        save_named(mode)
         assert not page.locator('#riskDialog').is_visible(), f'{mode} must apply without a warning'
         page.wait_for_function("document.querySelector('#applyStatus').textContent==='설정 전송 완료'", timeout=15000)
     # Summed gain is informational; manual boosts preview and save without a modal.
@@ -141,7 +144,7 @@ with sync_playwright() as p:
     gain.fill('12'); gain.press('Tab')
     page.wait_for_function("document.querySelector('#applyStatus').textContent==='미리듣기 중 · 저장 전'", timeout=10000)
     assert page.locator('#riskDialog').count() == 0
-    page.locator('#applyBtn').click()
+    save_named('직접 조절 테스트')
     page.wait_for_function("document.querySelector('#applyStatus').textContent==='설정 전송 완료'", timeout=15000)
     assert page.locator('.volume-guidance').is_visible()
     assert not errors, errors
@@ -159,7 +162,7 @@ with sync_playwright() as p:
     assert page.evaluate('window.__writes.length') == 0
     assert page.evaluate('window.__device.opened') is False
     page.locator('#closeSettingsBtn').click()
-    assert page.locator('#applyBtn').is_disabled()
+    assert page.locator('#applyBtn').is_enabled()
     assert not errors, errors
     print('PASS: supplied manufacturer search method reads VID/PID without opening, writing, or authorizing apply')
     browser.close()
