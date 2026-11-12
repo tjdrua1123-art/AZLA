@@ -51,8 +51,7 @@ with sync_playwright() as p:
     assert page.locator('[data-preset]').count() == 5
     assert page.locator('[data-preset] .preset-name').all_text_contents() == ['기본 모드','FPS 모드','음악 보컬','음악 밸런스','영화']
     assert page.locator('.band-filter select').first.locator('option[value="3"]').inner_text() == 'HIGH SHELF'
-    assert page.locator('[data-current-state]').count() == 1
-    assert page.locator('[data-current-state]').inner_text().startswith('저장된 설정')
+    assert page.locator('[data-current-state]').count() == 0
     assert page.locator('#profileName').inner_text() == '기본 모드'
     assert page.locator('[data-preset="flat"]').get_attribute('aria-pressed') == 'true'
     assert page.locator('#profileBadge').count() == 0
@@ -107,8 +106,6 @@ with sync_playwright() as p:
     page.goto(BASE); page.wait_for_selector('.band-column')
     page.locator('#connectBtn').click()
     page.wait_for_function("!document.querySelector('#applyBtn').disabled")
-    assert page.locator('[data-current-state]').inner_text().startswith('저장된 설정')
-    assert page.locator('[data-current-state]').inner_text() == '저장된 설정'
     assert page.evaluate('window.__writes.map(x=>x.bytes)') == [[128,9,0]]
     page.locator('[data-preset="fps"]').click()
     page.locator('#applyBtn').click()
@@ -122,12 +119,11 @@ with sync_playwright() as p:
     assert len(mutation_writes) == 12
     assert [w['bytes'][4] for w in mutation_writes[:10]] == list(range(10))
     assert mutation_writes[-1]['bytes'] == [1,1,0]
-    assert page.locator('[data-current-state]').inner_text() == '저장된 설정'
     assert page.evaluate("localStorage.getItem('azla_equalizer_device_state_v1')") is not None
     page.locator('[data-preset="flat"]').click()
     page.wait_for_function("document.querySelector('#applyStatus').textContent==='미리듣기 중 · 저장 전'", timeout=10000)
-    page.locator('[data-current-state]').click()
-    assert page.locator('#profileName').inner_text() == '저장된 설정'
+    page.locator('[data-preset="fps"]').click()
+    assert page.locator('#profileName').inner_text() == 'FPS 모드'
     assert page.locator('.band-gain input').nth(0).input_value() == '0'
     page.locator('.band-gain input').nth(0).fill('-1')
     page.locator('.band-gain input').nth(0).press('Tab')

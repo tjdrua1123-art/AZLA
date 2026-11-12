@@ -404,3 +404,33 @@ body{font-weight:500}
  .device-copy>span{font-size:13px}
  .sidebar .connect-button{min-height:54px;font-size:18px;padding:12px 16px}
 }
+
+/* Named sounds share the mode list; device saving remains a separate action. */
+.add-sound-button{flex:none;min-height:46px;margin:12px 4px 0;padding:10px 12px;border:1px dashed var(--accent);border-radius:4px;background:#FFF7F1;color:#171717;font-size:15px;font-weight:650;text-align:center}
+.add-sound-button:hover:not(:disabled){background:#FFE3D2}
+.user-sound-row{display:flex;align-items:center;gap:2px;flex:none;min-width:0;border-radius:4px}
+.user-sound-row:has([aria-pressed=true]){background:#FFF0E4}
+.user-sound-row .user-sound{flex:1;min-width:0;width:0;gap:0;padding-left:20px;padding-right:8px}
+.user-sound .preset-name{display:block;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sound-manage{flex:none;width:32px;height:36px;padding:0;border:0;border-radius:4px;background:transparent;color:#51565E;font-size:12px;font-weight:600;line-height:1}
+.sound-manage:hover:not(:disabled){background:#FFE3D2;color:#111111}
+.user-sound-row .sound-manage:last-child{margin-right:5px}
+.sound-dialog{width:480px;max-width:calc(100% - 32px);padding:28px;border:1px solid var(--line);border-radius:8px;background:#FFFFFF}
+.sound-dialog h2{font-size:23px;margin:0 0 12px}
+.sound-dialog-help{font-size:14px;line-height:1.7;color:#50555D;margin:12px 0 18px}
+.sound-name-label{display:block;font-size:14px;font-weight:650;margin-bottom:8px}
+.sound-name-input{display:block;width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:4px;background:#FFFFFF;color:#111111;font-size:16px}
+.sound-overwrite{display:flex;align-items:center;gap:9px;margin-top:16px;font-size:14px}.sound-overwrite[hidden]{display:none}
+.sound-form-error{color:#AD2C16;font-size:14px;min-height:21px;margin:10px 0}
+.sound-dialog-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:16px}
+.sound-dialog-actions button{min-width:80px;min-height:42px;font-size:15px;border-radius:4px}
+.sound-dialog-actions .primary-button{background:var(--accent);border-color:var(--accent);color:#111111}
+.delete-sound-name{font-size:18px;font-weight:650;overflow-wrap:anywhere}
+@media(max-width:900px){
+ .add-sound-button{grid-column:1 / -1;grid-row:4;margin:0 0 14px;min-height:42px;font-size:14px}
+ .user-sound-row{width:218px}.user-sound-row .user-sound{min-width:0;padding:10px 12px;min-height:48px}.user-sound .preset-name{font-size:14px}
+ .sound-dialog{padding:22px}
+}
+.profile-intro{flex:1}
+.profile-intro h2{min-width:0;max-width:min(38vw,420px);overflow:hidden;text-overflow:ellipsis}
+@media(max-width:900px){.profile-intro h2{max-width:100%}}

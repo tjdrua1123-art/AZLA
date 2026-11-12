@@ -14,8 +14,8 @@ const OBSOLETE_KEYS = Object.freeze([
 const flat = () => cloneEq(PRESETS.find(profile => profile.id === 'flat').eq);
 
 /**
- * v5 deliberately removes named user sounds and previous EQ snapshots.
- * Only the advanced-controls visibility preference survives a restart.
+ * v5 stores only advanced-controls visibility, never the current editor.
+ * Named sounds use a separate store and survive ordinary UI preference writes.
  */
 export function restore(storage) {
   let advanced = false;
@@ -62,4 +62,39 @@ export function persistDeviceSnapshot(storage, evidence) {
   const value = { version: 1, vendorId, productId, tag: eq.tag, savedAt: String(evidence.time || new Date().toISOString()), eq };
   storage.setItem(DEVICE_STATE_KEY, JSON.stringify(value));
   return { ...value, eq: cloneEq(eq) };
+}
+
+const SOUNDS_KEY = 'azla_equalizer_sounds_v1';
+
+export function soundName(value) {
+  if (typeof value !== 'string') throw new Error('사운드 이름을 입력해 주세요.');
+  const name = value.trim().normalize('NFC');
+  if (!name || name.length > 40 || /[\u0000-\u001f\u007f]/.test(name)) throw new Error('사운드 이름은 1~40자로 입력해 주세요.');
+  return name;
+}
+function soundRecord(value) {
+  if (!value || typeof value.id !== 'string' || !/^[a-zA-Z0-9_-]{1,80}$/.test(value.id)) throw new Error('사운드 정보를 확인할 수 없습니다.');
+  return { id: value.id, name: soundName(value.name), eq: cloneEq(value.eq) };
+}
+function distinctSound(records, record) {
+  if (records.some(item => item.id === record.id || item.name.toLocaleLowerCase('ko-KR') === record.name.toLocaleLowerCase('ko-KR'))) throw new Error('이미 사용 중인 이름입니다. 다른 이름을 입력해 주세요.');
+}
+export function restoreSounds(storage) {
+  try {
+    const value = JSON.parse(storage.getItem(SOUNDS_KEY) || 'null');
+    if (value?.version !== 1 || !Array.isArray(value.sounds)) return [];
+    const records = [];
+    for (const item of value.sounds) {
+      try { const record = soundRecord(item); distinctSound(records, record); records.push(record); }
+      catch { /* One damaged entry must not hide the rest of the library. */ }
+    }
+    return records;
+  } catch { return []; }
+}
+export function persistSounds(storage, sounds) {
+  if (!Array.isArray(sounds)) throw new Error('사운드 목록을 확인할 수 없습니다.');
+  const records = [];
+  for (const item of sounds) { const record = soundRecord(item); distinctSound(records, record); records.push(record); }
+  storage.setItem(SOUNDS_KEY, JSON.stringify({ version: 1, sounds: records }));
+  return records;
 }

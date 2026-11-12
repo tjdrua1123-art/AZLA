@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { PRESETS, cloneEq } from '../src/eq.js';
-import { restore, persist, restoreDeviceSnapshot, persistDeviceSnapshot } from '../src/storage.js';
+import { restore, persist, restoreDeviceSnapshot, persistDeviceSnapshot, restoreSounds, persistSounds, soundName } from '../src/storage.js';
 
 const flat=()=>cloneEq(PRESETS.find(entry=>entry.id==='flat').eq);
 const OLD_KEYS=[
@@ -79,4 +79,33 @@ test('device snapshot rejects malformed records and incomplete Flash evidence',(
   const storage=memoryStorage({azla_equalizer_device_state_v1:JSON.stringify({version:1,vendorId:1,productId:2,tag:9,savedAt:'now',eq:flat()})});
   assert.equal(restoreDeviceSnapshot(storage),null,'record tag must match EQ tag');
   assert.throws(()=>persistDeviceSnapshot(storage,{result:'ram-only',device:{vendorId:1,productId:2},eq:flat()}),/Flash/);
+});
+
+
+test('named sounds preserve full independent EQ snapshots across edits and deletion',()=>{
+  const storage=memoryStorage(),eq=flat();eq.freqs[0]=70;eq.qs[0]=0.9;eq.gains[0]=-3;eq.filterTypes[0]=3;
+  persistSounds(storage,[{id:'one',name:' 내 영화 ',eq}]);eq.gains[0]=9;
+  let sounds=restoreSounds(storage);assert.equal(sounds[0].name,'내 영화');assert.equal(sounds[0].eq.gains[0],-3);
+  assert.equal(sounds[0].eq.freqs[0],70);assert.equal(sounds[0].eq.qs[0],0.9);assert.equal(sounds[0].eq.filterTypes[0],3);
+  sounds[0].name='이름 변경';sounds.push({id:'two',name:'다른 설정',eq:flat()});persistSounds(storage,sounds);
+  assert.deepEqual(restoreSounds(storage).map(s=>s.name),['이름 변경','다른 설정']);
+  persistSounds(storage,sounds.filter(s=>s.id!=='one'));assert.deepEqual(restoreSounds(storage).map(s=>s.id),['two']);
+  assert.equal(restore(storage).selected,'flat','named sounds do not replace startup EQ');
+  assert.equal(restoreSounds(storage).length,1,'UI preference migration must preserve named sounds');
+});
+test('invalid and duplicate names cannot corrupt the existing library',()=>{
+  const storage=memoryStorage(),entry={id:'one',name:'My Sound',eq:flat()};persistSounds(storage,[entry]);
+  const before=storage.getItem('azla_equalizer_sounds_v1');
+  for(const name of ['', '   ', 'x'.repeat(41), 'a\nb'])assert.throws(()=>soundName(name));
+  assert.throws(()=>persistSounds(storage,[entry,{...entry,id:'two',name:' my sound ' }]),/이미 사용/);
+  assert.throws(()=>persistSounds(storage,[{...entry,eq:{gains:[2]}}]));
+  assert.equal(storage.getItem('azla_equalizer_sounds_v1'),before);
+  assert.throws(()=>persistSounds({setItem(){throw new Error('denied');}},[entry]),/denied/);
+});
+test('a corrupt or unavailable named-sound store fails safely, retaining valid entries',()=>{
+  const good={id:'good',name:'정상',eq:flat()};
+  const storage=memoryStorage({azla_equalizer_sounds_v1:JSON.stringify({version:1,sounds:[null,{...good,eq:{}},good,{...good,id:'duplicate'}]})});
+  assert.deepEqual(restoreSounds(storage),[good]);
+  assert.deepEqual(restoreSounds(memoryStorage({azla_equalizer_sounds_v1:'broken'})),[]);
+  assert.deepEqual(restoreSounds({getItem(){throw new Error('denied');}}),[]);
 });

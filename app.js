@@ -1,7 +1,7 @@
 import { BANDS, FILTERS, PRESETS, PRESET_REFERENCE, cloneEq, validateEq, signature, buildAnalyticModel, responseAt, peakResponse, parseRew, interpolate, comparison } from './src/eq.js';
 import { DeviceController, supportedDevices, generateRamPlan, sdkGraphModel, discoverDevice } from './src/device.js';
 import { PreviewQueue } from './src/preview.js';
-import { restore, persist, restoreDeviceSnapshot, persistDeviceSnapshot } from './src/storage.js';
+import { restore, persist, persistDeviceSnapshot, restoreSounds, persistSounds, soundName } from './src/storage.js';
 
 const $ = id => document.getElementById(id);
 const AUDIO_DEVICE_GUIDANCE = '오디오 기기마다 소리 특성이 다르므로, 사용하는 오디오 기기에 맞게 EQ를 조절해 주세요.';
@@ -12,7 +12,7 @@ const safeStorage = {
   removeItem: key => { try { localStorage.removeItem(key); } catch { /* storage may be unavailable */ } }
 };
 const previous = restore(safeStorage);
-const state = { eq: previous.current, selected: previous.selected, baseSelected: previous.selected, baseEq: cloneEq(previous.current), advanced: previous.advanced, lastApplied: null, activeBand: 4, busy: false, off: null, on: null, model: null, peak: null, error: null, deviceSnapshot: restoreDeviceSnapshot(safeStorage), deviceTag: null, deviceTagStatus: 'disconnected', connectionBusy: false };
+const state = { eq: previous.current, selected: previous.selected, baseSelected: previous.selected, baseEq: cloneEq(previous.current), advanced: previous.advanced, sounds: restoreSounds(safeStorage), lastApplied: null, activeBand: 4, busy: false, off: null, on: null, model: null, peak: null, error: null, deviceTag: null, deviceTagStatus: 'disconnected', connectionBusy: false };
 let devices = [], controller, discoveredDevice = null, chartFrame = null, modelToken = 0, chartGeometry = null, toastTimer, sdkTimer, livePreview;
 const canvas = $('responseChart');
 const ctx = canvas.getContext('2d');
@@ -40,52 +40,23 @@ function download(name, value) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 function selectedProfile() {
-  if (state.selected === 'device-current') {
-    const current = savedDeviceView();
-    return { name: '저장된 설정', description: current?.description || '불러올 저장 설정이 없습니다.', eq: current?.eq || state.eq, reference: current?.reference || '기기에 저장한 설정을 불러옵니다.' };
-  }
+  const sound = state.sounds.find(item => `sound:${item.id}` === state.selected);
+  if (sound) return { ...sound, description: '직접 저장한 내 사운드입니다. 원하는 대로 조절해 보세요.' };
   if (state.selected === 'manual') return { name: '직접 조절', description: '선택한 사운드를 슬라이더로 직접 조절한 상태입니다.', eq: state.eq, reference: '현재 세션의 임시 조절값' };
   return PRESETS.find(p => p.id === state.selected) || PRESETS[0];
 }
-function sameDevice(snapshot, device) { return !!snapshot && !!device && snapshot.vendorId === device.vendorId && snapshot.productId === device.productId; }
-function savedDeviceView() {
-  const device = controller?.device;
-  // A RAM preview must never replace the last explicitly saved snapshot.
-  const evidence = controller?.lastEvidence;
-  const snapshot = evidence?.result === 'flash-command-transmitted' && device
-    && sameDevice(evidence.device, device) ? { ...evidence.device, eq: evidence.eq } : state.deviceSnapshot;
-  if (snapshot && (!device || sameDevice(snapshot, device))) return {
-    eq: snapshot.eq,
-    description: '이 프로그램에서 마지막으로 저장한 설정입니다.',
-    reference: '조절 중인 값과 별도로 보관한 마지막 저장 설정을 불러옵니다.'
-  };
-  return {
-    eq: null,
-    description: device ? '이 기기에 저장한 설정이 없습니다. EQ를 조절한 뒤 기기에 저장을 눌러 주세요.' : '불러올 저장 설정이 없습니다. 기기를 연결하고 원하는 EQ를 저장해 주세요.',
-    reference: '저장한 설정이 있을 때 불러올 수 있습니다.'
-  };
+function loadSound(sound) {
+  if (state.busy) return;
+  state.eq = cloneEq(sound.eq); state.baseEq = cloneEq(sound.eq);
+  state.selected = `sound:${sound.id}`; state.baseSelected = state.selected; state.error = null;
+  refresh(true, true);
 }
 function renderPresets() {
-  const root = $('presetList'); root.replaceChildren();
-  const current = savedDeviceView();
-  const currentButton = document.createElement('button'); currentButton.type = 'button'; currentButton.className = 'preset-item device-current';
-  currentButton.dataset.currentState = 'true'; currentButton.setAttribute('aria-pressed', String(state.selected === 'device-current')); currentButton.disabled = state.busy;
-  currentButton.title = current.description;
-  if (!current.eq) currentButton.classList.add('unavailable');
-  const currentSymbol = document.createElement('span'); currentSymbol.className = 'preset-icon';
-  currentSymbol.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v12H4zM8 21h8m-4-4v4"/><path d="M8 10h2l2-3 2 6 2-3h2"/></svg>';
-  const currentCopy = document.createElement('span'); currentCopy.className = 'preset-copy';
-  const currentName = document.createElement('span'); currentName.className = 'preset-name'; currentName.textContent = '저장된 설정';
-  currentCopy.append(currentName);
-  const currentDot = document.createElement('span'); currentDot.className = 'preset-active-mark'; currentDot.setAttribute('aria-hidden', 'true');
-  currentButton.append(currentSymbol, currentCopy, currentDot);
-  currentButton.addEventListener('click', () => {
-    const value = savedDeviceView();
-    if (!value.eq) { toast(value.description, true); return; }
-    state.eq = cloneEq(value.eq); state.baseEq = cloneEq(value.eq); state.selected = 'device-current'; state.baseSelected = 'device-current'; state.error = null;
-    refresh(true, true);
-  });
-  root.append(currentButton);
+  const root = $('presetList'), scrollTop = root.scrollTop, scrollLeft = root.scrollLeft;
+  const active = root.contains(document.activeElement) ? document.activeElement.dataset : null;
+  const focusSelector = active?.preset ? `[data-preset="${active.preset}"]` : active?.sound ? `[data-sound="${active.sound}"]`
+    : active?.soundAction ? `[data-sound-action="${active.soundAction}"][data-sound-id="${active.soundId}"]` : null;
+  root.replaceChildren();
   for (const profile of PRESETS) {
     const button = document.createElement('button'); button.type = 'button'; button.className = 'preset-item';
     button.dataset.preset = profile.id; button.setAttribute('aria-pressed', String(profile.id === state.selected)); button.disabled = state.busy;
@@ -104,8 +75,83 @@ function renderPresets() {
     });
     root.append(button);
   }
-  document.querySelector('.library-count').textContent = `${String(PRESETS.length).padStart(2, '0')} MODES`;
+  for (const sound of state.sounds) {
+    const row = document.createElement('div'); row.className = 'user-sound-row';
+    const button = document.createElement('button'); button.type = 'button'; button.className = 'preset-item user-sound';
+    button.dataset.sound = sound.id; button.disabled = state.busy;
+    button.setAttribute('aria-pressed', String(state.selected === `sound:${sound.id}`));
+    const name = document.createElement('span'); name.className = 'preset-name'; name.textContent = sound.name;
+    button.title = sound.name; button.append(name); button.addEventListener('click', () => loadSound(sound));
+    row.append(button);
+    for (const [action, label] of [['edit', '수정'], ['delete', '삭제']]) {
+      const manage = document.createElement('button'); manage.type = 'button'; manage.className = 'sound-manage';
+      manage.dataset.soundAction = action; manage.dataset.soundId = sound.id; manage.textContent = label;
+      manage.setAttribute('aria-label', `${sound.name} ${label}`); manage.title = label; manage.disabled = state.busy;
+      manage.addEventListener('click', () => action === 'edit' ? openSoundDialog(sound) : openDeleteSound(sound));
+      row.append(manage);
+    }
+    root.append(row);
+  }
+  document.querySelector('.library-count').textContent = `${String(PRESETS.length + state.sounds.length).padStart(2, '0')} MODES`;
+  root.scrollTop = scrollTop; root.scrollLeft = scrollLeft;
+  if (focusSelector) root.querySelector(focusSelector)?.focus({ preventScroll: true });
 }
+let soundDraft = null, deletingSoundId = null;
+function openSoundDialog(sound = null) {
+  if (state.busy || $('bandControls').querySelector('[aria-invalid="true"]')) return;
+  soundDraft = { id: sound?.id || crypto.randomUUID(), eq: cloneEq(state.eq), editing: !!sound };
+  $('soundDialogTitle').textContent = sound ? '내 사운드 수정' : '내 사운드 추가';
+  $('soundName').value = sound?.name || '';
+  $('soundOverwriteLabel').hidden = !sound;
+  $('soundOverwrite').checked = false;
+  $('soundFormError').textContent = '';
+  $('soundSubmit').textContent = sound ? '수정 저장' : '추가';
+  $('soundDialog').showModal(); $('soundName').focus();
+}
+function openDeleteSound(sound) {
+  if (state.busy) return;
+  deletingSoundId = sound.id; $('deleteSoundName').textContent = sound.name;
+  $('deleteSoundError').textContent = ''; $('deleteSoundDialog').showModal();
+}
+function storeSoundChanges(sounds, errorId = 'soundFormError') {
+  try { state.sounds = persistSounds(safeStorage, sounds); return true; }
+  catch (error) {
+    const message = error.name === 'QuotaExceededError' ? '저장 공간이 부족합니다. 사용하지 않는 사운드를 삭제해 주세요.'
+      : error.name === 'SecurityError' ? '이 브라우저에서 저장을 허용해 주세요.' : error.message;
+    $(errorId).textContent = message;
+    return false;
+  }
+}
+function submitSound(event) {
+  event.preventDefault();
+  if (!soundDraft || state.busy) return;
+  let name;
+  try { name = soundName($('soundName').value); }
+  catch (error) { $('soundFormError').textContent = error.message; return; }
+  const existing = state.sounds.find(item => item.id === soundDraft.id);
+  const replaceEq = !soundDraft.editing || $('soundOverwrite').checked;
+  const record = { id: soundDraft.id, name, eq: replaceEq ? cloneEq(soundDraft.eq) : cloneEq(existing.eq) };
+  const sounds = existing ? state.sounds.map(item => item.id === record.id ? record : item) : [...state.sounds, record];
+  if (!storeSoundChanges(sounds)) return;
+  if (replaceEq) {
+    state.eq = cloneEq(record.eq); state.baseEq = cloneEq(record.eq);
+    state.selected = `sound:${record.id}`; state.baseSelected = state.selected;
+  }
+  $('soundDialog').close(); refresh(true); toast(existing ? '내 사운드를 수정했습니다.' : '내 사운드에 추가했습니다.');
+  if (!existing) $('presetList').lastElementChild?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  $('presetList').querySelector(`[data-sound="${record.id}"]`)?.focus({ preventScroll: true });
+}
+function deleteSound(event) {
+  event.preventDefault();
+  if (!deletingSoundId || state.busy) return;
+  const selected = `sound:${deletingSoundId}`;
+  if (!storeSoundChanges(state.sounds.filter(item => item.id !== deletingSoundId), 'deleteSoundError')) return;
+  if (state.selected === selected) state.selected = 'manual';
+  if (state.baseSelected === selected) state.baseSelected = 'manual';
+  $('deleteSoundDialog').close(); refresh(true); toast('내 사운드를 삭제했습니다. 현재 EQ와 기기에 저장된 설정은 유지됩니다.');
+  $('addSoundBtn').focus();
+}
+
 function numberInput(label, value, min, max, step, prop, i) {
   const input = document.createElement('input'); input.type = 'number'; input.value = value; input.min = min; input.max = max; input.step = step;
   input.setAttribute('aria-label', `${i + 1}번 밴드 ${label}`); input.dataset.prop = prop; input.dataset.band = i;
@@ -181,7 +227,7 @@ function refresh(rebuild = false, listen = false) {
   if (rebuild) { renderPresets(); renderBands(); }
   else {
     $('presetList').querySelectorAll('[data-preset]').forEach(el => el.setAttribute('aria-pressed', String(el.dataset.preset === state.selected)));
-    $('presetList').querySelector('[data-current-state]')?.setAttribute('aria-pressed', String(state.selected === 'device-current'));
+    $('presetList').querySelectorAll('[data-sound]').forEach(el => el.setAttribute('aria-pressed', String(`sound:${el.dataset.sound}` === state.selected)));
   }
   const profile = selectedProfile();
   $('profileName').textContent = profile.name;
@@ -224,6 +270,7 @@ function updateApplyState() {
   $('connectionLabel').append(dot, document.createTextNode(linked ? 'USB 연결됨' : '연결 대기'));
   $('deviceName').textContent = linked ? devices.find(d => d.vendorId === controller.device.vendorId && d.productId === controller.device.productId)?.name || 'AZLA USB DAC' : 'AZLA USB DAC';
   $('applyBtn').disabled = state.busy || state.connectionBusy || !linked || needsReconnect || invalid;
+  $('addSoundBtn').disabled = state.busy || invalid;
   if (state.busy) return;
   $('applyProgress').hidden = true;
   if (state.connectionBusy) { $('applyStatus').textContent = '기기 상태 확인 중'; $('applyDetail').textContent = '연결 후 조절하면 소리를 미리 들을 수 있습니다.'; }
@@ -238,7 +285,7 @@ function updateApplyState() {
 }
 function lockUI(flag) {
   state.busy = flag;
-  for (const node of document.querySelectorAll('#bandControls input, #bandControls select, #presetList button, #advancedToggle, #resetBtn, #flatBtn')) node.disabled = flag;
+  for (const node of document.querySelectorAll('#bandControls input, #bandControls select, #presetList button, #advancedToggle, #resetBtn, #flatBtn, #addSoundBtn')) node.disabled = flag;
   $('applyBtn').querySelector('span').textContent = flag ? '저장 중' : '기기에 저장';
   updateApplyState();
 }
@@ -253,7 +300,7 @@ async function apply() {
     await livePreview.idle();
     const evidence = await controller.apply(current); state.lastApplied = currentSignature;
     let snapshotRecorded = true;
-    try { state.deviceSnapshot = persistDeviceSnapshot(safeStorage, evidence); }
+    try { persistDeviceSnapshot(safeStorage, evidence); }
     catch { snapshotRecorded = false; }
     try { const read = await controller.readEqTag(); state.deviceTag = read.tag; state.deviceTagStatus = 'known'; }
     catch { state.deviceTag = null; state.deviceTagStatus = 'error'; }
@@ -359,6 +406,13 @@ async function loadMeasurement(kind, file) {
   } catch (error) { toast(error.message, true); }
 }
 
+$('addSoundBtn').addEventListener('click', () => openSoundDialog());
+$('soundForm').addEventListener('submit', submitSound);
+$('deleteSoundForm').addEventListener('submit', deleteSound);
+for (const [dialog, cancel] of [['soundDialog', 'cancelSoundBtn'], ['deleteSoundDialog', 'cancelDeleteSoundBtn']]) {
+  $(cancel).addEventListener('click', () => $(dialog).close());
+  $(dialog).addEventListener('close', () => { soundDraft = null; deletingSoundId = null; });
+}
 $('advancedToggle').checked = state.advanced;
 $('advancedToggle').addEventListener('change', event => { state.advanced = event.target.checked; $('bandControls').classList.toggle('advanced-visible', state.advanced); saveLocal(); scheduleDraw(); });
 $('resetBtn').addEventListener('click', () => { state.eq = cloneEq(state.baseEq); state.selected = state.baseSelected; state.error = null; refresh(true, true); saveLocal(); });

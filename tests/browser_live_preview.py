@@ -45,7 +45,7 @@ with sync_playwright() as p:
     assert page.evaluate('window.__flashCount()')==0
     assert page.evaluate('window.__writes.length')==12 # Tag + 10 bands + RAM
     assert page.evaluate("localStorage.getItem('azla_equalizer_device_state_v1')") is None
-    assert page.locator('[data-current-state]').inner_text() == '저장된 설정'
+    assert page.locator('[data-current-state]').count() == 0
     before=page.evaluate('window.__writes.length')
     # Multiple input events within one debounce window send only the latest value.
     page.locator('.band-gain input').nth(4).evaluate("el=>{for(const value of [1,2,3,4]){el.value=value;el.dispatchEvent(new Event('input',{bubbles:true}))}}")
