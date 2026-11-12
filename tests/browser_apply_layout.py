@@ -42,6 +42,19 @@ with sync_playwright() as p:
             page.locator('[data-preset="music-balanced"]').click()
             page.wait_for_timeout(200)
             page.screenshot(path=str(Path('docs/screenshots')/f'AZLA-Vivid-Orange-{width}.png'))
+        page.evaluate("""async()=>{
+            const {PRESETS}=await import('./src/eq.js');
+            const {persistDeviceSnapshot}=await import('./src/storage.js');
+            persistDeviceSnapshot(localStorage,{result:'flash-command-transmitted',device:{vendorId:13058,productId:1},eq:PRESETS.find(p=>p.id==='cinema').eq});
+        }""")
+        page.reload();page.wait_for_selector('.band-column');page.locator('#viewSavedEqBtn').click()
+        assert page.locator('#profileName').inner_text()=='기기에 저장한 EQ'
+        for advanced in [False,True]:
+            page.locator('#advancedToggle').set_checked(advanced)
+            assert page.locator('#returnEditBtn').evaluate('e=>{let r=e.getBoundingClientRect();return r.top>=0&&r.bottom<=innerHeight&&r.left>=0&&r.right<=innerWidth&&e.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2))}')
+            if height>=768:assert page.locator('.equalizer-panel').evaluate('e=>e.scrollHeight-e.clientHeight<=1'),(width,height,'saved view scroll')
+            assert page.evaluate('document.documentElement.scrollWidth<=innerWidth')
+        page.locator('#returnEditBtn').click();assert page.locator('#profileName').inner_text()=='기본 모드'
         assert not errors,errors
         print('PASS:',width,height,'apply button visible; no overlap or page scrolling; advanced controls accessible')
         page.close()

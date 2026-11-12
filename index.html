@@ -44,12 +44,12 @@
 
 
 
-      <section class="equalizer-panel" aria-labelledby="profileName">
-        <div class="profile-header"><div class="profile-intro"><div class="profile-topline"><span class="section-kicker">현재 사운드</span></div><h2 id="profileName">기본 모드</h2><p id="profileDescription">원래의 소리를 그대로. 모든 밴드 0 dB.</p></div><div class="profile-actions"><button id="resetBtn" class="quiet-button" type="button"><svg class="icon"><use href="#icon-reset"/></svg><span>되돌리기</span></button></div></div>
+      <section id="equalizerPanel" class="equalizer-panel" aria-labelledby="profileName">
+        <div class="profile-header"><div class="profile-intro"><div class="profile-topline"><span class="section-kicker">현재 사운드</span></div><h2 id="profileName">기본 모드</h2><p id="profileDescription">원래의 소리를 그대로. 모든 밴드 0 dB.</p></div><div class="profile-actions"><button id="returnEditBtn" class="return-edit-button" type="button" hidden>편집으로 돌아가기</button><button id="resetBtn" class="quiet-button" type="button"><svg class="icon"><use href="#icon-reset"/></svg><span>되돌리기</span></button></div></div>
 
         <div class="chart-section"><div class="chart-toolbar"><div class="chart-legends"><span class="chart-legend"><i class="legend-line"></i>EQ 응답</span><span class="chart-legend measured-legend" id="measurementLegend" hidden><i class="legend-line measured"></i>실측 변화량</span></div></div><div class="chart-wrap"><canvas id="responseChart" width="1200" height="270" aria-label="주파수에 따른 EQ 예상 응답. 아래 10밴드 조절로 변경할 수 있습니다." role="img"></canvas></div><div class="chart-bottom"><span id="modelLabel">오디오 기기마다 소리 특성이 다르므로, 사용하는 오디오 기기에 맞게 EQ를 조절해 주세요.</span><span id="peakLabel" class="peak-label">최대 변화 <b>0.0 dB</b></span></div></div>
 
-        <div class="controls-section"><div class="controls-heading"><div class="controls-title"><h3>10밴드 이퀄라이저</h3><span class="controls-hint">조절하면 실시간 미리듣기</span></div><div class="controls-actions"><label class="switch-label"><input id="advancedToggle" type="checkbox"><span class="switch-track"></span>세부 조절</label><span class="action-divider"></span><button id="flatBtn" class="text-button" type="button">전체 0 dB</button></div></div><div class="bands-scroll"><div class="band-scale" aria-hidden="true"><span>+12</span><span>0</span><span>−12</span></div><div id="bandControls" class="band-controls" aria-label="10밴드 주파수·게인·Q·필터 조절"></div></div><p class="volume-guidance">DAC의 출력이 강해 연결된 오디오 기기에서 소리가 크게 들릴 수 있습니다. 볼륨을 낮춘 뒤 조절해 주세요.</p><div class="controls-footnote"><span><span class="mini-dot"></span>조절하면 소리만 임시로 반영됩니다. EQ 적용을 눌러야 기기에 저장됩니다.</span><span>20 Hz — 20 kHz</span></div></div>
+        <div class="controls-section"><div class="controls-heading"><div class="controls-title"><h3>10밴드 이퀄라이저</h3><span class="controls-hint">조절하면 실시간 미리듣기</span></div><div class="controls-actions"><label class="switch-label"><input id="advancedToggle" type="checkbox"><span class="switch-track"></span>세부 조절</label><span class="action-divider"></span><button id="flatBtn" class="text-button" type="button">전체 0 dB</button></div></div><div class="bands-scroll"><div class="band-scale" aria-hidden="true"><span>+12</span><span>0</span><span>−12</span></div><div id="bandControls" class="band-controls" aria-label="10밴드 주파수·게인·Q·필터 조절"></div></div><p class="volume-guidance">DAC의 출력이 강해 연결된 오디오 기기에서 소리가 크게 들릴 수 있습니다. 볼륨을 낮춘 뒤 조절해 주세요.</p><div class="controls-footnote"><span><span class="mini-dot"></span><span id="controlsFootnoteText">조절하면 소리만 임시로 반영됩니다. EQ 적용을 눌러야 기기에 저장됩니다.</span></span><span>20 Hz — 20 kHz</span></div></div>
       </section>
 
       <footer class="apply-bar"><div class="apply-copy"><span class="apply-symbol"><svg class="icon"><use href="#icon-shield"/></svg></span><div><strong id="applyStatus">사운드를 준비하세요</strong><p id="applyDetail">볼륨을 낮추고 조절한 뒤, 사운드를 생성해 보관하거나 EQ 적용으로 기기에 저장하세요.</p></div></div><div class="apply-actions"><progress id="applyProgress" max="100" value="0" aria-label="기기 저장 진행률" hidden></progress><button id="saveSoundBtn" class="sound-save-button" type="button" hidden>변경사항 적용</button><button id="applyBtn" class="apply-button" type="button"><span>EQ 적용</span><svg class="icon"><use href="#icon-arrow"/></svg></button></div></footer>
@@ -58,14 +58,6 @@
   </div>
 
   <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
-
-  <dialog id="savedEqDialog" class="dialog saved-eq-dialog" aria-labelledby="savedEqTitle">
-    <h2 id="savedEqTitle">기기에 저장한 EQ</h2>
-    <p id="savedEqMessage" class="sound-dialog-help"></p>
-    <p id="savedEqTime" class="saved-eq-time"></p>
-    <div id="savedEqBands" class="saved-eq-bands" aria-label="기기 저장 EQ 10밴드"></div>
-    <div class="sound-dialog-actions"><button id="closeSavedEqBtn" class="primary-button" type="button">닫기</button></div>
-  </dialog>
 
   <div id="soundMenu" class="sound-menu" popover="auto" role="menu" aria-label="사운드 관리">
     <button type="button" role="menuitem" data-menu-action="rename">이름 변경</button>

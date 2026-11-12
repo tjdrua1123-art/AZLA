@@ -35,9 +35,9 @@ with sync_playwright() as p:
     assert page.locator('[data-current-state],#addSoundBtn,#soundOverwrite').count()==0
     assert page.locator('#saveSoundBtn').is_hidden() and page.locator('#createSoundBtn').is_enabled() and page.locator('#applyBtn').is_disabled()
     assert page.locator('#applyBtn span').inner_text()=='EQ 적용'
-    page.locator('#viewSavedEqBtn').click();assert page.locator('.saved-eq-band').count()==0
-    assert '기록이 없습니다' in page.locator('#savedEqMessage').inner_text()
-    page.locator('#closeSavedEqBtn').click()
+    page.locator('#viewSavedEqBtn').click();assert page.locator('#returnEditBtn').is_hidden()
+    assert '기록이 없습니다' in page.locator('#toast').inner_text()
+    assert page.locator('#savedEqDialog').count()==0
     page.locator('#advancedToggle').check()
     page.locator('.band-frequency input').nth(0).fill('70');page.locator('.band-q input').nth(0).fill('0.9')
     page.locator('.band-filter select').nth(0).select_option('3');page.locator('.band-gain input').nth(0).fill('-3')
@@ -81,16 +81,32 @@ with sync_playwright() as p:
     stored_record=page.evaluate("JSON.parse(localStorage.getItem('azla_equalizer_device_state_v1'))")
     page.locator('.band-gain input').nth(0).fill('2.7');heard();before_view=values()
     writes_before=page.evaluate('window.__writes.length')
+    dirty_curve=page.locator('#responseChart').evaluate('e=>e.toDataURL()')
     page.locator('#viewSavedEqBtn').click()
-    assert page.locator('.saved-eq-band').count()==10
-    assert page.locator('.saved-eq-band span').first.inner_text()==f"+{stored_record['eq']['gains'][0]:.1f} dB"
-    assert page.locator('.saved-eq-band strong').all_text_contents()==[f'{freq} Hz' for freq in stored_record['eq']['freqs']]
-    assert '다른 프로그램' in page.locator('#savedEqMessage').inner_text()
-    page.locator('#closeSavedEqBtn').click()
+    assert page.locator('#savedEqDialog').count()==0,'saved EQ uses the main editor layout'
+    assert page.locator('#profileName').inner_text()=='기기에 저장한 EQ'
+    assert page.locator('#viewSavedEqBtn').get_attribute('aria-pressed')=='true'
+    for field,selector in [('freqs','.band-frequency input'),('gains','.band-gain input'),('qs','.band-q input'),('filterTypes','.band-filter select')]:
+        actual=page.locator(selector).evaluate_all('(els)=>els.map(e=>Number(e.value))')
+        assert actual==stored_record['eq'][field],(field,actual,stored_record['eq'][field])
+    assert page.locator('#bandControls input:enabled,#bandControls select:enabled').count()==0
+    assert page.locator('#applyBtn').is_disabled() and page.locator('#createSoundBtn').is_disabled()
+    assert page.locator('#saveSoundBtn').is_hidden() and page.locator('#resetBtn').is_hidden()
+    assert '다른 프로그램' in page.locator('#applyDetail').inner_text()
+    page.wait_for_timeout(250)
+    assert page.locator('#responseChart').evaluate('e=>e.toDataURL()')!=dirty_curve,'graph must show the saved response'
+    frozen=values();rect=page.locator('#responseChart').bounding_box()
+    page.mouse.move(rect['x']+rect['width']*.47,rect['y']+rect['height']*.55)
+    page.mouse.down();page.mouse.move(rect['x']+rect['width']*.5,rect['y']+20);page.mouse.up()
+    page.locator('#advancedToggle').uncheck();page.locator('#advancedToggle').check()
+    assert values()==frozen and page.evaluate('window.__writes.length')==writes_before
+    page.locator('#returnEditBtn').click()
     assert values()==before_view and page.evaluate('window.__writes.length')==writes_before and flashes()==2
+    assert page.locator('#profileName').inner_text()=='연결 저장'
+    assert page.locator('#bandControls input:disabled,#bandControls select:disabled').count()==0
     page.evaluate('window.__device.productId=33333');page.locator('#viewSavedEqBtn').click()
-    assert page.locator('.saved-eq-band').count()==0 and '연결한 기기' in page.locator('#savedEqMessage').inner_text()
-    page.locator('#closeSavedEqBtn').click();page.evaluate('window.__device.productId=22136')
+    assert page.locator('#returnEditBtn').is_hidden() and '연결한 기기' in page.locator('#toast').inner_text()
+    page.evaluate('window.__device.productId=22136')
     # A blocked local write must leave records unchanged and never start Flash.
     page.evaluate("()=>{window.__realSetItem=Storage.prototype.setItem;Storage.prototype.setItem=function(){throw new DOMException('blocked','QuotaExceededError')}}")
     page.locator('.band-gain input').nth(0).fill('1');heard();page.locator('#saveSoundBtn').click()
@@ -111,13 +127,15 @@ with sync_playwright() as p:
     menu(third,'delete');page.locator('#deleteSoundForm button[type="submit"]').click()
     assert values()==before and flashes()==4 and len(library())==2
     page.reload();page.wait_for_selector('.band-column');assert page.locator('[data-sound]').count()==2
-    page.locator('#viewSavedEqBtn').click();assert page.locator('.saved-eq-band').count()==10
-    assert page.locator('.saved-eq-band span').first.inner_text()=='+1.0 dB'
+    page.locator('#viewSavedEqBtn').click();assert page.locator('#profileName').inner_text()=='기기에 저장한 EQ'
+    assert page.locator('.band-gain input').first.input_value()=='1'
     assert page.evaluate('window.__writes.length')==0
-    page.locator('#closeSavedEqBtn').click()
-    connect();page.locator('#viewSavedEqBtn').click()
-    assert page.locator('.saved-eq-band').count()==0 and '설정이 저장 기록과 달라' in page.locator('#savedEqMessage').inner_text()
-    page.locator('#closeSavedEqBtn').click();page.locator('#connectBtn').click();page.wait_for_function('!window.__device.opened')
+    # Connecting a device with a different stored identity exits the read-only view.
+    connect()
+    assert page.locator('#returnEditBtn').is_hidden() and '설정이 저장 기록과 달라' in page.locator('#toast').inner_text()
+    assert page.evaluate('window.__writes.map(w=>w.bytes)')==[[128,9,0]],'view/return during connect must not audition the editor'
+    page.locator('#viewSavedEqBtn').click();assert '설정이 저장 기록과 달라' in page.locator('#toast').inner_text()
+    page.locator('#connectBtn').click();page.wait_for_function('!window.__device.opened')
     before_copy=values();before_copy_writes=page.evaluate('window.__writes.length');menu(first,'copy');page.locator('#soundName').fill('원본 보관 복사');page.locator('#soundSubmit').click()
     page.locator('#soundDialog').wait_for(state='hidden')
     assert values()==before_copy and library()[-1]['eq']['gains'][0]==2,'copying an unselected sound must not change the editor'
@@ -136,9 +154,10 @@ with sync_playwright() as p:
     page.keyboard.press('Escape')
     page.set_viewport_size({'width':390,'height':844});menu(last,'rename')
     assert page.locator('#soundName').is_visible();page.locator('#cancelSoundBtn').click()
-    page.locator('#viewSavedEqBtn').click();assert page.locator('.saved-eq-band').count()==10
-    page.locator('#closeSavedEqBtn').click()
+    page.locator('#viewSavedEqBtn').click();assert page.locator('#profileName').inner_text()=='기기에 저장한 EQ'
+    assert page.locator('#returnEditBtn').is_visible() and page.locator('.band-column').count()==10
+    page.locator('#returnEditBtn').click()
     assert page.evaluate('document.documentElement.scrollWidth<=innerWidth')
     assert not errors,errors
-    print('PASS: sidebar creation, conditional change application, independent DAC saves; read-only last Flash record survives RAM edits/reload; no inferred settings for missing/mismatched records; menu, scrolling and mobile access')
+    print('PASS: sidebar creation, conditional change application, independent DAC saves; main graph/sliders show frozen last Flash data; edits restored exactly; no USB writes on viewing/return/connection; no inferred settings for missing/mismatched records; menu, scrolling and mobile access')
     browser.close()

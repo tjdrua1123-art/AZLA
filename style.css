@@ -456,18 +456,11 @@ body{font-weight:500}
 .saved-eq-button{min-height:36px;background:#FFFFFF;border-color:var(--line-soft);font-size:13px;font-weight:550}
 .create-sound-button:hover:not(:disabled),.saved-eq-button:hover:not(:disabled){background:#FFE3D2}
 .sound-save-button[hidden]{display:none}
-.saved-eq-dialog{width:640px;max-width:calc(100% - 32px);padding:28px;background:#FFFFFF;border:1px solid var(--line);border-radius:8px}
-.saved-eq-dialog h2{font-size:23px;margin:0 0 12px}
-.saved-eq-time{font-size:12px;color:#60666E;margin:0 0 16px}
-.saved-eq-bands{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
-.saved-eq-band{display:flex;flex-direction:column;gap:6px;padding:12px 6px;background:#FFF7F1;border:1px solid #F0D8CB;border-radius:4px;text-align:center}
-.saved-eq-band strong{font-size:13px}.saved-eq-band span{font-size:18px;font-weight:700}.saved-eq-band small{font-size:10px;color:#51565E}
 @media(max-width:900px){
  .sidebar-utilities{grid-column:1 / -1;grid-row:3;display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 0 12px}
  .sidebar-utilities button{min-height:40px;padding:8px;font-size:13px}
  .preset-list{grid-row:4}
 }
-@media(max-width:520px){.saved-eq-dialog{padding:22px}.saved-eq-bands{grid-template-columns:repeat(2,minmax(0,1fr))}}
 
 /* One text edge for the desktop logo, section label, actions and mode names. */
 .create-sound-button{display:flex;align-items:center;justify-content:space-between;gap:8px}
@@ -490,3 +483,13 @@ body{font-weight:500}
  .sidebar .device-card{margin-left:0;margin-right:0;padding:14px 11px 12px;border-width:1px}
  .sidebar .connect-button{padding-left:11px;padding-right:11px}
 }
+
+.return-edit-button{padding:8px 12px;border:1px solid var(--accent);border-radius:4px;background:#FFF7F1;color:#171717;font-size:13px;font-weight:600;white-space:nowrap}
+.return-edit-button[hidden]{display:none}
+.return-edit-button:hover{background:#FFE3D2}
+.saved-eq-button[aria-pressed=true]{border-color:var(--accent);background:#FFF0E4}
+.saved-eq-view #responseChart{cursor:default}
+.saved-eq-view #bandControls input:disabled,.saved-eq-view #bandControls select:disabled{opacity:1;color:var(--text);-webkit-text-fill-color:var(--text);cursor:default}
+.saved-eq-view .gain-slider:disabled{opacity:1}
+@media(max-width:520px){.return-edit-button{font-size:11px;padding:8px}}
+.saved-eq-view #resetBtn{display:none}
