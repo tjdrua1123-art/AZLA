@@ -321,6 +321,9 @@ function updateApplyState() {
   const ready = !!controller?.bandCount && linked;
   $('connectionGuide').hidden = ready; $('equalizerPanel').hidden = !ready; document.querySelector('.apply-bar').hidden = !ready;
   $('guideConnectBtn').disabled = state.connectionBusy || state.busy;
+  const connectionIssue = controller?.connectionFailure;
+  $('connectionIssue').hidden = !connectionIssue || state.connectionBusy;
+  $('connectionIssueText').textContent = connectionIssue ? '기기의 EQ 설정을 읽는 중 문제가 발생했습니다. 연결 기록을 저장해 전달해 주세요.' : '';
   $('eqEnabled').checked = displayedEq().enabled !== false; $('eqEnabled').disabled = !!state.savedView || state.busy || !ready;
   $('presetList').inert = !ready; $('createSoundBtn').hidden = !ready; $('viewSavedEqBtn').hidden = !ready;
   $('applyBtn').disabled = !!state.savedView || state.busy || state.connectionBusy || !canSaveToDevice() || invalid;
@@ -546,6 +549,7 @@ $('advancedToggle').addEventListener('change', event => { state.advanced = event
 $('resetBtn').addEventListener('click', () => { if (state.savedView) return; state.eq = cloneEq(state.baseEq); state.selected = state.baseSelected; state.error = null; refresh(true, true); saveLocal(); });
 $('flatBtn').addEventListener('click', () => { if (state.savedView) return; const flat = activePresets().find(profile => profile.id === 'flat').eq; state.eq = cloneEq(flat); state.baseEq = cloneEq(flat); state.selected = 'flat'; state.baseSelected = 'flat'; state.error = null; refresh(true, true); saveLocal(); toast('기본 모드 기준값으로 초기화했습니다.'); });
 $('closeSettingsBtn').addEventListener('click', () => $('settingsDialog').close());
+$('downloadConnectionLogBtn').addEventListener('click', () => { if(controller?.connectionFailure) download('AZLA-Connection.json', controller.connectionFailure); });
 $('exportLogBtn').addEventListener('click', () => download('AZLA-Diagnostics.json', { ...controller.diagnostics(), discoveredDevice, preview: state.eq, model: state.model.source, presetReference: PRESET_REFERENCE }));
 $('rewOffInput').addEventListener('change', e => loadMeasurement('off', e.target.files[0]));
 $('rewOnInput').addEventListener('change', e => loadMeasurement('on', e.target.files[0]));

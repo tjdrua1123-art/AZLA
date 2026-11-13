@@ -15,21 +15,23 @@ export function reportBytes(device, direction) {
   }}; visit(device.collections); return bits/8;
 }
 export class RegisterPipe {
-  constructor(device,signal,timeout=1800) {this.device=device;this.signal=signal;this.timeout=timeout;this.active=false;this.poisoned=false;}
+  constructor(device,signal,timeout=1800) {this.device=device;this.signal=signal;this.timeout=timeout;this.active=false;this.poisoned=false;this.trace=[];}
   async request(address,command,value=0) {
     if(this.active||this.poisoned||this.signal.aborted) throw new Error('기기를 다시 연결해 주세요.');
     this.active=true;
+    const record={address,command,request:value>>>0,time:new Date().toISOString(),status:'pending'};
+    this.trace.push(record);if(this.trace.length>96)this.trace.shift();
     try {return await new Promise((resolve,reject)=>{
       let timer;
       const cleanup=()=>{clearTimeout(timer);this.device.removeEventListener('inputreport',receive);this.signal.removeEventListener('abort',abort);};
-      const fail=()=>{cleanup();this.poisoned=true;reject(new Error('기기 응답을 확인할 수 없습니다. 다시 연결해 주세요.'));};
+      const fail=()=>{cleanup();record.status='failed';this.poisoned=true;reject(new Error('기기 응답을 확인할 수 없습니다. 다시 연결해 주세요.'));};
       const abort=()=>fail();
       const receive=e=>{
         if(e.reportId!==REPORT_ID || (e.device && e.device!==this.device))return;
         const d=e.data;if(!d||d.byteLength!==10)return;
         const v=new DataView(d.buffer,d.byteOffset,10);
         if(v.getUint32(0,true)!==address||v.getUint8(4)!==command||v.getUint8(5)!==0)return;
-        cleanup();resolve(v.getUint32(6,true));
+        record.response=v.getUint32(6,true);record.bytes=Array.from(new Uint8Array(d.buffer,d.byteOffset,10));record.status='received';cleanup();resolve(record.response);
       };
       this.device.addEventListener('inputreport',receive);this.signal.addEventListener('abort',abort,{once:true});
       timer=setTimeout(fail,this.timeout);
@@ -62,11 +64,12 @@ export function encodeWords(eq,original) {
   });
 }
 export class KtSession {
-  constructor(pipe,count){this.pipe=pipe;this.count=count;this.base=count===5?0x26:0x35;this.words=null;this.global=1;this.ready=false;}
+  constructor(pipe,count){this.pipe=pipe;this.count=count;this.base=count===5?0x26:0x35;this.words=null;this.global=1;this.ready=false;this.lastRead=null;}
   async readEq(){
     this.ready=false;
     if(this.count===6)this.global=await this.pipe.read(0x34);
     const words=[];for(let i=0;i<this.count*2;i++)words.push(await this.pipe.read(this.base+i));
+    this.lastRead={count:this.count,base:this.base,global:this.global,words:[...words],bands:Array.from({length:this.count},(_,i)=>{const a=words[i*2]>>>0,b=words[i*2+1]>>>0,raw=a&65535;return {band:i+1,addresses:[this.base+i*2,this.base+i*2+1],frequencyWord:a>>>16,frequencyHz:(a>>>16)*2,gain:(raw>=32768?raw-65536:raw)/10,q:(b&65535)/1000,type:(b>>>16)&7,enabled:!!(b&0x80000)};})};
     const eq=decodeWords(words,this.count,this.global);this.words=words;this.ready=true;return eq;
   }
   async compare(words,global=this.global){
