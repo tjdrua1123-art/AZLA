@@ -2,12 +2,12 @@
   "name": "azla-equalizer",
   "version": "2.0.0",
   "private": true,
-  "description": "AZLA 10-band equalizer and device configuration application",
+  "description": "AZLA adaptive 5/6/10-band web equalizer",
   "type": "module",
   "main": "desktop/main.cjs",
   "scripts": {
     "start": "node server.mjs",
-    "test": "node --test tests/eq.test.js tests/device.test.js tests/storage.test.js tests/vendor-sdk.test.js tests/preview.test.js",
+    "test": "node --test tests/eq.test.js tests/device.test.js tests/storage.test.js tests/vendor-sdk.test.js tests/preview.test.js tests/kt.test.js tests/multi-device.test.js",
     "desktop": "electron desktop/main.cjs",
     "package:win": "electron-builder --win nsis --x64",
     "package:folder": "electron-builder --win --x64 --dir -c.win.signAndEditExecutable=false"
@@ -19,9 +19,35 @@
   "build": {
     "appId": "kr.co.azla.equalizer",
     "productName": "AZLA Equalizer",
-    "directories": { "output": "release" },
-    "files": ["index.html", "style.css", "app.js", "src/**/*", "sdk/**/*", "device-config.json", "desktop/main.cjs", "package.json"],
-    "win": { "target": [{ "target": "nsis", "arch": ["x64"] }] },
-    "nsis": { "oneClick": false, "perMachine": false, "allowToChangeInstallationDirectory": true }
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "index.html",
+      "style.css",
+      "app.js",
+      "src/**/*",
+      "sdk/**/*",
+      "device-config.json",
+      "desktop/main.cjs",
+      "package.json",
+      "assets/**/*",
+      "licenses/**/*"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true
+    }
   }
 }

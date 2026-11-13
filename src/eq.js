@@ -59,13 +59,16 @@ Object.freeze(PRESETS);
 /** Returns a new canonical EQ object, rejecting coercions and malformed input. */
 export function validateEq(value) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error('EQ 설정 형식이 올바르지 않습니다.');
+  if (value.enabled !== undefined && typeof value.enabled !== 'boolean') throw new Error('EQ 사용 상태가 올바르지 않습니다.');
+  const count = value.freqs?.length;
+  if (![5,6,10].includes(count)) throw new Error('지원되지 않는 밴드 수입니다.');
   for (const key of ['freqs','qs','gains','filterTypes']) {
-    if (!Array.isArray(value[key]) || value[key].length !== BANDS) throw new Error('EQ는 10개 밴드의 주파수·게인·Q·필터가 필요합니다.');
+    if (!Array.isArray(value[key]) || value[key].length !== count) throw new Error('EQ 밴드별 주파수·게인·Q·필터가 필요합니다.');
   }
-  for (let i=0; i<BANDS; i++) {
+  for (let i=0; i<count; i++) {
     const {freqs, qs, gains, filterTypes} = value;
     if (!Number.isInteger(freqs[i]) || freqs[i] < 20 || freqs[i] > 20000) throw new Error(`${i+1}번 주파수는 20~20,000 Hz 정수로 입력하세요.`);
-    if (!Number.isFinite(qs[i]) || qs[i] < .5 || qs[i] > 5) throw new Error(`${i+1}번 Q는 0.5~5.0 사이로 입력하세요.`);
+    if (!Number.isFinite(qs[i]) || qs[i] < (count === 10 ? .5 : .1) || qs[i] > (count === 10 ? 5 : 16)) throw new Error(`${i+1}번 Q는 ${count === 10 ? '0.5~5.0' : '0.1~16.0'} 사이로 입력하세요.`);
     if (!Number.isFinite(gains[i]) || gains[i] < -12 || gains[i] > 12) throw new Error(`${i+1}번 게인은 −12~+12 dB 사이로 입력하세요.`);
     if (!Number.isInteger(filterTypes[i]) || !Object.hasOwn(FILTERS, filterTypes[i])) throw new Error(`${i+1}번 필터 종류가 올바르지 않습니다.`);
   }
@@ -74,7 +77,7 @@ export function validateEq(value) {
   if (value.offset !== undefined && value.offset !== 0) throw new Error('이 프로그램은 전체 출력 게인 자동 보정을 사용하지 않습니다.');
   return {
     freqs: [...value.freqs], qs: [...value.qs], gains: [...value.gains],
-    filterTypes: [...value.filterTypes], tag, offset: 0
+    filterTypes: [...value.filterTypes], tag, offset: 0, ...(count !== 10 || value.enabled !== undefined ? {enabled:value.enabled !== false} : {})
   };
 }
 
@@ -82,7 +85,7 @@ export function cloneEq(value) { return validateEq(value); }
 
 export function signature(value) {
   const eq = validateEq(value);
-  return JSON.stringify({freqs:eq.freqs, qs:eq.qs, gains:eq.gains, filterTypes:eq.filterTypes, tag:eq.tag});
+  return JSON.stringify({freqs:eq.freqs, qs:eq.qs, gains:eq.gains, filterTypes:eq.filterTypes, tag:eq.tag, ...(eq.enabled !== undefined ? {enabled:eq.enabled} : {})});
 }
 
 function biquad(freq, q, gain, type) {
@@ -117,7 +120,7 @@ function biquad(freq, q, gain, type) {
 export function buildAnalyticModel(value) {
   const eq = validateEq(value);
   return {
-    coeffs:eq.freqs.map((freq,i)=>biquad(freq,eq.qs[i],eq.gains[i],eq.filterTypes[i])),
+    coeffs:eq.enabled === false ? [] : eq.freqs.map((freq,i)=>biquad(freq,eq.qs[i],eq.gains[i],eq.filterTypes[i])),
     source:'analytic', sampleRate:SAMPLE_RATE, freqs:[...eq.freqs]
   };
 }
@@ -191,4 +194,17 @@ export function comparison(value, model, off, on) {
     return {band:i+1,freq,predicted,measured,error};
   });
   return {rows,meanAbsoluteError:count?total/count:null,count};
+}
+
+/** Device-sized presets sample the original gain envelope on a log frequency axis. */
+export function presetsFor(count = 10, frequencies) {
+  if (count === 10) return PRESETS;
+  if (![5,6].includes(count)) throw new Error('지원되지 않는 밴드 수입니다.');
+  const freqs = frequencies || (count === 5 ? [60,250,1000,4000,12000] : [60,200,600,1500,4000,12000]);
+  return PRESETS.map(p => ({...p, eq:validateEq({
+    freqs:[...freqs], gains:freqs.map(f => {
+      const rows=p.eq.freqs.map((freq,i)=>({f:freq,db:p.eq.gains[i]}));
+      return Math.round((interpolate(Math.max(rows[0].f,Math.min(rows.at(-1).f,f)),rows)||0)*10)/10;
+    }), qs:Array(count).fill(1.4), filterTypes:Array(count).fill(2),tag:p.eq.tag,offset:0,enabled:true
+  })}));
 }

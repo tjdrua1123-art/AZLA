@@ -25,7 +25,7 @@
 
   <div class="app-shell">
     <aside class="sidebar" aria-label="사운드 라이브러리">
-      <a class="brand" href="./" aria-label="AZLA Equalizer 홈"><span class="brand-wordmark"><svg class="brand-logo" viewBox="0 0 174 28" role="img" aria-label="AZLA"><g fill="none" stroke="#fff" stroke-width="2.6" stroke-linejoin="miter"><path d="M2 26 14 2h2l12 24M7 17h16M49 3h23L50 25h25M98 2v23h24M145 26l12-24h2l12 24M150 17h16"/></g></svg></span><span class="brand-tagline">SOUND BEYOND LIMITS</span></a>
+      <a class="brand" href="./" aria-label="AZLA Equalizer 홈"><span class="brand-wordmark"><img class="brand-logo" src="assets/azla-logo.svg" alt="AZLA"></span><span class="brand-tagline">SOUND BEYOND LIMITS</span></a>
 
       <div class="sidebar-heading"><span>사운드 모드</span><span class="library-count">05 MODES</span></div>
       <div class="sidebar-utilities"><button id="createSoundBtn" class="create-sound-button" type="button"><span>사운드 생성</span><span class="create-sound-plus" aria-hidden="true">＋</span></button><button id="viewSavedEqBtn" class="saved-eq-button" type="button">기기 저장 EQ 보기</button></div>
@@ -33,7 +33,7 @@
       <div class="sidebar-spacer"></div>
       <div class="sidebar-note">AZLA AUDIO</div>
       <section class="device-card" aria-label="장치 연결">
-        <div class="device-card-top"><span class="device-icon"><svg class="icon"><use href="#icon-usb"/></svg></span><span class="device-copy"><strong id="deviceName">AZLA USB DAC</strong><span id="connectionLabel"><i class="status-dot"></i>연결 대기</span></span></div>
+        <div class="device-card-top"><span class="device-icon"><svg class="icon"><use href="#icon-usb"/></svg></span><span class="device-copy"><strong id="deviceName">AZLA SOUND</strong><span id="connectionLabel"><i class="status-dot"></i>연결 대기</span></span></div>
         <button id="connectBtn" class="connect-button" type="button"><span>기기 연결</span><svg class="icon"><use href="#icon-plus"/></svg></button>
       </section>
 
@@ -44,15 +44,23 @@
 
 
 
-      <section id="equalizerPanel" class="equalizer-panel" aria-labelledby="profileName">
-        <div class="profile-header"><div class="profile-intro"><div class="profile-topline"><span class="section-kicker">현재 사운드</span></div><h2 id="profileName">기본 모드</h2><p id="profileDescription">원래의 소리를 그대로. 모든 밴드 0 dB.</p></div><div class="profile-actions"><button id="returnEditBtn" class="return-edit-button" type="button" hidden>편집으로 돌아가기</button><button id="resetBtn" class="quiet-button" type="button"><svg class="icon"><use href="#icon-reset"/></svg><span>되돌리기</span></button></div></div>
+      <section id="connectionGuide" class="connection-guide" aria-labelledby="welcomeTitle">
+        <div class="welcome-eyebrow">AZLA SOUND</div>
+        <h1 id="welcomeTitle">나만의 소리를<br>완성하는 시간.</h1>
+        <p class="welcome-description">작은 조절로 달라지는 사운드.<br>기기를 연결하고, 좋아하는 소리를 찾아보세요.</p>
+        <div class="welcome-device" aria-hidden="true"><span class="signal signal-left">)))</span><svg viewBox="0 0 80 160"><path d="M33 3h14v28H33zM24 31h32v80H24zM40 111v46" fill="white" stroke="currentColor" stroke-width="2"/><text x="40" y="77" text-anchor="middle" font-size="9" fill="currentColor">AZLA</text></svg><span class="signal">)))</span></div>
+        <button id="guideConnectBtn" class="welcome-connect" type="button">기기 연결하기 <span aria-hidden="true">→</span></button>
+        <p class="welcome-help">PC의 Chrome · Edge에서 이용해 주세요.<br>연결하면 기기에 맞는 이퀄라이저가 표시됩니다.</p>
+      </section>
+      <section id="equalizerPanel" hidden class="equalizer-panel" aria-labelledby="profileName">
+        <div class="profile-header"><div class="profile-intro"><div class="profile-topline"><span class="section-kicker">현재 사운드</span></div><h2 id="profileName">기본 모드</h2><p id="profileDescription">원래의 소리를 그대로. 모든 밴드 0 dB.</p></div><div class="profile-actions"><label class="switch-label eq-power"><input id="eqEnabled" type="checkbox" checked><span class="switch-track"></span>EQ 사용</label><button id="returnEditBtn" class="return-edit-button" type="button" hidden>편집으로 돌아가기</button><button id="resetBtn" class="quiet-button" type="button"><svg class="icon"><use href="#icon-reset"/></svg><span>되돌리기</span></button></div></div>
 
         <div class="chart-section"><div class="chart-toolbar"><div class="chart-legends"><span class="chart-legend"><i class="legend-line"></i>EQ 응답</span><span class="chart-legend measured-legend" id="measurementLegend" hidden><i class="legend-line measured"></i>실측 변화량</span></div></div><div class="chart-wrap"><canvas id="responseChart" width="1200" height="270" aria-label="주파수에 따른 EQ 예상 응답. 아래 10밴드 조절로 변경할 수 있습니다." role="img"></canvas></div><div class="chart-bottom"><span id="modelLabel">오디오 기기마다 소리 특성이 다르므로, 사용하는 오디오 기기에 맞게 EQ를 조절해 주세요.</span><span id="peakLabel" class="peak-label">최대 변화 <b>0.0 dB</b></span></div></div>
 
         <div class="controls-section"><div class="controls-heading"><div class="controls-title"><h3>10밴드 이퀄라이저</h3><span class="controls-hint">조절하면 실시간 미리듣기</span></div><div class="controls-actions"><label class="switch-label"><input id="advancedToggle" type="checkbox"><span class="switch-track"></span>세부 조절</label><span class="action-divider"></span><button id="flatBtn" class="text-button" type="button">전체 0 dB</button></div></div><div class="bands-scroll"><div class="band-scale" aria-hidden="true"><span>+12</span><span>0</span><span>−12</span></div><div id="bandControls" class="band-controls" aria-label="10밴드 주파수·게인·Q·필터 조절"></div></div><p class="volume-guidance">DAC의 출력이 강해 연결된 오디오 기기에서 소리가 크게 들릴 수 있습니다. 볼륨을 낮춘 뒤 조절해 주세요.</p><div class="controls-footnote"><span><span class="mini-dot"></span><span id="controlsFootnoteText">조절하면 소리만 임시로 반영됩니다. EQ 적용을 눌러야 기기에 저장됩니다.</span></span><span>20 Hz — 20 kHz</span></div></div>
       </section>
 
-      <footer class="apply-bar"><div class="apply-copy"><span class="apply-symbol"><svg class="icon"><use href="#icon-shield"/></svg></span><div><strong id="applyStatus">사운드를 준비하세요</strong><p id="applyDetail">볼륨을 낮추고 조절한 뒤, 사운드를 생성해 보관하거나 EQ 적용으로 기기에 저장하세요.</p></div></div><div class="apply-actions"><progress id="applyProgress" max="100" value="0" aria-label="기기 저장 진행률" hidden></progress><button id="saveSoundBtn" class="sound-save-button" type="button" hidden>변경사항 적용</button><button id="applyBtn" class="apply-button" type="button"><span>EQ 적용</span><svg class="icon"><use href="#icon-arrow"/></svg></button></div></footer>
+      <footer class="apply-bar" hidden><div class="apply-copy"><span class="apply-symbol"><svg class="icon"><use href="#icon-shield"/></svg></span><div><strong id="applyStatus">사운드를 준비하세요</strong><p id="applyDetail">볼륨을 낮추고 조절한 뒤, 사운드를 생성해 보관하거나 EQ 적용으로 기기에 저장하세요.</p></div></div><div class="apply-actions"><progress id="applyProgress" max="100" value="0" aria-label="기기 저장 진행률" hidden></progress><button id="saveSoundBtn" class="sound-save-button" type="button" hidden>변경사항 적용</button><button id="applyBtn" class="apply-button" type="button"><span>EQ 적용</span><svg class="icon"><use href="#icon-arrow"/></svg></button></div></footer>
       <div class="bottom-caption"><span>ENGINEERED FOR THE WAY YOU LISTEN.</span><span>© AZLA. All rights reserved.</span></div>
     </main>
   </div>

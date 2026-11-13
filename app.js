@@ -1,5 +1,6 @@
-import { BANDS, FILTERS, PRESETS, PRESET_REFERENCE, cloneEq, validateEq, signature, buildAnalyticModel, responseAt, peakResponse, parseRew, interpolate, comparison } from './src/eq.js';
-import { DeviceController, supportedDevices, generateRamPlan, sdkGraphModel, discoverDevice } from './src/device.js';
+import { BANDS, FILTERS, presetsFor, PRESET_REFERENCE, cloneEq, validateEq, signature, buildAnalyticModel, responseAt, peakResponse, parseRew, interpolate, comparison } from './src/eq.js';
+import { supportedDevices, generateRamPlan, sdkGraphModel, discoverDevice } from './src/device.js';
+import { MultiDeviceController } from './src/multi-device.js';
 import { PreviewQueue } from './src/preview.js';
 import { restore, persist, persistDeviceSnapshot, restoreDeviceSnapshot, restoreSounds, persistSounds, soundName } from './src/storage.js';
 
@@ -17,6 +18,9 @@ const state = { eq: previous.current, selected: previous.selected, baseSelected:
 let devices = [], controller, discoveredDevice = null, chartFrame = null, modelToken = 0, chartGeometry = null, toastTimer, sdkTimer, livePreview;
 const canvas = $('responseChart');
 const ctx = canvas.getContext('2d');
+const activePresets = () => presetsFor(controller?.bandCount || 10, controller?.connectedEq?.freqs);
+const count = () => displayedEq().freqs.length;
+const compatibleSounds = () => state.sounds.filter(sound => sound.eq.freqs.length === (controller?.bandCount || 10));
 const colors = Array(BANDS).fill('#FF5B24');
 const formatDb = value => `${value > 0 ? '+' : ''}${Number(value).toFixed(1)}`;
 const freqLabel = value => value >= 1000 ? `${Number((value / 1000).toFixed(1))}k` : String(Math.round(value));
@@ -46,11 +50,12 @@ function currentSound() {
 }
 function canSaveToDevice() { return !!controller?.device?.opened && !controller.requiresReconnect; }
 function selectedProfile() {
+  if (state.savedView && controller?.session) return { name:'기기에 저장한 EQ', description:'연결 시 기기에서 읽은 설정 · 읽기 전용', reference:'현재 연결에서 읽은 EQ를 표시합니다.' };
   if (state.savedView) return { name: '기기에 저장한 EQ', description: '마지막 기기 저장 기록 · 읽기 전용', reference: '이 프로그램의 마지막 저장 기록입니다. 다른 프로그램에서 변경한 값은 반영되지 않습니다.' };
   const sound = currentSound();
   if (sound) return { ...sound, description: signature(sound.eq) === signature(state.eq) ? '저장한 사운드입니다. 원하는 대로 조절해 보세요.' : '사운드를 조절 중입니다. 마음에 들면 변경사항 적용을 눌러 주세요.' };
   if (state.selected === 'manual') return { name: '직접 조절', description: '선택한 사운드를 슬라이더로 직접 조절한 상태입니다.', eq: state.eq, reference: '현재 세션의 임시 조절값' };
-  return PRESETS.find(p => p.id === state.selected) || PRESETS[0];
+  return activePresets().find(p => p.id === state.selected) || activePresets()[0];
 }
 function loadSound(sound) {
   if (state.busy) return;
@@ -65,7 +70,7 @@ function renderPresets() {
   const focusSelector = active?.preset ? `[data-preset="${active.preset}"]` : active?.sound ? `[data-sound="${active.sound}"]`
     : active?.soundAction ? `[data-sound-action="${active.soundAction}"][data-sound-id="${active.soundId}"]` : null;
   root.replaceChildren();
-  for (const profile of PRESETS) {
+  for (const profile of activePresets()) {
     const button = document.createElement('button'); button.type = 'button'; button.className = 'preset-item';
     button.dataset.preset = profile.id; button.setAttribute('aria-pressed', String(!state.savedView && profile.id === state.selected)); button.disabled = state.busy;
     const symbol = document.createElement('span'); symbol.className = 'preset-icon';
@@ -84,7 +89,7 @@ function renderPresets() {
     });
     root.append(button);
   }
-  for (const sound of state.sounds) {
+  for (const sound of compatibleSounds()) {
     const row = document.createElement('div'); row.className = 'user-sound-row';
     const button = document.createElement('button'); button.type = 'button'; button.className = 'preset-item user-sound';
     button.dataset.sound = sound.id; button.disabled = state.busy;
@@ -98,7 +103,7 @@ function renderPresets() {
     manage.addEventListener('click', () => openSoundMenu(sound, manage)); row.append(manage);
     root.append(row);
   }
-  document.querySelector('.library-count').textContent = `${String(PRESETS.length + state.sounds.length).padStart(2, '0')} MODES`;
+  document.querySelector('.library-count').textContent = `${String(activePresets().length + compatibleSounds().length).padStart(2, '0')} MODES`;
   root.scrollTop = scrollTop; root.scrollLeft = scrollLeft;
   if (focusSelector) root.querySelector(focusSelector)?.focus({ preventScroll: true });
 }
@@ -203,8 +208,10 @@ function numberInput(label, value, min, max, step, prop, i) {
 }
 function renderBands() {
   const eq = displayedEq();
-  const root = $('bandControls'); root.replaceChildren(); root.classList.toggle('advanced-visible', state.advanced);
-  for (let i = 0; i < BANDS; i++) {
+  const root = $('bandControls'); root.replaceChildren(); root.classList.toggle('advanced-visible', state.advanced); root.style.setProperty('--band-count',eq.freqs.length);
+  document.querySelector('.controls-title h3').textContent = `${eq.freqs.length}밴드 이퀄라이저`;
+  root.setAttribute('aria-label', `${eq.freqs.length}밴드 주파수·게인·Q·필터 조절`); canvas.setAttribute('aria-label', `${eq.freqs.length}밴드 EQ 예상 응답`);
+  for (let i = 0; i < eq.freqs.length; i++) {
     const column = document.createElement('div'); column.className = 'band-column'; column.dataset.band = i;
     column.classList.toggle('selected', i === state.activeBand);
     const selectColumn = () => { if (!state.busy) selectBand(i); };
@@ -212,7 +219,7 @@ function renderBands() {
     column.addEventListener('focusin', selectColumn);
     const num = document.createElement('span'); num.className = 'band-number'; num.textContent = String(i + 1).padStart(2, '0');
     const freq = document.createElement('label'); freq.className = 'band-frequency';
-    freq.append(numberInput('주파수 Hz', eq.freqs[i], 20, 20000, 1, 'freqs', i));
+    freq.append(numberInput('주파수 Hz', eq.freqs[i], 20, 20000, count() === 10 ? 1 : 2, 'freqs', i));
     const hz = document.createElement('small'); hz.textContent = 'Hz'; freq.append(hz);
     const gain = document.createElement('label'); gain.className = 'band-gain';
     gain.append(numberInput('게인 dB', eq.gains[i], -12, 12, .1, 'gains', i));
@@ -225,7 +232,7 @@ function renderBands() {
     slider.addEventListener('dblclick', () => editBand(i, 'gains', 0));
     shell.append(slider);
     const q = document.createElement('label'); q.className = 'band-q band-advanced'; q.textContent = 'Q';
-    q.append(numberInput('Q값', eq.qs[i], .5, 5, 'any', 'qs', i));
+    q.append(numberInput('Q값', eq.qs[i], count() === 10 ? .5 : .1, count() === 10 ? 5 : 16, 'any', 'qs', i));
     const filter = document.createElement('label'); filter.className = 'band-filter band-advanced';
     const select = document.createElement('select'); select.setAttribute('aria-label', `${i + 1}번 밴드 필터`); select.dataset.band = i;
     for (const [value, label] of Object.entries(FILTERS)) { const option = document.createElement('option'); option.value = value; option.textContent = label; select.append(option); }
@@ -241,13 +248,14 @@ function selectBand(i) {
 }
 function updateSlider(slider, gain) {
   slider.value = gain;
-  // Range thumbs travel within the track, inset by half their 13px height.
+  // Range thumbs travel within the track, inset by half their 20px height.
   const ratio = (12 - gain) / 24;
-  slider.style.setProperty('--gain-stop', `calc(${ratio * 100}% + ${(0.5 - ratio) * 13}px)`);
+  slider.style.setProperty('--gain-stop', `calc(${ratio * 100}% + ${(0.5 - ratio) * 20}px)`);
 }
 function editBand(i, prop, value) {
   if (state.busy || state.savedView) return;
   const next = cloneEq(state.eq); next[prop][i] = value; next.tag = 14;
+  if (count() !== 10 && prop === 'freqs' && ((i>0 && value<next.freqs[i-1]) || (i+1<count() && value>next.freqs[i+1]))) { toast('주파수는 낮은 밴드부터 순서대로 설정해 주세요.', true); return; }
   try { state.eq = validateEq(next); } catch (error) { toast(error.message, true); return; }
   state.selected = 'manual'; state.error = null; selectBand(i);
   const column = $('bandControls').children[i];
@@ -277,7 +285,7 @@ function refresh(rebuild = false, listen = false) {
   updateGraphLabels(); scheduleDraw(); renderComparison(); updateApplyState();
   const token = ++modelToken;
   clearTimeout(sdkTimer);
-  if (SDK?.default) sdkTimer = setTimeout(async () => {
+  if (SDK?.default && count() === 10 && displayedEq().enabled !== false) sdkTimer = setTimeout(async () => {
     try {
       const eq = cloneEq(displayedEq()), packets = await generateRamPlan(SDK, eq);
       if (token !== modelToken) return;
@@ -308,7 +316,13 @@ function updateApplyState() {
   $('connectionLabel').replaceChildren();
   const dot = document.createElement('i'); dot.className = 'status-dot'; dot.classList.toggle('connected', linked);
   $('connectionLabel').append(dot, document.createTextNode(linked ? 'USB 연결됨' : '연결 대기'));
-  $('deviceName').textContent = linked ? devices.find(d => d.vendorId === controller.device.vendorId && d.productId === controller.device.productId)?.name || 'AZLA USB DAC' : 'AZLA USB DAC';
+  $('deviceName').textContent = 'AZLA SOUND';
+  if (linked && controller.bandCount) $('connectionLabel').append(document.createTextNode(` · ${controller.bandCount}밴드`));
+  const ready = !!controller?.bandCount && linked;
+  $('connectionGuide').hidden = ready; $('equalizerPanel').hidden = !ready; document.querySelector('.apply-bar').hidden = !ready;
+  $('guideConnectBtn').disabled = state.connectionBusy || state.busy;
+  $('eqEnabled').checked = displayedEq().enabled !== false; $('eqEnabled').disabled = !!state.savedView || state.busy || !ready;
+  $('presetList').inert = !ready; $('createSoundBtn').hidden = !ready; $('viewSavedEqBtn').hidden = !ready;
   $('applyBtn').disabled = !!state.savedView || state.busy || state.connectionBusy || !canSaveToDevice() || invalid;
   $('applyBtn').querySelector('span').textContent = state.busy ? '적용 중' : 'EQ 적용';
   $('saveSoundBtn').hidden = !!state.savedView || !currentSound();
@@ -322,7 +336,7 @@ function updateApplyState() {
   updateSaveDialogHelp();
   if (state.busy) return;
   $('applyProgress').hidden = true;
-  if (state.savedView) { $('applyStatus').textContent = '기기 저장 EQ 확인 중'; $('applyDetail').textContent = '이 프로그램의 마지막 저장 기록입니다. 다른 프로그램에서 변경한 값은 반영되지 않습니다.'; }
+  if (state.savedView) { $('applyStatus').textContent = '기기 저장 EQ 확인 중'; $('applyDetail').textContent = controller?.session ? '연결 시 기기에서 읽은 설정입니다. 확인만으로 현재 소리는 바뀌지 않습니다.' : '이 프로그램의 마지막 저장 기록입니다. 다른 프로그램에서 변경한 값은 반영되지 않습니다.'; }
   else if (state.connectionBusy) { $('applyStatus').textContent = '기기 상태 확인 중'; $('applyDetail').textContent = '연결 후 조절하면 소리를 미리 들을 수 있습니다.'; }
   else if (state.error) { $('applyStatus').textContent = '기기 반영을 확인해 주세요'; $('applyDetail').textContent = state.error; }
   else if (!linked) {
@@ -360,7 +374,7 @@ async function apply() {
     try { const read = await controller.readEqTag(); state.deviceTag = read.tag; state.deviceTagStatus = 'known'; }
     catch { state.deviceTag = null; state.deviceTagStatus = 'error'; }
     renderPresets();
-    toast(recorded ? 'EQ를 기기에 적용하고 저장했습니다.' : 'EQ는 기기에 저장했지만 이 브라우저에 기록을 보관하지 못했습니다.');
+    toast(evidence.requiresReconnect ? '저장 명령을 보냈습니다. 다시 연결해 저장값을 확인해 주세요.' : recorded ? 'EQ를 기기에 적용하고 저장했습니다.' : 'EQ는 기기에 저장했지만 이 브라우저에 기록을 보관하지 못했습니다.');
   } catch (error) { state.lastApplied = null; state.error = `기기 적용을 확인하지 못했습니다. ${error.message}`; toast(state.error, true); }
   finally { lockUI(false); }
 }
@@ -375,7 +389,11 @@ function requestApply() {
 }
 
 function savedEqRecord() {
-  const snapshot = state.deviceSnapshot, device = controller?.device;
+  const device = controller?.device;
+  if (controller?.session && controller.requiresReconnect) return {message:'기기를 다시 연결하면 저장값을 읽어 확인할 수 있습니다.'};
+  if (controller?.session && controller.savedEq) return {snapshot:{eq:controller.savedEq}};
+  const snapshot = state.deviceSnapshot;
+  if (snapshot && snapshot.eq.freqs.length !== (controller?.bandCount || 10)) return {message:'이 기기에 저장한 EQ 기록이 없습니다.'};
   if (!snapshot) return { message: '기기에 저장한 EQ 기록이 없습니다. EQ 적용 후 다시 확인해 주세요.' };
   if (device && (snapshot.vendorId !== device.vendorId || snapshot.productId !== device.productId)) {
     return { message: '연결한 기기에 저장한 EQ 기록이 없습니다. EQ 적용 후 다시 확인해 주세요.' };
@@ -462,7 +480,8 @@ canvas.addEventListener('pointermove', event => {
   if (!dragging || state.savedView || state.busy) return;
   const rect = canvas.getBoundingClientRect(), g = chartGeometry;
   const px = Math.max(g.left, Math.min(g.w - g.right, event.clientX - rect.left));
-  const freq = Math.round(20 * 1000 ** ((px - g.left) / (g.w - g.left - g.right)));
+  const step = count() === 10 ? 1 : 2;
+  const freq = Math.round(20 * 1000 ** ((px - g.left) / (g.w - g.left - g.right)) / step)*step;
   const gain = Math.round(Math.max(-12, Math.min(12, dragging.gain + (dragging.y - (event.clientY - rect.top)) * dragging.range * 2 / (g.h - g.top - g.bottom))) * 10) / 10;
   editBand(dragging.i, 'freqs', freq); editBand(dragging.i, 'gains', gain);
 });
@@ -481,7 +500,7 @@ function renderComparison() {
     $('comparisonRows').append(tr);
   }
   $('measurementLegend').hidden = !(state.off && state.on);
-  $('rewSummary').textContent = result.count ? `${result.count}/10개 밴드 비교 · 평균 절대 차이 ${result.meanAbsoluteError.toFixed(2)} dB (${state.model.source === 'sdk' ? 'SDK 예상' : '수학적 예상'} 기준)` : 'EQ OFF와 EQ ON 파일을 모두 불러오면 차이를 계산합니다.';
+  $('rewSummary').textContent = result.count ? `${result.count}/${count()}개 밴드 비교 · 평균 절대 차이 ${result.meanAbsoluteError.toFixed(2)} dB (${state.model.source === 'sdk' ? 'SDK 예상' : '수학적 예상'} 기준)` : 'EQ OFF와 EQ ON 파일을 모두 불러오면 차이를 계산합니다.';
 }
 async function loadMeasurement(kind, file) {
   if (!file) return;
@@ -521,10 +540,11 @@ for (const [dialog, cancel] of [['soundDialog', 'cancelSoundBtn'], ['deleteSound
   $(cancel).addEventListener('click', () => $(dialog).close());
   $(dialog).addEventListener('close', () => { soundDraft = null; deletingSoundId = null; });
 }
+$('eqEnabled').addEventListener('change', event => { if(state.savedView || state.busy)return; state.eq = {...cloneEq(state.eq),enabled:event.target.checked}; state.selected='manual'; refresh(false,true); });
 $('advancedToggle').checked = state.advanced;
 $('advancedToggle').addEventListener('change', event => { state.advanced = event.target.checked; $('bandControls').classList.toggle('advanced-visible', state.advanced); saveLocal(); scheduleDraw(); });
 $('resetBtn').addEventListener('click', () => { if (state.savedView) return; state.eq = cloneEq(state.baseEq); state.selected = state.baseSelected; state.error = null; refresh(true, true); saveLocal(); });
-$('flatBtn').addEventListener('click', () => { if (state.savedView) return; const flat = PRESETS.find(profile => profile.id === 'flat').eq; state.eq = cloneEq(flat); state.baseEq = cloneEq(flat); state.selected = 'flat'; state.baseSelected = 'flat'; state.error = null; refresh(true, true); saveLocal(); toast('기본 모드 기준값으로 초기화했습니다.'); });
+$('flatBtn').addEventListener('click', () => { if (state.savedView) return; const flat = activePresets().find(profile => profile.id === 'flat').eq; state.eq = cloneEq(flat); state.baseEq = cloneEq(flat); state.selected = 'flat'; state.baseSelected = 'flat'; state.error = null; refresh(true, true); saveLocal(); toast('기본 모드 기준값으로 초기화했습니다.'); });
 $('closeSettingsBtn').addEventListener('click', () => $('settingsDialog').close());
 $('exportLogBtn').addEventListener('click', () => download('AZLA-Diagnostics.json', { ...controller.diagnostics(), discoveredDevice, preview: state.eq, model: state.model.source, presetReference: PRESET_REFERENCE }));
 $('rewOffInput').addEventListener('change', e => loadMeasurement('off', e.target.files[0]));
@@ -540,7 +560,7 @@ window.addEventListener('beforeunload', event => { if (state.busy) { event.preve
 async function initialize() {
   let configError = false, connectionMode = 'registered';
   try { const response = await fetch('device-config.json', { cache: 'no-store' }); if (!response.ok) throw new Error(); const config = await response.json(); devices = supportedDevices(config); connectionMode = config.connectionMode === 'manufacturer' ? 'manufacturer' : 'registered'; } catch { configError = true; }
-  controller = new DeviceController({ SDK, hid: navigator.hid, devices, connectionMode, onProgress: (value, label) => {
+  controller = new MultiDeviceController({ SDK, hid: navigator.hid, devices, connectionMode, onProgress: (value, label) => {
     $('applyProgress').value = value * 100; $('applyStatus').textContent = value === 1 ? '설정 전송 완료' : label; $('applyDetail').textContent = '장치 저장이 끝날 때까지 USB를 연결해 두세요.';
   } });
   livePreview = new PreviewQueue({
@@ -551,13 +571,14 @@ async function initialize() {
   controller.onDisconnect = () => {
     livePreview.cancel();
     state.lastApplied = null; state.deviceTag = null; state.deviceTagStatus = 'disconnected';
+    if (controller.expectingReset && state.busy) { state.error=null; renderPresets(); updateApplyState(); return; }
     state.error = 'USB 연결이 끊어졌습니다. 장치를 다시 연결해 주세요.';
     renderPresets(); updateApplyState(); toast(state.error, true);
   };
-  $('connectBtn').addEventListener('click', async () => {
+  const connect = async () => {
     if (state.busy || state.connectionBusy) return;
     state.connectionBusy = true;
-    const signatureAtConnect = signature(state.eq);
+    leaveSavedEq(false);
     livePreview.cancel();
     updateApplyState();
     try {
@@ -568,21 +589,26 @@ async function initialize() {
         await livePreview.idle();
         const device = await controller.connect();
         if (device) {
-          state.lastApplied = null; state.error = null; state.deviceTag = null; state.deviceTagStatus = 'reading'; renderPresets();
+          state.eq = cloneEq(controller.connectedEq || activePresets()[0].eq); state.baseEq = cloneEq(state.eq); state.selected = controller.connectedEq ? 'manual' : 'flat'; state.baseSelected = state.selected; state.activeBand = Math.min(2, state.eq.freqs.length-1);
+          state.lastApplied = null; state.error = null; state.deviceTag = null; state.deviceTagStatus = 'reading'; refresh(true);
           try { const read = await controller.readEqTag(); state.deviceTag = read.tag; state.deviceTagStatus = 'known'; }
           catch { state.deviceTagStatus = 'error'; }
-          renderPresets(); toast('AZLA 기기가 연결되었습니다. 볼륨을 낮춘 뒤 조절해 주세요.');
+          if (controller.connectedEq && state.deviceSnapshot?.vendorId === device.vendorId && state.deviceSnapshot?.productId === device.productId) {
+            const expected = {...state.deviceSnapshot.eq,tag:14}, actual = {...controller.connectedEq,tag:14};
+            state.readbackMatches = signature(expected) === signature(actual);
+          }
+          renderPresets(); toast(state.readbackMatches === true ? '기기에서 읽은 설정이 마지막 저장 요청값과 일치합니다.' : 'AZLA 기기가 연결되었습니다. 볼륨을 낮춘 뒤 조절해 주세요.'); state.readbackMatches = null;
         }
       }
-    } catch (error) { toast(error.message, true); $('settingsDialog').showModal(); }
+    } catch (error) { toast(error.message, true); }
     finally {
       state.connectionBusy = false;
       if (state.savedView && !savedEqRecord().snapshot) {
         const message = savedEqRecord().message; leaveSavedEq(false); refresh(true); toast(message, true);
       } else updateApplyState();
-      if (controller.device && signature(state.eq) !== signatureAtConnect) scheduleLivePreview();
     }
-  });
+  };
+  $('connectBtn').addEventListener('click', connect); $('guideConnectBtn').addEventListener('click', connect);
   $('supportStatus').textContent = window.isSecureContext && navigator.hid ? 'WebHID 지원' : 'Windows Chrome / Edge 필요';
   $('sdkStatus').textContent = SDK?.default ? '원본 SDK 준비됨' : '제조사 SDK 본체 추가 필요';
   $('connectionHelp').textContent = [!SDK?.default ? '제조사 SDK 본체가 아직 포함되지 않았습니다.' : '', connectionMode === 'manufacturer' ? '기존 프로그램과 같은 장치 검색 방식을 사용합니다. 사용 중인 AZLA DAC를 선택해 주세요.' : !devices.length ? '최종 제품의 USB 식별 정보 등록이 필요합니다.' : '', configError ? '장치 설정 파일을 읽을 수 없습니다.' : '', '조절하면 실시간으로 미리 듣고, EQ 적용을 눌러야 기기에 저장합니다.'].filter(Boolean).join(' ');
@@ -598,7 +624,7 @@ async function initialize() {
       const info = await discoverDevice(navigator.hid);
       if (info) {
         discoveredDevice = info;
-        result.textContent = `${info.name} · VID 0x${info.vendorId.toString(16).toUpperCase().padStart(4, '0')} / PID 0x${info.productId.toString(16).toUpperCase().padStart(4, '0')} · 기록 저장으로 내보낼 수 있습니다.`;
+        result.textContent = '기기 연결을 확인했습니다.';
       }
     } catch (error) { toast(error.message, true); }
     finally { inspect.disabled = false; }

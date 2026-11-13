@@ -7,9 +7,9 @@ export const TIMING = Object.freeze({ gap: 130, beforeFlash: 1100, afterFlash: 3
 const RAM_COMMAND = Object.freeze([1, 10, 4, 0, 0, 255, 255]);
 const FLASH_COMMAND = Object.freeze([1, 1, 0]);
 export const TAG_READ_COMMAND = Object.freeze([128, 9, 0]);
-// The search list comes from the supplied manufacturer DeviceService.js.
+// Original manufacturer search list plus the VID confirmed in the supplied KT firmware.
 // Discovery grants no application write authorization and never opens a device.
-export const DISCOVERY_VIDS = Object.freeze([0x3302, 0x0762, 0x35D8, 0x2FC6, 0x0104, 0xB44D, 0x0661, 0x0666, 0x0D8C, 0x0663]);
+export const DISCOVERY_VIDS = Object.freeze([0x3302, 0x0762, 0x35D8, 0x2FC6, 0x0104, 0xB44D, 0x0661, 0x0666, 0x0D8C, 0x0663, 0x31B2]);
 export async function discoverDevice(hid) {
   if (!hid) throw new Error('장치 확인은 Windows Chrome 또는 Edge에서 사용할 수 있습니다.');
   const selected = await hid.requestDevice({ filters: DISCOVERY_VIDS.map(vendorId => ({ vendorId })) });

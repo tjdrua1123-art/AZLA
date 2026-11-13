@@ -10,7 +10,7 @@ export function createAppServer() {
     try {
       const pathname = decodeURIComponent(new URL(req.url, 'http://localhost').pathname);
       const rel = pathname === '/' ? 'index.html' : pathname.slice(1);
-      if (rel.split('/').some(p => p.startsWith('.')) || !/^(index\.html|style\.css|app\.js|device-config\.json|(?:src|sdk)\/[^\0]+)$/.test(rel)) {
+      if (rel.split('/').some(p => p.startsWith('.')) || !/^(index\.html|style\.css|app\.js|device-config\.json|(?:src|sdk|assets)\/[^\0]+)$/.test(rel)) {
         res.writeHead(404).end('Not found'); return;
       }
       const target = resolve(root, rel);
